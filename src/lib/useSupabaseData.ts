@@ -207,23 +207,45 @@ function buildContractsDash(cotacoes: Record<string, CotacaoRow>) {
 // ═══════════════════════════════════════════════════════════════
 
 interface BasisHistoricoRow {
-  praca_cidade: string;
-  praca_estado: string;
+  cidade: string;
+  estado: string;
   mercado: string;
-  mes: number; // 1-12
+  mes_referencia: string; // "Janeiro", "Fevereiro", etc.
   basis_min: number;
   basis_max: number;
-  basis_medio: number;
+  medio: number;
 }
 
 function buildBasisData(rows: BasisHistoricoRow[]): Record<string, BasisMonth[]> {
+  // Map Supabase mercado values to display format used in the component
+  const mercadoMap: Record<string, string> = {
+    "soja_export": "Soja Exportação",
+    "soja_exportacao": "Soja Exportação",
+    "Soja Exportação": "Soja Exportação",
+    "milho_export": "Milho Exportação",
+    "milho_exportacao": "Milho Exportação",
+    "Milho Exportação": "Milho Exportação",
+    "milho_b3": "Milho B3",
+    "Milho B3": "Milho B3",
+  };
+
   const grouped: Record<string, Map<number, { mins: number[]; maxs: number[]; medios: number[] }>> = {};
 
   for (const row of rows) {
-    const key = `${row.praca_cidade}-${row.praca_estado}-${row.mercado}`;
+    const mercadoDisplay = mercadoMap[row.mercado] || row.mercado;
+    const key = `${row.cidade}-${row.estado}-${mercadoDisplay}`;
     if (!grouped[key]) grouped[key] = new Map();
     const mesMap = grouped[key];
-    const mesIdx = row.mes; // 1-12
+    // mes_referencia can be "Janeiro", "Fevereiro", or abbreviated "Jan/Fev" etc.
+    // Try full name first, then try matching first 3 chars
+    let mesIdx = MESES.indexOf(row.mes_referencia);
+    if (mesIdx < 0) {
+      // Try matching by first 3 characters (e.g. "Jan/Fev" → match "Janeiro")
+      const prefix = row.mes_referencia.slice(0, 3).toLowerCase();
+      const MESES_LOWER_PREFIX = MESES.map(m => m.slice(0, 3).toLowerCase());
+      mesIdx = MESES_LOWER_PREFIX.indexOf(prefix);
+    }
+    if (mesIdx < 0) continue; // skip unknown month names
 
     if (!mesMap.has(mesIdx)) {
       mesMap.set(mesIdx, { mins: [], maxs: [], medios: [] });
@@ -231,7 +253,7 @@ function buildBasisData(rows: BasisHistoricoRow[]): Record<string, BasisMonth[]>
     const bucket = mesMap.get(mesIdx)!;
     bucket.mins.push(row.basis_min);
     bucket.maxs.push(row.basis_max);
-    bucket.medios.push(row.basis_medio);
+    bucket.medios.push(row.medio);
   }
 
   const result: Record<string, BasisMonth[]> = {};
@@ -239,7 +261,7 @@ function buildBasisData(rows: BasisHistoricoRow[]): Record<string, BasisMonth[]>
   for (const [key, mesMap] of Object.entries(grouped)) {
     const months: BasisMonth[] = [];
     for (let m = 0; m < 12; m++) {
-      const bucket = mesMap.get(m + 1);
+      const bucket = mesMap.get(m);
       if (bucket && bucket.medios.length > 0) {
         const avg = (arr: number[]) => arr.reduce((a, b) => a + b, 0) / arr.length;
         months.push({
@@ -330,7 +352,7 @@ export function useSupabaseData(): SupabaseData {
       // ─── 3. BASIS HISTÓRICO ───
       const { data: basisRows, error: basisErr } = await supabase
         .from("basis_historico")
-        .select("praca_cidade, praca_estado, mercado, mes, basis_min, basis_max, basis_medio");
+        .select("cidade, estado, mercado, mes_referencia, basis_min, basis_max, medio");
 
       if (!basisErr && basisRows && basisRows.length > 0) {
         const built = buildBasisData(basisRows as BasisHistoricoRow[]);
