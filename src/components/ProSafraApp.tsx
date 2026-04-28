@@ -1,149 +1,13 @@
 "use client";
 import React, { useState, useMemo, useEffect } from "react";
+import { useSupabaseData } from "../lib/useSupabaseData";
+import type { CotacaoRow, PracaRow, BasisMonth, ContractDash } from "../lib/useSupabaseData";
 
 // ═══════════════════════════════════════════════════════════════
-// SHARED DATA
+// SHARED DATA — now loaded from Supabase via useSupabaseData hook
+// COTACOES, CONTRACTS_DASH, PRACAS, BASIS_DATA, DEFAULT_BASIS
+// are passed as props from the root component
 // ═══════════════════════════════════════════════════════════════
-
-const PRACAS = [
-  { id: 1, cidade: "Rio Verde", estado: "GO" },
-  { id: 2, cidade: "Sorriso", estado: "MT" },
-  { id: 3, cidade: "Lucas do Rio Verde", estado: "MT" },
-  { id: 4, cidade: "Dourados", estado: "MS" },
-  { id: 5, cidade: "Cascavel", estado: "PR" },
-  { id: 6, cidade: "Luís Eduardo Magalhães", estado: "BA" },
-  { id: 7, cidade: "Uberaba", estado: "MG" },
-  { id: 8, cidade: "Não-Me-Toque", estado: "RS" },
-  { id: 9, cidade: "Balsas", estado: "MA" },
-  { id: 10, cidade: "Uruçuí", estado: "PI" },
-  { id: 11, cidade: "Paragominas", estado: "PA" },
-  { id: 12, cidade: "Palmas", estado: "TO" },
-  { id: 13, cidade: "Chapecó", estado: "SC" },
-  { id: 14, cidade: "Cristalina", estado: "GO" },
-  { id: 15, cidade: "Primavera do Leste", estado: "MT" },
-];
-
-const BASIS_DATA = {
-  "Rio Verde-GO-Soja Exportação": [
-    { mes: "Janeiro", basis_min: -115, basis_max: -65, medio: -90 },
-    { mes: "Fevereiro", basis_min: -120, basis_max: -70, medio: -95 },
-    { mes: "Março", basis_min: -130, basis_max: -80, medio: -105 },
-    { mes: "Abril", basis_min: -125, basis_max: -72, medio: -98.5 },
-    { mes: "Maio", basis_min: -110, basis_max: -60, medio: -85 },
-    { mes: "Junho", basis_min: -100, basis_max: -50, medio: -75 },
-    { mes: "Julho", basis_min: -95, basis_max: -45, medio: -70 },
-    { mes: "Agosto", basis_min: -90, basis_max: -40, medio: -65 },
-    { mes: "Setembro", basis_min: -85, basis_max: -35, medio: -60 },
-    { mes: "Outubro", basis_min: -80, basis_max: -30, medio: -55 },
-    { mes: "Novembro", basis_min: -90, basis_max: -40, medio: -65 },
-    { mes: "Dezembro", basis_min: -100, basis_max: -50, medio: -75 },
-  ],
-  "Sorriso-MT-Soja Exportação": [
-    { mes: "Janeiro", basis_min: -140, basis_max: -90, medio: -115 },
-    { mes: "Fevereiro", basis_min: -145, basis_max: -95, medio: -120 },
-    { mes: "Março", basis_min: -155, basis_max: -105, medio: -130 },
-    { mes: "Abril", basis_min: -150, basis_max: -97, medio: -123.5 },
-    { mes: "Maio", basis_min: -135, basis_max: -85, medio: -110 },
-    { mes: "Junho", basis_min: -125, basis_max: -75, medio: -100 },
-    { mes: "Julho", basis_min: -120, basis_max: -70, medio: -95 },
-    { mes: "Agosto", basis_min: -115, basis_max: -65, medio: -90 },
-    { mes: "Setembro", basis_min: -110, basis_max: -60, medio: -85 },
-    { mes: "Outubro", basis_min: -105, basis_max: -55, medio: -80 },
-    { mes: "Novembro", basis_min: -115, basis_max: -65, medio: -90 },
-    { mes: "Dezembro", basis_min: -125, basis_max: -75, medio: -100 },
-  ],
-};
-const DEFAULT_BASIS = [
-  { mes: "Janeiro", basis_min: -120, basis_max: -70, medio: -95 },
-  { mes: "Fevereiro", basis_min: -125, basis_max: -75, medio: -100 },
-  { mes: "Março", basis_min: -135, basis_max: -85, medio: -110 },
-  { mes: "Abril", basis_min: -130, basis_max: -77, medio: -103.5 },
-  { mes: "Maio", basis_min: -115, basis_max: -65, medio: -90 },
-  { mes: "Junho", basis_min: -105, basis_max: -55, medio: -80 },
-  { mes: "Julho", basis_min: -100, basis_max: -50, medio: -75 },
-  { mes: "Agosto", basis_min: -95, basis_max: -45, medio: -70 },
-  { mes: "Setembro", basis_min: -90, basis_max: -40, medio: -65 },
-  { mes: "Outubro", basis_min: -85, basis_max: -35, medio: -60 },
-  { mes: "Novembro", basis_min: -95, basis_max: -45, medio: -70 },
-  { mes: "Dezembro", basis_min: -105, basis_max: -55, medio: -80 },
-];
-
-const COTACOES = {
-  "CBOT:ZSF2027":{lp:1166.25,ch:11,chp:0.95},"CBOT:ZSH2027":{lp:1165.5,ch:10.5,chp:0.91},
-  "CBOT:ZSK2026":{lp:1167,ch:9,chp:0.78},"CBOT:ZSK2027":{lp:1168.75,ch:10.5,chp:0.91},
-  "CBOT:ZSN2026":{lp:1183.25,ch:10.5,chp:0.9},"CBOT:ZSN2027":{lp:1174.25,ch:10,chp:0.86},
-  "CBOT:ZSX2026":{lp:1154.5,ch:10.5,chp:0.92},"CBOT:ZSX2027":{lp:1126.5,ch:10,chp:0.9},
-  "CBOT:ZCK2026":{lp:451.5,ch:5,chp:1.12},"CBOT:ZCN2026":{lp:461,ch:5.25,chp:1.15},
-  "CBOT:ZCU2026":{lp:463.75,ch:4.75,chp:1.03},"CBOT:ZCZ2026":{lp:478.75,ch:5.5,chp:1.16},
-  "CBOT:ZCH2027":{lp:483,ch:5,chp:1.05},"CBOT:ZCK2027":{lp:488,ch:5.25,chp:1.09},
-  "CBOT:ZCN2027":{lp:493,ch:5,chp:1.02},"CBOT:ZCU2027":{lp:497,ch:4.75,chp:0.96},
-  "CBOT:ZCZ2027":{lp:502,ch:5,chp:1.01},
-  "BMFBOVESPA:CCMK2026":{lp:66.32,ch:0.09,chp:0.14},"BMFBOVESPA:CCMN2026":{lp:67.25,ch:0.08,chp:0.12},
-  "BMFBOVESPA:CCMU2026":{lp:68.4,ch:0.2,chp:0.29},"BMFBOVESPA:CCMX2026":{lp:70.77,ch:-0.02,chp:-0.03},
-  "BMFBOVESPA:CCMF2027":{lp:73.4,ch:0.34,chp:0.47},"BMFBOVESPA:CCMH2027":{lp:75.15,ch:-0.03,chp:-0.04},
-  "BMFBOVESPA:CCMK2027":{lp:71.52,ch:-0.46,chp:-0.64},"BMFBOVESPA:CCMN2027":{lp:71.81,ch:-0.46,chp:-0.64},
-  "BMFBOVESPA:CCMU2027":{lp:72,ch:-0.04,chp:-0.06},
-  "BMFBOVESPA:DOLK2026":{lp:5008,ch:-0.5,chp:-0.01},"BMFBOVESPA:DOLM2026":{lp:5041,ch:-2,chp:-0.04},
-  "BMFBOVESPA:DOLN2026":{lp:5078.43,ch:-8.5,chp:-0.17},"BMFBOVESPA:DOLQ2026":{lp:5117.01,ch:-8.5,chp:-0.17},
-  "BMFBOVESPA:DOLU2026":{lp:5152.69,ch:-9.5,chp:-0.18},"BMFBOVESPA:DOLV2026":{lp:5187.71,ch:-10,chp:-0.19},
-  "BMFBOVESPA:DOLX2026":{lp:5220.86,ch:-9.5,chp:-0.18},"BMFBOVESPA:DOLZ2026":{lp:5252.27,ch:-11,chp:-0.21},
-  "BMFBOVESPA:DOLF2027":{lp:5285.09,ch:-11.5,chp:-0.22},"BMFBOVESPA:DOLG2027":{lp:5320,ch:-12,chp:-0.23},
-  "BMFBOVESPA:DOLH2027":{lp:5348.43,ch:-13,chp:-0.24},"BMFBOVESPA:DOLJ2027":{lp:5383.39,ch:-14.5,chp:-0.27},
-  "BMFBOVESPA:DOLN2027":{lp:5483.75,ch:-15,chp:-0.27},"BMFBOVESPA:DOLQ2027":{lp:5517.46,ch:-15.5,chp:-0.28},
-  "BMFBOVESPA:DOLV2027":{lp:5586.1,ch:-17,chp:-0.3},
-};
-
-const CONTRACTS_DASH = {
-  sojaCbot: [
-    {sym:"ZSK2026",mo:"Mai/26",lp:1167,ch:9,chp:0.78,hi:1171,lo:1156.75,vol:137118},
-    {sym:"ZSN2026",mo:"Jul/26",lp:1183.25,ch:10.5,chp:0.9,hi:1186.25,lo:1171,vol:126817},
-    {sym:"ZSX2026",mo:"Nov/26",lp:1154.5,ch:10.5,chp:0.92,hi:1157.25,lo:1141,vol:28820},
-    {sym:"ZSF2027",mo:"Jan/27",lp:1166.25,ch:11,chp:0.95,hi:1168.75,lo:1153.25,vol:5419},
-    {sym:"ZSH2027",mo:"Mar/27",lp:1165.5,ch:10.5,chp:0.91,hi:1167.75,lo:1154.5,vol:3761},
-    {sym:"ZSK2027",mo:"Mai/27",lp:1168.75,ch:10.5,chp:0.91,hi:1171,lo:1157.75,vol:1359},
-    {sym:"ZSN2027",mo:"Jul/27",lp:1174.25,ch:10,chp:0.86,hi:1176.75,lo:1164.75,vol:949},
-    {sym:"ZSX2027",mo:"Nov/27",lp:1126.5,ch:10,chp:0.9,hi:1128.75,lo:1117.75,vol:282},
-  ],
-  milhoCbot: [
-    {sym:"ZCK2026",mo:"Mai/26",lp:451.5,ch:5,chp:1.12,hi:452,lo:446,vol:45200},
-    {sym:"ZCN2026",mo:"Jul/26",lp:461,ch:5.25,chp:1.15,hi:462,lo:455.5,vol:32100},
-    {sym:"ZCU2026",mo:"Set/26",lp:463.75,ch:4.75,chp:1.03,hi:464.5,lo:459,vol:8500},
-    {sym:"ZCZ2026",mo:"Dez/26",lp:478.75,ch:5.5,chp:1.16,hi:479.5,lo:473,vol:18900},
-    {sym:"ZCH2027",mo:"Mar/27",lp:483,ch:5,chp:1.05,hi:484,lo:478,vol:9061},
-    {sym:"ZCK2027",mo:"Mai/27",lp:488,ch:5.25,chp:1.09,hi:489,lo:483,vol:1242},
-    {sym:"ZCN2027",mo:"Jul/27",lp:493,ch:5,chp:1.02,hi:494,lo:488,vol:905},
-    {sym:"ZCU2027",mo:"Set/27",lp:497,ch:4.75,chp:0.96,hi:498,lo:492,vol:223},
-    {sym:"ZCZ2027",mo:"Dez/27",lp:502,ch:5,chp:1.01,hi:503,lo:497,vol:1229},
-  ],
-  milhoB3: [
-    {sym:"CCMK2026",mo:"Mai/26",lp:66.32,ch:0.09,chp:0.14,hi:66.4,lo:66.21,vol:808,u:"R$/sc"},
-    {sym:"CCMN2026",mo:"Jul/26",lp:67.25,ch:0.08,chp:0.12,hi:67.25,lo:66.99,vol:429,u:"R$/sc"},
-    {sym:"CCMU2026",mo:"Set/26",lp:68.4,ch:0.2,chp:0.29,hi:68.4,lo:68.23,vol:55,u:"R$/sc"},
-    {sym:"CCMX2026",mo:"Nov/26",lp:70.77,ch:-0.02,chp:-0.03,hi:70.95,lo:70.75,vol:160,u:"R$/sc"},
-    {sym:"CCMF2027",mo:"Jan/27",lp:73.4,ch:0.34,chp:0.47,hi:73.4,lo:73.39,vol:64,u:"R$/sc"},
-    {sym:"CCMH2027",mo:"Mar/27",lp:75.15,ch:-0.03,chp:-0.04,hi:75.15,lo:75,vol:46,u:"R$/sc"},
-    {sym:"CCMK2027",mo:"Mai/27",lp:71.52,ch:-0.46,chp:-0.64,hi:71.52,lo:71.52,vol:0,u:"R$/sc"},
-    {sym:"CCMN2027",mo:"Jul/27",lp:71.81,ch:-0.46,chp:-0.64,hi:71.81,lo:71.81,vol:0,u:"R$/sc"},
-    {sym:"CCMU2027",mo:"Set/27",lp:72,ch:-0.04,chp:-0.06,hi:72,lo:72,vol:1,u:"R$/sc"},
-  ],
-  dolarB3: [
-    {sym:"DOLK2026",mo:"Mai/26",lp:5008,ch:-0.5,chp:-0.01,hi:5016.5,lo:4999,vol:154095},
-    {sym:"DOLM2026",mo:"Jun/26",lp:5041,ch:-2,chp:-0.04,hi:5042,lo:5039,vol:820},
-    {sym:"DOLN2026",mo:"Jul/26",lp:5078.43,ch:-8.5,chp:-0.17,hi:5078.43,lo:5078.43,vol:0},
-    {sym:"DOLQ2026",mo:"Ago/26",lp:5117.01,ch:-8.5,chp:-0.17,hi:5117.01,lo:5117.01,vol:0},
-    {sym:"DOLU2026",mo:"Set/26",lp:5152.69,ch:-9.5,chp:-0.18,hi:5152.69,lo:5152.69,vol:0},
-    {sym:"DOLV2026",mo:"Out/26",lp:5187.71,ch:-10,chp:-0.19,hi:5187.71,lo:5187.71,vol:0},
-    {sym:"DOLX2026",mo:"Nov/26",lp:5220.86,ch:-9.5,chp:-0.18,hi:5220.86,lo:5220.86,vol:0},
-    {sym:"DOLZ2026",mo:"Dez/26",lp:5252.27,ch:-11,chp:-0.21,hi:5252.27,lo:5252.27,vol:0},
-    {sym:"DOLF2027",mo:"Jan/27",lp:5285.09,ch:-11.5,chp:-0.22,hi:5285.09,lo:5285.09,vol:0},
-    {sym:"DOLG2027",mo:"Fev/27",lp:5320,ch:-12,chp:-0.23,hi:5320,lo:5320,vol:0},
-    {sym:"DOLH2027",mo:"Mar/27",lp:5348.43,ch:-13,chp:-0.24,hi:5348.43,lo:5348.43,vol:0},
-    {sym:"DOLJ2027",mo:"Abr/27",lp:5383.39,ch:-14.5,chp:-0.27,hi:5383.39,lo:5383.39,vol:0},
-    {sym:"DOLN2027",mo:"Jul/27",lp:5483.75,ch:-15,chp:-0.27,hi:5483.75,lo:5483.75,vol:0},
-    {sym:"DOLQ2027",mo:"Ago/27",lp:5517.46,ch:-15.5,chp:-0.28,hi:5517.46,lo:5517.46,vol:0},
-    {sym:"DOLV2027",mo:"Out/27",lp:5586.1,ch:-17,chp:-0.3,hi:5586.1,lo:5586.1,vol:0},
-  ],
-};
 
 // ═══════════════════════════════════════════════════════════════
 // UTILS
@@ -160,8 +24,8 @@ const buildSoja = (mi,yr) => { const c=SOJA_MAP[mi]; return `CBOT:ZS${c}${mi===1
 const buildMilho = (mi,yr) => `CBOT:ZC${MILHO_MAP[mi]}${yr}`;
 const buildDol = (mi,yr) => `BMFBOVESPA:DOL${DOL_CODE[mi]}${yr}`;
 
-function findClosest(sym, keys) {
-  if (COTACOES[sym]) return sym;
+function findClosest(sym, keys, cotacoes) {
+  if (cotacoes[sym]) return sym;
   const m = sym.match(/^(.+?)([A-Z])(\d{4})$/);
   if (!m) return sym;
   const ord = "FGHJKMNQUVXZ";
@@ -287,12 +151,16 @@ function DashSection({title,sub,color,contracts,unit,isDol,defOpen=false}) {
   );
 }
 
-function DashboardPage({goTo}) {
+function DashboardPage({goTo, contractsDash}) {
+  const sLead = contractsDash.sojaCbot[0];
+  const mcLead = contractsDash.milhoCbot[0];
+  const mbLead = contractsDash.milhoB3[0];
   const spots = [
-    {label:"Soja 1º Venc.",value:"1.167,00",unit:"c/bu",ch:"+9,00",color:"#22C55E",sub:"ZSK2026"},
-    {label:"Milho CBOT 1º Venc.",value:"451,50",unit:"c/bu",ch:"+5,00",color:"#22C55E",sub:"ZCK2026"},
-    {label:"Milho B3 1º Venc.",value:"66,32",unit:"R$/sc",ch:"+0,09",color:"#22C55E",sub:"CCMK2026"},
+    {label:"Soja 1º Venc.",value:sLead?fmt(sLead.lp):"—",unit:"c/bu",ch:sLead?(sLead.ch>=0?"+":"")+fmt(sLead.ch):"—",color:sLead&&sLead.ch>=0?"#22C55E":"#EF4444",sub:sLead?sLead.sym:"—"},
+    {label:"Milho CBOT 1º Venc.",value:mcLead?fmt(mcLead.lp):"—",unit:"c/bu",ch:mcLead?(mcLead.ch>=0?"+":"")+fmt(mcLead.ch):"—",color:mcLead&&mcLead.ch>=0?"#22C55E":"#EF4444",sub:mcLead?mcLead.sym:"—"},
+    {label:"Milho B3 1º Venc.",value:mbLead?fmt(mbLead.lp):"—",unit:"R$/sc",ch:mbLead?(mbLead.ch>=0?"+":"")+fmt(mbLead.ch):"—",color:mbLead&&mbLead.ch>=0?"#22C55E":"#EF4444",sub:mbLead?mbLead.sym:"—"},
   ];
+  const totalAtivos = contractsDash.sojaCbot.length + contractsDash.milhoCbot.length + contractsDash.milhoB3.length;
   return (
     <div style={{maxWidth:1100,margin:"0 auto",padding:"20px 28px"}}>
       <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14,marginBottom:28}}>
@@ -314,14 +182,14 @@ function DashboardPage({goTo}) {
       <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
         <div style={{width:3,height:18,background:"#E63946",borderRadius:2}}/>
         <span style={{fontSize:15,fontWeight:700}}>Todos os contratos</span>
-        <span style={{color:"#4B5563",fontSize:11}}>37 ativos monitorados</span>
+        <span style={{color:"#4B5563",fontSize:11}}>{totalAtivos} ativos monitorados</span>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
-        <DashSection title="Soja CBOT" sub="c/bu" color="#22C55E" contracts={CONTRACTS_DASH.sojaCbot} defOpen/>
-        <DashSection title="Milho CBOT" sub="c/bu" color="#F59E0B" contracts={CONTRACTS_DASH.milhoCbot} defOpen/>
+        <DashSection title="Soja CBOT" sub="c/bu" color="#22C55E" contracts={contractsDash.sojaCbot} defOpen/>
+        <DashSection title="Milho CBOT" sub="c/bu" color="#F59E0B" contracts={contractsDash.milhoCbot} defOpen/>
       </div>
       <div style={{marginBottom:28}}>
-        <DashSection title="Milho B3" sub="R$/saca" color="#10B981" contracts={CONTRACTS_DASH.milhoB3} unit="R$/sc" defOpen/>
+        <DashSection title="Milho B3" sub="R$/saca" color="#10B981" contracts={contractsDash.milhoB3} unit="R$/sc" defOpen/>
       </div>
       <div style={{display:"flex",gap:12}}>
         {[{label:"Preço Justo",color:"#22C55E",id:"preco-justo"},{label:"Paridade",color:"#457B9D",id:"paridade"},{label:"Nova Oferta",color:"#E63946",id:"ofertas"}].map(b=>(
@@ -343,7 +211,7 @@ function DashboardPage({goTo}) {
 // PREÇO JUSTO PAGE
 // ═══════════════════════════════════════════════════════════════
 
-function PrecoJustoPage() {
+function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
   const [mercado,setMercado]=useState("Soja Exportação");
   const [pracaId,setPracaId]=useState(1);
   const [entK,setEntK]=useState("4-2026");
@@ -355,13 +223,13 @@ function PrecoJustoPage() {
   const praca=PRACAS.find(p=>p.id===pracaId);
   const pLabel=praca?`${praca.cidade} - ${praca.estado}`:"";
   const isSoja=mercado==="Soja Exportação";
-  const byState=useMemo(()=>{const g={};PRACAS.forEach(p=>{(g[p.estado]||=[]).push(p);});return g;},[]);
+  const byState=useMemo(()=>{const g={};PRACAS.forEach(p=>{(g[p.estado]||=[]).push(p);});return g;},[PRACAS]);
   const bKey=praca?`${praca.cidade}-${praca.estado}-${mercado}`:"";
   const bAll=BASIS_DATA[bKey]||DEFAULT_BASIS;
   const bM=bAll[eMi];
   const allK=Object.keys(COTACOES);
   const rawCS=isSoja?buildSoja(eMi,eYr):buildMilho(eMi,eYr);
-  const csym=findClosest(rawCS,allK);
+  const csym=findClosest(rawCS,allK,COTACOES);
   const ccot=COTACOES[csym];
   const chi=ccot?ccot.lp:(isSoja?1165:490);
   const cCh=ccot?.ch||0; const cChp=ccot?.chp||0;
@@ -370,7 +238,7 @@ function PrecoJustoPage() {
   const cLabel=`${CODE_NAME[cCode]}/${cShort.slice(-4)}`;
   const cFB=csym!==rawCS;
   const rawDS=buildDol(pMi,pYr);
-  const dsym=findClosest(rawDS,allK.filter(k=>k.includes("DOL")));
+  const dsym=findClosest(rawDS,allK.filter(k=>k.includes("DOL")),COTACOES);
   const dcot=COTACOES[dsym];
   const dol=dcot?dcot.lp/1000:5.008;
   const dCh=dcot?dcot.ch/1000:0; const dChp=dcot?.chp||0;
@@ -393,9 +261,9 @@ function PrecoJustoPage() {
       const b=bAll[mi];
       const isPast=yr<2026||(yr===2026&&mi<3);
       const rawC=isSoja?buildSoja(mi,yr):buildMilho(mi,yr);
-      const cs=findClosest(rawC,allK); const cc=COTACOES[cs]; const ch=cc?cc.lp:null;
+      const cs=findClosest(rawC,allK,COTACOES); const cc=COTACOES[cs]; const ch=cc?cc.lp:null;
       const rawD=buildDol(mi,yr);
-      const ds=findClosest(rawD,dolKeys); const dc=COTACOES[ds]; const md=dc?dc.lp/1000:null;
+      const ds=findClosest(rawD,dolKeys,COTACOES); const dc=COTACOES[ds]; const md=dc?dc.lp/1000:null;
       const has=!isPast&&ch!==null&&md!==null;
       ms.push({label:`${MESES_SHORT[mi]}/${String(yr).slice(-2)}`,basis:b.medio,bMin:b.basis_min,bMax:b.basis_max,has,
         pMin:has?calc(ch,b.basis_min,md):null,pJusto:has?calc(ch,b.medio,md):null,pMax:has?calc(ch,b.basis_max,md):null,idx:n});
@@ -843,7 +711,7 @@ const ANALISE_DATA = {
   },
 };
 
-function AnaliseTecnicaPage() {
+function AnaliseTecnicaPage({COTACOES}) {
   const [selSym, setSelSym] = useState("CBOT:ZSK2026");
 
   const contrato = ANALISE_CONTRATOS.find(c => c.sym === selSym);
@@ -1507,7 +1375,7 @@ const DOL_CONTRACTS = [
   { sym: "BMFBOVESPA:DOLV2027", mo: "Out/27", mes: "Outubro 2027" },
 ];
 
-function CambioPage() {
+function CambioPage({COTACOES, ptax}) {
   const contracts = DOL_CONTRACTS.map(c => {
     const cot = COTACOES[c.sym];
     const rate = cot ? cot.lp / 1000 : null;
@@ -1559,15 +1427,15 @@ function CambioPage() {
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             <div>
               <div style={{ color: "#9CA3AF", fontSize: 9, marginBottom: 2 }}>Compra</div>
-              <span style={{ fontSize: 20, fontWeight: 700, color: "#F1F5F9", fontFamily: "'JetBrains Mono',monospace" }}>R$ 5,0012</span>
+              <span style={{ fontSize: 20, fontWeight: 700, color: "#F1F5F9", fontFamily: "'JetBrains Mono',monospace" }}>R$ {ptax ? fmt(ptax.compra, 4) : "—"}</span>
             </div>
             <div style={{ width: 1, height: 30, background: "rgba(255,255,255,0.06)" }} />
             <div>
               <div style={{ color: "#9CA3AF", fontSize: 9, marginBottom: 2 }}>Venda</div>
-              <span style={{ fontSize: 20, fontWeight: 700, color: "#F1F5F9", fontFamily: "'JetBrains Mono',monospace" }}>R$ 5,0018</span>
+              <span style={{ fontSize: 20, fontWeight: 700, color: "#F1F5F9", fontFamily: "'JetBrains Mono',monospace" }}>R$ {ptax ? fmt(ptax.venda, 4) : "—"}</span>
             </div>
           </div>
-          <div style={{ color: "#374151", fontSize: 9, marginTop: 6 }}>Ref: 14/04/2026 — Fonte: Banco Central do Brasil</div>
+          <div style={{ color: "#374151", fontSize: 9, marginTop: 6 }}>{ptax ? `Ref: ${ptax.data_ref.split("-").reverse().join("/")}` : "Sem dados"} — Fonte: Banco Central do Brasil</div>
         </div>
 
         <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "16px 20px", flex: 1, position: "relative", overflow: "hidden" }}>
@@ -1685,7 +1553,7 @@ function CambioPage() {
 // PARIDADE DE EXPORTAÇÃO PAGE
 // ═══════════════════════════════════════════════════════════════
 
-function ParidadePage() {
+function ParidadePage({COTACOES}) {
   const [plano, setPlano] = useState("pro");
   const [entK, setEntK] = useState("4-2026");
   const [pagK, setPagK] = useState("5-2026");
@@ -1698,7 +1566,7 @@ function ParidadePage() {
   // Chicago — contrato correto pelo mês de entrega
   const allK = Object.keys(COTACOES);
   const rawCS = buildSoja(eMi, eYr);
-  const csym = findClosest(rawCS, allK);
+  const csym = findClosest(rawCS, allK, COTACOES);
   const ccot = COTACOES[csym];
   const chicagoCbu = ccot ? ccot.lp : 1049;
   const cShort = csym.replace("CBOT:", "");
@@ -1708,7 +1576,7 @@ function ParidadePage() {
   // Dólar — contrato futuro pelo mês de pagamento
   const dolKeys = allK.filter(k => k.includes("DOL"));
   const rawDS = buildDol(pMi, pYr);
-  const dsym = findClosest(rawDS, dolKeys);
+  const dsym = findClosest(rawDS, dolKeys, COTACOES);
   const dcot = COTACOES[dsym];
   const cambio = dcot ? dcot.lp / 1000 : 5.008;
   const dShort = dsym.replace("BMFBOVESPA:", "");
@@ -1904,7 +1772,7 @@ function ParidadePage() {
 // CUSTO CARREGO PAGE
 // ═══════════════════════════════════════════════════════════════
 
-function CustoCarregoPage() {
+function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
   const mercado = "Soja Exportação"; // Custo carrego é só soja inicialmente
   const [pracaId, setPracaId] = useState(1);
   const [dtEntrega, setDtEntrega] = useState("2026-05-01");
@@ -1928,7 +1796,7 @@ function CustoCarregoPage() {
     const g = {};
     PRACAS.forEach(p => { (g[p.estado] ||= []).push(p); });
     return g;
-  }, []);
+  }, [PRACAS]);
 
   // Auto-fetch Chicago and Cambio from dates
   const allK = Object.keys(COTACOES);
@@ -1944,13 +1812,13 @@ function CustoCarregoPage() {
   const cur = getMonthYear(dtEntrega);
   const curPag = getMonthYear(dtPagto);
   const rawCurC = buildSoja(cur.mi, cur.yr);
-  const curCSym = findClosest(rawCurC, allK);
+  const curCSym = findClosest(rawCurC, allK, COTACOES);
   const curCot = COTACOES[curCSym];
   const chicagoAtual = curCot ? curCot.lp / 100 : 10.50; // Convert c/bu to US$/bu
   const chicagoAtualCbu = curCot ? curCot.lp : 1050;
 
   const rawCurD = buildDol(curPag.mi, curPag.yr);
-  const curDSym = findClosest(rawCurD, dolKeys);
+  const curDSym = findClosest(rawCurD, dolKeys, COTACOES);
   const curDCot = COTACOES[curDSym];
   const cambioAtual = curDCot ? curDCot.lp / 1000 : 5.008;
 
@@ -1958,13 +1826,13 @@ function CustoCarregoPage() {
   const fut = getMonthYear(dtEntregaFut);
   const futPag = getMonthYear(dtPagtoFut);
   const rawFutC = buildSoja(fut.mi, fut.yr);
-  const futCSym = findClosest(rawFutC, allK);
+  const futCSym = findClosest(rawFutC, allK, COTACOES);
   const futCot = COTACOES[futCSym];
   const chicagoFut = futCot ? futCot.lp / 100 : 10.80;
   const chicagoFutCbu = futCot ? futCot.lp : 1080;
 
   const rawFutD = buildDol(futPag.mi, futPag.yr);
-  const futDSym = findClosest(rawFutD, dolKeys);
+  const futDSym = findClosest(rawFutD, dolKeys, COTACOES);
   const futDCot = COTACOES[futDSym];
   const cambioFut = futDCot ? futDCot.lp / 1000 : 5.25;
 
@@ -2317,10 +2185,10 @@ function CustoCarregoPage() {
         </div>
       ) : posicoes.map(pos => {
         const rawC = buildSoja(pos.mesFutIdx, pos.mesFutYr);
-        const cS = findClosest(rawC, allK); const cC = COTACOES[cS];
+        const cS = findClosest(rawC, allK, COTACOES); const cC = COTACOES[cS];
         const chiHj = cC ? cC.lp : pos.chicagoEntrada;
         const rawD = buildDol(pos.mesFutIdx, pos.mesFutYr);
-        const dS = findClosest(rawD, dolKeys); const dC = COTACOES[dS];
+        const dS = findClosest(rawD, dolKeys, COTACOES); const dC = COTACOES[dS];
         const camHj = dC ? dC.lp / 1000 : pos.cambioEntrada;
 
         // Preço teórico ATUAL
@@ -2441,7 +2309,7 @@ function CustoCarregoPage() {
 // OFERTAS FIRMES PAGE
 // ═══════════════════════════════════════════════════════════════
 
-function OfertasFirmesPage() {
+function OfertasFirmesPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
   const [nome, setNome] = useState("");
   const [fazenda, setFazenda] = useState("");
   const [mercadoOf, setMercadoOf] = useState("Soja Exportação");
@@ -2468,7 +2336,7 @@ function OfertasFirmesPage() {
     const g = {};
     PRACAS.forEach(p => { (g[p.estado] ||= []).push(p); });
     return g;
-  }, []);
+  }, [PRACAS]);
 
   // Volume conversion
   const volSacas = volUnit === "sacas" ? volQtd : Math.round(volQtd * 16.6667);
@@ -2479,12 +2347,12 @@ function OfertasFirmesPage() {
   const dolKeys = allK.filter(k => k.includes("DOL"));
   const isSojaOf = mercadoOf === "Soja Exportação";
   const rawCS = isSojaOf ? buildSoja(eMi, eYr) : buildMilho(eMi, eYr);
-  const csym = findClosest(rawCS, allK);
+  const csym = findClosest(rawCS, allK, COTACOES);
   const ccot = COTACOES[csym];
   const chi = ccot ? ccot.lp : (isSojaOf ? 1167 : 491);
 
   const rawDS = buildDol(pMi, pYr);
-  const dsym = findClosest(rawDS, dolKeys);
+  const dsym = findClosest(rawDS, dolKeys, COTACOES);
   const dcot = COTACOES[dsym];
   const dol = dcot ? dcot.lp / 1000 : 5.008;
 
@@ -2767,11 +2635,11 @@ _Gerado via ProSafra_`;
               const oYr = parseInt(oParts[1]);
               const isSojaH = !o.mercado || o.mercado === "Soja Exportação";
               const rawOC = oMi >= 0 ? (isSojaH ? buildSoja(oMi, oYr) : buildMilho(oMi, oYr)) : null;
-              const oCSym = rawOC ? findClosest(rawOC, allK) : null;
+              const oCSym = rawOC ? findClosest(rawOC, allK, COTACOES) : null;
               const oCot = oCSym ? COTACOES[oCSym] : null;
               const chiHj = oCot ? oCot.lp : o.chicago;
               const rawOD = oMi >= 0 ? buildDol(oMi, oYr) : null;
-              const oDSym = rawOD ? findClosest(rawOD, dolKeys) : null;
+              const oDSym = rawOD ? findClosest(rawOD, dolKeys, COTACOES) : null;
               const oDCot = oDSym ? COTACOES[oDSym] : null;
               const dolHj = oDCot ? oDCot.lp / 1000 : o.dolar;
               const simb = o.moeda === "USD" ? "US$" : "R$";
@@ -2860,6 +2728,18 @@ export default function ProSafraApp() {
   const greeting=time.getHours()<12?"Bom dia":time.getHours()<18?"Boa tarde":"Boa noite";
   const dateStr=time.toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
 
+  // ─── SUPABASE DATA HOOK ───
+  const { cotacoes, contractsDash, pracas, basisData, defaultBasis, ptax, loading, lastUpdate, isLive } = useSupabaseData();
+
+  // Dólar header — read from cotacoes (DOL 1º venc or FX:USDBRL)
+  const dolFirst = contractsDash.dolarB3[0];
+  const fxSpot = cotacoes["FX:USDBRL"];
+  const headerDol = dolFirst ? dolFirst.lp / 1000 : (fxSpot ? fxSpot.lp : 5.008);
+  const headerDolStr = fmt(headerDol, 4);
+
+  // Shorthand props for pages that need all data
+  const dataProps = { PRACAS: pracas, COTACOES: cotacoes, BASIS_DATA: basisData, DEFAULT_BASIS: defaultBasis };
+
   return (
     <div style={{display:"flex",minHeight:"100vh",background:"#080A0F",fontFamily:"'Outfit',sans-serif",color:"#F1F5F9"}}>
       <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
@@ -2916,23 +2796,23 @@ export default function ProSafraApp() {
           <div style={{display:"flex",alignItems:"center",gap:14}}>
             <div style={{background:"rgba(69,123,157,0.1)",border:"1px solid rgba(69,123,157,0.2)",borderRadius:7,padding:"7px 14px",display:"flex",alignItems:"center",gap:10}}>
               <span style={{color:"#457B9D",fontSize:10,fontWeight:500,textTransform:"uppercase",letterSpacing:"0.06em"}}>USD/BRL</span>
-              <span style={{color:"#F1F5F9",fontSize:15,fontWeight:700,fontFamily:"'JetBrains Mono',monospace"}}>R$ 5,0080</span>
+              <span style={{color:"#F1F5F9",fontSize:15,fontWeight:700,fontFamily:"'JetBrains Mono',monospace"}}>R$ {headerDolStr}</span>
             </div>
-            <div style={{width:7,height:7,borderRadius:"50%",background:"#22C55E",boxShadow:"0 0 6px #22C55E44"}}/>
-            <span style={{color:"#6B7280",fontSize:10}}>Mercado aberto</span>
+            <div style={{width:7,height:7,borderRadius:"50%",background:isLive?"#22C55E":"#F59E0B",boxShadow:isLive?"0 0 6px #22C55E44":"0 0 6px #F59E0B44"}}/>
+            <span style={{color:"#6B7280",fontSize:10}}>{loading?"Carregando…":isLive?"Dados ao vivo":"Dados offline"}</span>
           </div>
         </div>
 
-        {page==="dashboard"&&<DashboardPage goTo={setPage}/>}
-        {page==="preco-justo"&&<PrecoJustoPage/>}
+        {page==="dashboard"&&<DashboardPage goTo={setPage} contractsDash={contractsDash}/>}
+        {page==="preco-justo"&&<PrecoJustoPage {...dataProps}/>}
         {page==="premios"&&<PremiosPortoPage/>}
-        {page==="analise"&&<AnaliseTecnicaPage/>}
+        {page==="analise"&&<AnaliseTecnicaPage COTACOES={cotacoes}/>}
         {page==="fundamentos"&&<FundamentosPage/>}
         {page==="fundos"&&<PosicaoFundosPage/>}
-        {page==="cambio"&&<CambioPage/>}
-        {page==="paridade"&&<ParidadePage/>}
-        {page==="carrego"&&<CustoCarregoPage/>}
-        {page==="ofertas"&&<OfertasFirmesPage/>}
+        {page==="cambio"&&<CambioPage COTACOES={cotacoes} ptax={ptax}/>}
+        {page==="paridade"&&<ParidadePage COTACOES={cotacoes}/>}
+        {page==="carrego"&&<CustoCarregoPage {...dataProps}/>}
+        {page==="ofertas"&&<OfertasFirmesPage {...dataProps}/>}
         {!["dashboard","preco-justo","premios","analise","fundamentos","fundos","cambio","paridade","carrego","ofertas"].includes(page)&&(
           <div style={{padding:"60px 28px",textAlign:"center"}}>
             <div style={{fontSize:40,marginBottom:16,opacity:0.3}}>{NAV.find(n=>n.id===page)?.icon}</div>
@@ -2941,7 +2821,7 @@ export default function ProSafraApp() {
         )}
 
         <div style={{borderTop:"1px solid rgba(255,255,255,0.04)",margin:"0 28px",paddingTop:14,paddingBottom:20,display:"flex",justifyContent:"space-between",color:"#374151",fontSize:9}}>
-          <span>Fonte: TradingView Data via RapidAPI • Supabase • Dados com delay 10-15min</span>
+          <span>Fonte: TradingView Data via RapidAPI • Supabase{isLive?" ✓":""} • {lastUpdate ? `Atualizado: ${new Date(lastUpdate).toLocaleTimeString("pt-BR")}` : "Dados com delay 10-15min"}</span>
           <span>ProSafra © 2026 — O que realmente vale seu grão</span>
         </div>
       </div>
