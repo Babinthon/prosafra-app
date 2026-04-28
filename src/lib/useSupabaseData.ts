@@ -282,6 +282,74 @@ function buildBasisData(rows: BasisHistoricoRow[]): Record<string, BasisMonth[]>
 }
 
 // ═══════════════════════════════════════════════════════════════
+// BUILD FUNDOS DATA FROM fundos_posicao ROWS
+// ═══════════════════════════════════════════════════════════════
+
+interface FundosPosRow {
+  data_ref: string;
+  produto: string;
+  posicao_net: number;
+}
+
+export interface FundosProduto {
+  posAtual: number;
+  posAnterior: number;
+  historico: { data: string; pos: number }[];
+  max12m: number;
+  min12m: number;
+}
+
+export interface FundosData {
+  soja: FundosProduto;
+  milho: FundosProduto;
+}
+
+function buildFundosData(rows: FundosPosRow[]): FundosData | null {
+  const byProd: Record<string, { data_ref: string; posicao_net: number }[]> = { soja: [], milho: [] };
+
+  for (const r of rows) {
+    if (byProd[r.produto]) {
+      byProd[r.produto].push({ data_ref: r.data_ref, posicao_net: r.posicao_net });
+    }
+  }
+
+  // Sort by date ascending
+  for (const k of Object.keys(byProd)) {
+    byProd[k].sort((a, b) => a.data_ref.localeCompare(b.data_ref));
+  }
+
+  const buildOne = (arr: { data_ref: string; posicao_net: number }[]): FundosProduto => {
+    if (arr.length === 0) return { posAtual: 0, posAnterior: 0, historico: [], max12m: 0, min12m: 0 };
+
+    // Last 8 weeks for chart
+    const last8 = arr.slice(-8);
+    const historico = last8.map(r => ({
+      data: r.data_ref.slice(5).split("-").reverse().join("/"), // "MM-DD" → "DD/MM"
+      pos: r.posicao_net,
+    }));
+
+    const allPos = arr.map(r => r.posicao_net);
+    const posAtual = arr[arr.length - 1].posicao_net;
+    const posAnterior = arr.length >= 2 ? arr[arr.length - 2].posicao_net : posAtual;
+
+    return {
+      posAtual,
+      posAnterior,
+      historico,
+      max12m: Math.max(...allPos),
+      min12m: Math.min(...allPos),
+    };
+  };
+
+  const soja = buildOne(byProd.soja);
+  const milho = buildOne(byProd.milho);
+
+  if (soja.historico.length === 0 && milho.historico.length === 0) return null;
+
+  return { soja, milho };
+}
+
+// ═══════════════════════════════════════════════════════════════
 // MAIN HOOK
 // ═══════════════════════════════════════════════════════════════
 
@@ -298,6 +366,7 @@ export interface SupabaseData {
   basisData: Record<string, BasisMonth[]>;
   defaultBasis: BasisMonth[];
   ptax: PtaxRow | null;
+  fundosData: FundosData | null;
   loading: boolean;
   lastUpdate: string | null;
   isLive: boolean; // true = Supabase data, false = fallback
@@ -309,6 +378,7 @@ export function useSupabaseData(): SupabaseData {
   const [pracas, setPracas] = useState<PracaRow[]>(PRACAS_FALLBACK);
   const [basisData, setBasisData] = useState<Record<string, BasisMonth[]>>({});
   const [ptax, setPtax] = useState<PtaxRow | null>(null);
+  const [fundosData, setFundosData] = useState<FundosData | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<string | null>(null);
   const [isLive, setIsLive] = useState(false);
@@ -389,6 +459,17 @@ export function useSupabaseData(): SupabaseData {
       if (!ptaxErr && ptaxData && ptaxData.length > 0) {
         setPtax(ptaxData[0] as PtaxRow);
       }
+
+      // ─── 5. FUNDOS POSIÇÃO ───
+      const { data: fundosRows, error: fundosErr } = await supabase
+        .from("fundos_posicao")
+        .select("data_ref, produto, posicao_net")
+        .order("data_ref", { ascending: true });
+
+      if (!fundosErr && fundosRows && fundosRows.length > 0) {
+        const built = buildFundosData(fundosRows as FundosPosRow[]);
+        if (built) setFundosData(built);
+      }
     } catch (e) {
       console.error("useSupabaseData: fetch error, using fallback", e);
     } finally {
@@ -412,6 +493,7 @@ export function useSupabaseData(): SupabaseData {
     basisData,
     defaultBasis: DEFAULT_BASIS,
     ptax,
+    fundosData,
     loading,
     lastUpdate,
     isLive,

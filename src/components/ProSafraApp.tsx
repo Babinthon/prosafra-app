@@ -53,6 +53,7 @@ const NAV = [
   {id:"carrego",label:"Custo Carrego",icon:"⊞"},
   {id:"ofertas",label:"Ofertas Firmes",icon:"✉"},
   {id:"consultoria",label:"Consultoria",icon:"★"},
+  {id:"admin",label:"Admin",icon:"⚙"},
 ];
 
 function buildOpts() {
@@ -1193,9 +1194,12 @@ const FUNDOS_DATA = {
   fonte: "CFTC Commitments of Traders — Managed Money",
 };
 
-function PosicaoFundosPage() {
+function PosicaoFundosPage({fundosData}) {
   const [produto, setProduto] = useState("soja");
-  const d = FUNDOS_DATA[produto];
+
+  // Use Supabase data if available, otherwise fallback
+  const hasLive = fundosData && fundosData.soja && fundosData.soja.historico.length > 0;
+  const d = hasLive ? fundosData[produto] : FUNDOS_DATA[produto];
 
   const isLong = d.posAtual >= 0;
   const sentimento = isLong ? (d.posAtual > 100000 ? "Fortemente comprado" : "Comprado") : (d.posAtual < -100000 ? "Fortemente vendido" : "Vendido");
@@ -2734,6 +2738,200 @@ _Gerado via ProSafra_`;
 }
 
 // ═══════════════════════════════════════════════════════════════
+// ADMIN PAGE
+// ═══════════════════════════════════════════════════════════════
+
+function AdminPage() {
+  const [pw, setPw] = useState("");
+  const [authed, setAuthed] = useState(false);
+  const [authErr, setAuthErr] = useState("");
+  const [tab, setTab] = useState("fundos");
+
+  // Fundos state
+  const [fDataRef, setFDataRef] = useState(new Date().toISOString().slice(0, 10));
+  const [fSoja, setFSoja] = useState("");
+  const [fMilho, setFMilho] = useState("");
+  const [fHist, setFHist] = useState([]);
+  const [fMsg, setFMsg] = useState("");
+  const [fLoading, setFLoading] = useState(false);
+
+  const doLogin = async () => {
+    setAuthErr("");
+    try {
+      const res = await fetch("/api/admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: pw, action: "auth_check" }),
+      });
+      const j = await res.json();
+      if (j.success) { setAuthed(true); loadFundos(); }
+      else setAuthErr(j.error || "Senha incorreta");
+    } catch { setAuthErr("Erro de conexão"); }
+  };
+
+  const loadFundos = async () => {
+    try {
+      const res = await fetch("/api/admin?type=fundos");
+      const j = await res.json();
+      if (j.data) setFHist(j.data);
+    } catch {}
+  };
+
+  const saveFundos = async () => {
+    if (!fDataRef) { setFMsg("Informe a data"); return; }
+    if (!fSoja && !fMilho) { setFMsg("Informe pelo menos soja ou milho"); return; }
+    setFLoading(true);
+    setFMsg("");
+    try {
+      const res = await fetch("/api/admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          password: pw,
+          action: "fundos_upsert",
+          data: { data_ref: fDataRef, soja: fSoja, milho: fMilho },
+        }),
+      });
+      const j = await res.json();
+      if (j.success) {
+        setFMsg(`✓ Salvo! ${j.inserted} registro(s)`);
+        setFSoja(""); setFMilho("");
+        loadFundos();
+      } else setFMsg(`Erro: ${j.error}`);
+    } catch { setFMsg("Erro de conexão"); }
+    setFLoading(false);
+  };
+
+  const deleteFundos = async (data_ref, produto) => {
+    if (!confirm(`Deletar ${produto} de ${data_ref}?`)) return;
+    try {
+      await fetch("/api/admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: pw, action: "fundos_delete", data: { data_ref, produto } }),
+      });
+      loadFundos();
+    } catch {}
+  };
+
+  const inputStyle = { background: "#0D1117", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: "8px 12px", color: "#F1F5F9", fontSize: 13, outline: "none", width: "100%" };
+  const btnStyle = { background: "#E63946", border: "none", borderRadius: 7, padding: "10px 24px", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" };
+
+  if (!authed) {
+    return (
+      <div style={{ maxWidth: 400, margin: "80px auto", padding: "0 28px" }}>
+        <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: 32 }}>
+          <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>⚙ Admin ProSafra</div>
+          <div style={{ color: "#6B7280", fontSize: 12, marginBottom: 24 }}>Digite a senha para acessar o painel</div>
+          <input type="password" value={pw} onChange={e => setPw(e.target.value)} onKeyDown={e => e.key === "Enter" && doLogin()} placeholder="Senha" style={{ ...inputStyle, marginBottom: 14 }} />
+          {authErr && <div style={{ color: "#EF4444", fontSize: 12, marginBottom: 10 }}>{authErr}</div>}
+          <button onClick={doLogin} style={btnStyle}>Entrar</button>
+        </div>
+      </div>
+    );
+  }
+
+  // Group fundos history by date
+  const fundosByDate = {};
+  fHist.forEach(r => {
+    if (!fundosByDate[r.data_ref]) fundosByDate[r.data_ref] = {};
+    fundosByDate[r.data_ref][r.produto] = r.posicao_net;
+  });
+  const fundosDates = Object.keys(fundosByDate).sort().reverse();
+
+  return (
+    <div style={{ maxWidth: 900, margin: "0 auto", padding: "20px 28px 60px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}>
+        <div style={{ width: 3, height: 18, background: "#E63946", borderRadius: 2 }} />
+        <span style={{ fontSize: 15, fontWeight: 700 }}>Painel Admin</span>
+        <span style={{ color: "#4B5563", fontSize: 11 }}>Atualizar dados manualmente</span>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display: "flex", gap: 6, marginBottom: 24 }}>
+        {[{ id: "fundos", label: "Posição Fundos" }].map(t => (
+          <div key={t.id} onClick={() => setTab(t.id)} style={{
+            padding: "8px 20px", borderRadius: 7, cursor: "pointer", fontSize: 12, fontWeight: 600,
+            background: tab === t.id ? "rgba(230,57,70,0.1)" : "rgba(255,255,255,0.03)",
+            color: tab === t.id ? "#E63946" : "#6B7280",
+            border: `1px solid ${tab === t.id ? "rgba(230,57,70,0.3)" : "rgba(255,255,255,0.06)"}`,
+          }}>{t.label}</div>
+        ))}
+      </div>
+
+      {/* Fundos Tab */}
+      {tab === "fundos" && (
+        <div>
+          <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: 24, marginBottom: 20 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 16 }}>Lançar posição dos fundos</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 14 }}>
+              <div>
+                <label style={{ color: "#6B7280", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Data (CFTC)</label>
+                <input type="date" value={fDataRef} onChange={e => setFDataRef(e.target.value)} style={inputStyle} />
+              </div>
+              <div>
+                <label style={{ color: "#6B7280", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Soja Net (contratos)</label>
+                <input type="number" value={fSoja} onChange={e => setFSoja(e.target.value)} placeholder="ex: 187573" style={inputStyle} />
+              </div>
+              <div>
+                <label style={{ color: "#6B7280", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Milho Net (contratos)</label>
+                <input type="number" value={fMilho} onChange={e => setFMilho(e.target.value)} placeholder="ex: 182213" style={inputStyle} />
+              </div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <button onClick={saveFundos} disabled={fLoading} style={{ ...btnStyle, opacity: fLoading ? 0.6 : 1 }}>
+                {fLoading ? "Salvando..." : "Salvar"}
+              </button>
+              {fMsg && <span style={{ fontSize: 12, color: fMsg.startsWith("✓") ? "#22C55E" : "#EF4444" }}>{fMsg}</span>}
+            </div>
+          </div>
+
+          {/* Histórico */}
+          <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: 24 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 16 }}>Histórico ({fundosDates.length} datas)</div>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                <thead>
+                  <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+                    <th style={{ textAlign: "left", padding: "8px 12px", color: "#6B7280", fontWeight: 500 }}>Data</th>
+                    <th style={{ textAlign: "right", padding: "8px 12px", color: "#6B7280", fontWeight: 500 }}>Soja Net</th>
+                    <th style={{ textAlign: "right", padding: "8px 12px", color: "#6B7280", fontWeight: 500 }}>Milho Net</th>
+                    <th style={{ textAlign: "center", padding: "8px 12px", color: "#6B7280", fontWeight: 500 }}>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {fundosDates.map(dt => {
+                    const row = fundosByDate[dt];
+                    return (
+                      <tr key={dt} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                        <td style={{ padding: "8px 12px", color: "#9CA3AF" }}>{dt.split("-").reverse().join("/")}</td>
+                        <td style={{ padding: "8px 12px", textAlign: "right", fontFamily: "'JetBrains Mono',monospace", color: row.soja >= 0 ? "#22C55E" : "#EF4444" }}>
+                          {row.soja !== undefined ? row.soja.toLocaleString("pt-BR") : "—"}
+                        </td>
+                        <td style={{ padding: "8px 12px", textAlign: "right", fontFamily: "'JetBrains Mono',monospace", color: row.milho >= 0 ? "#22C55E" : "#EF4444" }}>
+                          {row.milho !== undefined ? row.milho.toLocaleString("pt-BR") : "—"}
+                        </td>
+                        <td style={{ padding: "8px 12px", textAlign: "center" }}>
+                          {row.soja !== undefined && <span onClick={() => deleteFundos(dt, "soja")} style={{ color: "#EF4444", cursor: "pointer", fontSize: 10, marginRight: 8 }}>✕ soja</span>}
+                          {row.milho !== undefined && <span onClick={() => deleteFundos(dt, "milho")} style={{ color: "#EF4444", cursor: "pointer", fontSize: 10 }}>✕ milho</span>}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {fundosDates.length === 0 && (
+                    <tr><td colSpan={4} style={{ padding: "20px 12px", textAlign: "center", color: "#4B5563" }}>Nenhum registro. Lance a primeira posição acima.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
 // MAIN APP
 // ═══════════════════════════════════════════════════════════════
 
@@ -2746,7 +2944,7 @@ export default function ProSafraApp() {
   const dateStr=time.toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
 
   // ─── SUPABASE DATA HOOK ───
-  const { cotacoes, contractsDash, pracas, basisData, defaultBasis, ptax, loading, lastUpdate, isLive } = useSupabaseData();
+  const { cotacoes, contractsDash, pracas, basisData, defaultBasis, ptax, fundosData, loading, lastUpdate, isLive } = useSupabaseData();
 
   // Dólar header — read from cotacoes (DOL 1º venc or FX:USDBRL)
   const dolFirst = contractsDash.dolarB3[0];
@@ -2808,6 +3006,7 @@ export default function ProSafraApp() {
               {page==="paridade"&&<span style={{color:"#374151",fontSize:11,marginLeft:8}}>Preço máximo no porto — Como a trading calcula</span>}
               {page==="carrego"&&<span style={{color:"#374151",fontSize:11,marginLeft:8}}>Vale a pena carregar ou vender agora?</span>}
               {page==="ofertas"&&<span style={{color:"#374151",fontSize:11,marginLeft:8}}>Gere sua oferta e envie via WhatsApp</span>}
+              {page==="admin"&&<span style={{color:"#374151",fontSize:11,marginLeft:8}}>Painel do fundador — atualizar dados</span>}
             </div>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:14}}>
@@ -2825,12 +3024,13 @@ export default function ProSafraApp() {
         {page==="premios"&&<PremiosPortoPage/>}
         {page==="analise"&&<AnaliseTecnicaPage COTACOES={cotacoes}/>}
         {page==="fundamentos"&&<FundamentosPage/>}
-        {page==="fundos"&&<PosicaoFundosPage/>}
+        {page==="fundos"&&<PosicaoFundosPage fundosData={fundosData}/>}
         {page==="cambio"&&<CambioPage COTACOES={cotacoes} ptax={ptax}/>}
         {page==="paridade"&&<ParidadePage COTACOES={cotacoes}/>}
         {page==="carrego"&&<CustoCarregoPage {...dataProps}/>}
         {page==="ofertas"&&<OfertasFirmesPage {...dataProps}/>}
-        {!["dashboard","preco-justo","premios","analise","fundamentos","fundos","cambio","paridade","carrego","ofertas"].includes(page)&&(
+        {page==="admin"&&<AdminPage/>}
+        {!["dashboard","preco-justo","premios","analise","fundamentos","fundos","cambio","paridade","carrego","ofertas","admin"].includes(page)&&(
           <div style={{padding:"60px 28px",textAlign:"center"}}>
             <div style={{fontSize:40,marginBottom:16,opacity:0.3}}>{NAV.find(n=>n.id===page)?.icon}</div>
             <div style={{color:"#4B5563",fontSize:14}}>{NAV.find(n=>n.id===page)?.label} — Em construção</div>
