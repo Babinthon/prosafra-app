@@ -349,13 +349,33 @@ export function useSupabaseData(): SupabaseData {
         setPracas(pracasData);
       }
 
-      // ─── 3. BASIS HISTÓRICO ───
-      const { data: basisRows, error: basisErr } = await supabase
-        .from("basis_historico")
-        .select("cidade, estado, mercado, mes_referencia, basis_min, basis_max, medio");
+      // ─── 3. BASIS HISTÓRICO (4794+ rows, Supabase default limit is 1000) ───
+      const allBasisRows: any[] = [];
+      let basisPage = 0;
+      const basisPageSize = 1000;
+      let hasMore = true;
 
-      if (!basisErr && basisRows && basisRows.length > 0) {
-        const built = buildBasisData(basisRows as BasisHistoricoRow[]);
+      while (hasMore) {
+        const from = basisPage * basisPageSize;
+        const to = from + basisPageSize - 1;
+        const { data: basisChunk, error: basisErr } = await supabase
+          .from("basis_historico")
+          .select("cidade, estado, mercado, mes_referencia, basis_min, basis_max, medio")
+          .range(from, to);
+
+        if (basisErr || !basisChunk || basisChunk.length === 0) {
+          hasMore = false;
+        } else {
+          allBasisRows.push(...basisChunk);
+          if (basisChunk.length < basisPageSize) {
+            hasMore = false;
+          }
+          basisPage++;
+        }
+      }
+
+      if (allBasisRows.length > 0) {
+        const built = buildBasisData(allBasisRows as BasisHistoricoRow[]);
         setBasisData(built);
       }
 
