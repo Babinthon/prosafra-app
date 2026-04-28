@@ -6,10 +6,8 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-// BCB API — Cotação do dólar (PTAX)
-// Using the BCB series API (more reliable than Olinda)
-// Series 1 = Dólar comercial compra
-// Series 10813 = Dólar comercial venda
+// PTAX via AwesomeAPI (economia.awesomeapi.com.br) — gratuita, sem bloqueio
+// Retorna cotação comercial compra/venda do dólar
 
 async function fetchPtax(): Promise<{
   dataRef: string;
@@ -17,56 +15,40 @@ async function fetchPtax(): Promise<{
   venda: number;
 } | null> {
   try {
-    const today = new Date();
-    const start = new Date(today);
-    start.setDate(start.getDate() - 10); // últimos 10 dias para garantir dia útil
+    // Buscar últimos 5 dias de cotação USD-BRL
+    const url = "https://economia.awesomeapi.com.br/json/daily/USD-BRL/5";
 
+    const res = await fetch(url, {
+      headers: { Accept: "application/json" },
+    });
+
+    if (!res.ok) {
+      console.error(`AwesomeAPI error: ${res.status}`);
+      return null;
+    }
+
+    const data = await res.json();
+
+    if (!data || data.length === 0) {
+      console.error("AwesomeAPI: no data returned");
+      return null;
+    }
+
+    // Primeiro item é o mais recente
+    const latest = data[0];
+
+    // timestamp é Unix em segundos
+    const dt = new Date(parseInt(latest.timestamp) * 1000);
     const pad = (n: number) => String(n).padStart(2, "0");
-    const fmtBCB = (d: Date) => `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
-    
-    const startStr = fmtBCB(start);
-    const endStr = fmtBCB(today);
-
-    // Fetch compra (série 1)
-    const urlCompra = `https://api.bcb.gov.br/dados/serie/bcdata.sgs.1/dados?formato=json&dataInicial=${startStr}&dataFinal=${endStr}`;
-    // Fetch venda (série 10813)  
-    const urlVenda = `https://api.bcb.gov.br/dados/serie/bcdata.sgs.10813/dados?formato=json&dataInicial=${startStr}&dataFinal=${endStr}`;
-
-    console.log("PTAX compra URL:", urlCompra);
-
-    const [resCompra, resVenda] = await Promise.all([
-      fetch(urlCompra, { headers: { Accept: "application/json" } }),
-      fetch(urlVenda, { headers: { Accept: "application/json" } }),
-    ]);
-
-    if (!resCompra.ok || !resVenda.ok) {
-      console.error(`BCB API error: compra=${resCompra.status} venda=${resVenda.status}`);
-      return null;
-    }
-
-    const dataCompra = await resCompra.json();
-    const dataVenda = await resVenda.json();
-
-    if (!dataCompra?.length || !dataVenda?.length) {
-      console.error("BCB: no data returned");
-      return null;
-    }
-
-    // Pegar o último (mais recente)
-    const lastCompra = dataCompra[dataCompra.length - 1];
-    const lastVenda = dataVenda[dataVenda.length - 1];
-
-    // data format from BCB: "dd/MM/yyyy" → convert to "yyyy-MM-dd"
-    const parts = lastCompra.data.split("/");
-    const dataRef = `${parts[2]}-${parts[1]}-${parts[0]}`;
+    const dataRef = `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
 
     return {
       dataRef,
-      compra: parseFloat(lastCompra.valor),
-      venda: parseFloat(lastVenda.valor),
+      compra: parseFloat(latest.bid),
+      venda: parseFloat(latest.ask),
     };
   } catch (e: any) {
-    console.error("BCB PTAX fetch error:", e.message);
+    console.error("PTAX fetch error:", e.message);
     return null;
   }
 }
