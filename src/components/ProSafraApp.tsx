@@ -2824,7 +2824,9 @@ function AdminPage() {
   };
 
   const addPremioItem = () => {
-    if (!pNewContrato || !pNewPremio) return;
+    const contrato = pNewContrato.trim();
+    const premio = pNewPremio.toString().trim();
+    if (!contrato || !premio) { setPMsg("Preencha contrato e prêmio"); return; }
     const [mi, yr] = pNewMes.split("-").map(Number);
     setPItems(prev => {
       const exists = prev.findIndex(p => p.mes_idx === mi && p.ano === yr);
@@ -2985,10 +2987,10 @@ function AdminPage() {
                 <label style={{ color: "#6B7280", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Var. dia</label>
                 <input type="number" value={pNewVar} onChange={e => setPNewVar(e.target.value)} placeholder="0.0" style={{ ...inputStyle, width: 70, fontFamily: "'JetBrains Mono',monospace" }} />
               </div>
-              <div onClick={addPremioItem} style={{
+              <button type="button" onClick={addPremioItem} style={{
                 background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)", borderRadius: 7,
                 padding: "9px 16px", cursor: "pointer", color: "#22C55E", fontSize: 12, fontWeight: 600,
-              }}>+ Adicionar</div>
+              }}>+ Adicionar</button>
             </div>
 
             {/* Current items table */}
