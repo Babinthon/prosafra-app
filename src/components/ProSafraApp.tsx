@@ -2755,6 +2755,17 @@ function AdminPage() {
   const [fMsg, setFMsg] = useState("");
   const [fLoading, setFLoading] = useState(false);
 
+  // Premios state
+  const [pItems, setPItems] = useState([]);
+  const [pDataRef, setPDataRef] = useState(new Date().toISOString().slice(0, 10));
+  const [pNewMes, setPNewMes] = useState("4-2026");
+  const [pNewContrato, setPNewContrato] = useState("");
+  const [pNewPremio, setPNewPremio] = useState("");
+  const [pNewVar, setPNewVar] = useState("");
+  const [pMsg, setPMsg] = useState("");
+  const [pLoading, setPLoading] = useState(false);
+  const [pHist, setPHist] = useState([]);
+
   const doLogin = async () => {
     setAuthErr("");
     try {
@@ -2764,7 +2775,7 @@ function AdminPage() {
         body: JSON.stringify({ password: pw, action: "auth_check" }),
       });
       const j = await res.json();
-      if (j.success) { setAuthed(true); loadFundos(); }
+      if (j.success) { setAuthed(true); loadFundos(); loadPremios(); }
       else setAuthErr(j.error || "Senha incorreta");
     } catch { setAuthErr("Erro de conexão"); }
   };
@@ -2780,24 +2791,15 @@ function AdminPage() {
   const saveFundos = async () => {
     if (!fDataRef) { setFMsg("Informe a data"); return; }
     if (!fSoja && !fMilho) { setFMsg("Informe pelo menos soja ou milho"); return; }
-    setFLoading(true);
-    setFMsg("");
+    setFLoading(true); setFMsg("");
     try {
       const res = await fetch("/api/admin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          password: pw,
-          action: "fundos_upsert",
-          data: { data_ref: fDataRef, soja: fSoja, milho: fMilho },
-        }),
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: pw, action: "fundos_upsert", data: { data_ref: fDataRef, soja: fSoja, milho: fMilho } }),
       });
       const j = await res.json();
-      if (j.success) {
-        setFMsg(`✓ Salvo! ${j.inserted} registro(s)`);
-        setFSoja(""); setFMilho("");
-        loadFundos();
-      } else setFMsg(`Erro: ${j.error}`);
+      if (j.success) { setFMsg(`✓ Salvo! ${j.inserted} registro(s)`); setFSoja(""); setFMilho(""); loadFundos(); }
+      else setFMsg(`Erro: ${j.error}`);
     } catch { setFMsg("Erro de conexão"); }
     setFLoading(false);
   };
@@ -2805,13 +2807,52 @@ function AdminPage() {
   const deleteFundos = async (data_ref, produto) => {
     if (!confirm(`Deletar ${produto} de ${data_ref}?`)) return;
     try {
-      await fetch("/api/admin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: pw, action: "fundos_delete", data: { data_ref, produto } }),
-      });
+      await fetch("/api/admin", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: pw, action: "fundos_delete", data: { data_ref, produto } }) });
       loadFundos();
     } catch {}
+  };
+
+  // ─── Premios functions ───
+  const loadPremios = async () => {
+    try {
+      const res = await fetch("/api/admin?type=premios");
+      const j = await res.json();
+      if (j.atual) setPItems(j.atual);
+      if (j.historico) setPHist(j.historico);
+    } catch {}
+  };
+
+  const addPremioItem = () => {
+    if (!pNewContrato || !pNewPremio) return;
+    const [mi, yr] = pNewMes.split("-").map(Number);
+    setPItems(prev => {
+      const exists = prev.findIndex(p => p.mes_idx === mi && p.ano === yr);
+      const item = { mes_idx: mi, ano: yr, contrato: pNewContrato, venda: parseFloat(pNewPremio), var_dia: parseFloat(pNewVar) || 0 };
+      if (exists >= 0) { const n = [...prev]; n[exists] = item; return n; }
+      return [...prev, item];
+    });
+    setPNewContrato(""); setPNewPremio(""); setPNewVar("");
+  };
+
+  const removePremioItem = (mi, yr) => {
+    setPItems(prev => prev.filter(p => !(p.mes_idx === mi && p.ano === yr)));
+  };
+
+  const savePremios = async () => {
+    if (pItems.length === 0) { setPMsg("Adicione pelo menos 1 prêmio"); return; }
+    setPLoading(true); setPMsg("");
+    try {
+      const items = pItems.map(p => ({ mes_idx: p.mes_idx, ano: p.ano, contrato: p.contrato, premio: p.venda, var_dia: p.var_dia || 0 }));
+      const res = await fetch("/api/admin", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: pw, action: "premios_upsert", data: { items, data_ref: pDataRef } }),
+      });
+      const j = await res.json();
+      if (j.success) { setPMsg(`✓ ${j.inserted} prêmio(s) salvos + histórico gravado`); loadPremios(); }
+      else setPMsg(`Erro: ${j.error}`);
+    } catch { setPMsg("Erro de conexão"); }
+    setPLoading(false);
   };
 
   const inputStyle = { background: "#0D1117", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: "8px 12px", color: "#F1F5F9", fontSize: 13, outline: "none", width: "100%" };
@@ -2831,13 +2872,13 @@ function AdminPage() {
     );
   }
 
-  // Group fundos history by date
+  // Group fundos by date
   const fundosByDate = {};
-  fHist.forEach(r => {
-    if (!fundosByDate[r.data_ref]) fundosByDate[r.data_ref] = {};
-    fundosByDate[r.data_ref][r.produto] = r.posicao_net;
-  });
+  fHist.forEach(r => { if (!fundosByDate[r.data_ref]) fundosByDate[r.data_ref] = {}; fundosByDate[r.data_ref][r.produto] = r.posicao_net; });
   const fundosDates = Object.keys(fundosByDate).sort().reverse();
+
+  // Sort premios
+  const pSorted = [...pItems].sort((a, b) => (a.ano * 12 + a.mes_idx) - (b.ano * 12 + b.mes_idx));
 
   return (
     <div style={{ maxWidth: 900, margin: "0 auto", padding: "20px 28px 60px" }}>
@@ -2849,7 +2890,7 @@ function AdminPage() {
 
       {/* Tabs */}
       <div style={{ display: "flex", gap: 6, marginBottom: 24 }}>
-        {[{ id: "fundos", label: "Posição Fundos" }].map(t => (
+        {[{ id: "fundos", label: "Posição Fundos" }, { id: "premios", label: "Prêmios Porto" }].map(t => (
           <div key={t.id} onClick={() => setTab(t.id)} style={{
             padding: "8px 20px", borderRadius: 7, cursor: "pointer", fontSize: 12, fontWeight: 600,
             background: tab === t.id ? "rgba(230,57,70,0.1)" : "rgba(255,255,255,0.03)",
@@ -2859,7 +2900,7 @@ function AdminPage() {
         ))}
       </div>
 
-      {/* Fundos Tab */}
+      {/* ═══ FUNDOS TAB ═══ */}
       {tab === "fundos" && (
         <div>
           <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: 24, marginBottom: 20 }}>
@@ -2879,52 +2920,112 @@ function AdminPage() {
               </div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-              <button onClick={saveFundos} disabled={fLoading} style={{ ...btnStyle, opacity: fLoading ? 0.6 : 1 }}>
-                {fLoading ? "Salvando..." : "Salvar"}
-              </button>
+              <button onClick={saveFundos} disabled={fLoading} style={{ ...btnStyle, opacity: fLoading ? 0.6 : 1 }}>{fLoading ? "Salvando..." : "Salvar"}</button>
               {fMsg && <span style={{ fontSize: 12, color: fMsg.startsWith("✓") ? "#22C55E" : "#EF4444" }}>{fMsg}</span>}
             </div>
           </div>
-
-          {/* Histórico */}
           <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: 24 }}>
             <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 16 }}>Histórico ({fundosDates.length} datas)</div>
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-                <thead>
-                  <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-                    <th style={{ textAlign: "left", padding: "8px 12px", color: "#6B7280", fontWeight: 500 }}>Data</th>
-                    <th style={{ textAlign: "right", padding: "8px 12px", color: "#6B7280", fontWeight: 500 }}>Soja Net</th>
-                    <th style={{ textAlign: "right", padding: "8px 12px", color: "#6B7280", fontWeight: 500 }}>Milho Net</th>
-                    <th style={{ textAlign: "center", padding: "8px 12px", color: "#6B7280", fontWeight: 500 }}>Ações</th>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+              <thead><tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+                <th style={{ textAlign: "left", padding: "8px 12px", color: "#6B7280", fontWeight: 500 }}>Data</th>
+                <th style={{ textAlign: "right", padding: "8px 12px", color: "#6B7280", fontWeight: 500 }}>Soja Net</th>
+                <th style={{ textAlign: "right", padding: "8px 12px", color: "#6B7280", fontWeight: 500 }}>Milho Net</th>
+                <th style={{ textAlign: "center", padding: "8px 12px", color: "#6B7280", fontWeight: 500 }}>Ações</th>
+              </tr></thead>
+              <tbody>
+                {fundosDates.map(dt => { const row = fundosByDate[dt]; return (
+                  <tr key={dt} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                    <td style={{ padding: "8px 12px", color: "#9CA3AF" }}>{dt.split("-").reverse().join("/")}</td>
+                    <td style={{ padding: "8px 12px", textAlign: "right", fontFamily: "'JetBrains Mono',monospace", color: row.soja >= 0 ? "#22C55E" : "#EF4444" }}>{row.soja !== undefined ? row.soja.toLocaleString("pt-BR") : "—"}</td>
+                    <td style={{ padding: "8px 12px", textAlign: "right", fontFamily: "'JetBrains Mono',monospace", color: row.milho >= 0 ? "#22C55E" : "#EF4444" }}>{row.milho !== undefined ? row.milho.toLocaleString("pt-BR") : "—"}</td>
+                    <td style={{ padding: "8px 12px", textAlign: "center" }}>
+                      {row.soja !== undefined && <span onClick={() => deleteFundos(dt, "soja")} style={{ color: "#EF4444", cursor: "pointer", fontSize: 10, marginRight: 8 }}>✕ soja</span>}
+                      {row.milho !== undefined && <span onClick={() => deleteFundos(dt, "milho")} style={{ color: "#EF4444", cursor: "pointer", fontSize: 10 }}>✕ milho</span>}
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {fundosDates.map(dt => {
-                    const row = fundosByDate[dt];
-                    return (
-                      <tr key={dt} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                        <td style={{ padding: "8px 12px", color: "#9CA3AF" }}>{dt.split("-").reverse().join("/")}</td>
-                        <td style={{ padding: "8px 12px", textAlign: "right", fontFamily: "'JetBrains Mono',monospace", color: row.soja >= 0 ? "#22C55E" : "#EF4444" }}>
-                          {row.soja !== undefined ? row.soja.toLocaleString("pt-BR") : "—"}
-                        </td>
-                        <td style={{ padding: "8px 12px", textAlign: "right", fontFamily: "'JetBrains Mono',monospace", color: row.milho >= 0 ? "#22C55E" : "#EF4444" }}>
-                          {row.milho !== undefined ? row.milho.toLocaleString("pt-BR") : "—"}
-                        </td>
-                        <td style={{ padding: "8px 12px", textAlign: "center" }}>
-                          {row.soja !== undefined && <span onClick={() => deleteFundos(dt, "soja")} style={{ color: "#EF4444", cursor: "pointer", fontSize: 10, marginRight: 8 }}>✕ soja</span>}
-                          {row.milho !== undefined && <span onClick={() => deleteFundos(dt, "milho")} style={{ color: "#EF4444", cursor: "pointer", fontSize: 10 }}>✕ milho</span>}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                  {fundosDates.length === 0 && (
-                    <tr><td colSpan={4} style={{ padding: "20px 12px", textAlign: "center", color: "#4B5563" }}>Nenhum registro. Lance a primeira posição acima.</td></tr>
-                  )}
-                </tbody>
-              </table>
+                ); })}
+                {fundosDates.length === 0 && <tr><td colSpan={4} style={{ padding: "20px 12px", textAlign: "center", color: "#4B5563" }}>Nenhum registro.</td></tr>}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ PRÊMIOS TAB ═══ */}
+      {tab === "premios" && (
+        <div>
+          <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: 24, marginBottom: 20 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>Lançar prêmios — Soja Paranaguá</div>
+            <div style={{ color: "#6B7280", fontSize: 11, marginBottom: 16 }}>Adicione cada mês de embarque, depois clique "Salvar todos"</div>
+
+            {/* Date ref */}
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ color: "#6B7280", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Data de referência</label>
+              <input type="date" value={pDataRef} onChange={e => setPDataRef(e.target.value)} style={{ ...inputStyle, width: 180 }} />
+            </div>
+
+            {/* Add row */}
+            <div style={{ display: "flex", gap: 8, alignItems: "flex-end", marginBottom: 16, flexWrap: "wrap" }}>
+              <div>
+                <label style={{ color: "#6B7280", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Mês embarque</label>
+                <select value={pNewMes} onChange={e => setPNewMes(e.target.value)} style={{ ...inputStyle, width: 140 }}>
+                  {OPTS.map(o => <option key={`${o.mi}-${o.yr}`} value={`${o.mi}-${o.yr}`}>{o.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{ color: "#6B7280", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Contrato ref.</label>
+                <input value={pNewContrato} onChange={e => setPNewContrato(e.target.value)} placeholder="SK6" style={{ ...inputStyle, width: 70 }} />
+              </div>
+              <div>
+                <label style={{ color: "#6B7280", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Prêmio (c/bu)</label>
+                <input type="number" value={pNewPremio} onChange={e => setPNewPremio(e.target.value)} placeholder="45.0" style={{ ...inputStyle, width: 90, fontFamily: "'JetBrains Mono',monospace" }} />
+              </div>
+              <div>
+                <label style={{ color: "#6B7280", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Var. dia</label>
+                <input type="number" value={pNewVar} onChange={e => setPNewVar(e.target.value)} placeholder="0.0" style={{ ...inputStyle, width: 70, fontFamily: "'JetBrains Mono',monospace" }} />
+              </div>
+              <div onClick={addPremioItem} style={{
+                background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)", borderRadius: 7,
+                padding: "9px 16px", cursor: "pointer", color: "#22C55E", fontSize: 12, fontWeight: 600,
+              }}>+ Adicionar</div>
+            </div>
+
+            {/* Current items table */}
+            {pSorted.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "130px 70px 100px 70px 40px", gap: 0, fontSize: 11 }}>
+                  {["Embarque", "Contrato", "Prêmio (c/bu)", "Var.", ""].map(h => (
+                    <div key={h} style={{ padding: "6px 8px", color: "#4B5563", fontWeight: 600, textTransform: "uppercase", fontSize: 9, letterSpacing: "0.06em", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>{h}</div>
+                  ))}
+                  {pSorted.map(p => (
+                    <React.Fragment key={`${p.mes_idx}-${p.ano}`}>
+                      <div style={{ padding: "8px 8px", color: "#9CA3AF", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>{MESES_SHORT[p.mes_idx]}/{String(p.ano).slice(-2)}</div>
+                      <div style={{ padding: "8px 8px", color: "#6B7280", borderBottom: "1px solid rgba(255,255,255,0.04)", fontFamily: "'JetBrains Mono',monospace", fontSize: 11 }}>{p.contrato}</div>
+                      <div style={{ padding: "8px 8px", color: p.venda >= 0 ? "#22C55E" : "#EF4444", borderBottom: "1px solid rgba(255,255,255,0.04)", fontFamily: "'JetBrains Mono',monospace", fontSize: 12, fontWeight: 600 }}>{p.venda > 0 ? "+" : ""}{p.venda}</div>
+                      <div style={{ padding: "8px 8px", color: "#6B7280", borderBottom: "1px solid rgba(255,255,255,0.04)", fontFamily: "'JetBrains Mono',monospace", fontSize: 11 }}>{p.var_dia || 0}</div>
+                      <div onClick={() => removePremioItem(p.mes_idx, p.ano)} style={{ padding: "8px 4px", borderBottom: "1px solid rgba(255,255,255,0.04)", color: "#EF4444", cursor: "pointer", textAlign: "center", fontSize: 13 }}>✕</div>
+                    </React.Fragment>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <button onClick={savePremios} disabled={pLoading || pSorted.length === 0} style={{ ...btnStyle, opacity: pLoading || pSorted.length === 0 ? 0.6 : 1 }}>
+                {pLoading ? "Salvando..." : `Salvar todos (${pSorted.length})`}
+              </button>
+              {pMsg && <span style={{ fontSize: 12, color: pMsg.startsWith("✓") ? "#22C55E" : "#EF4444" }}>{pMsg}</span>}
             </div>
           </div>
+
+          {/* Histórico de lançamentos */}
+          {pHist.length > 0 && (
+            <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: 24 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 16 }}>Histórico de prêmios ({pHist.length} registros)</div>
+              <div style={{ color: "#4B5563", fontSize: 11 }}>Cada lançamento é gravado com a data — isso alimenta o termômetro na tela Prêmios Porto.</div>
+            </div>
+          )}
         </div>
       )}
     </div>
