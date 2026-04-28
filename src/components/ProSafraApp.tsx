@@ -220,10 +220,21 @@ function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
 
   const [eMi,eYr]=entK.split("-").map(Number);
   const [pMi,pYr]=pagK.split("-").map(Number);
-  const praca=PRACAS.find(p=>p.id===pracaId);
-  const pLabel=praca?`${praca.cidade} - ${praca.estado}`:"";
   const isSoja=mercado==="Soja Exportação";
-  const byState=useMemo(()=>{const g={};PRACAS.forEach(p=>{(g[p.estado]||=[]).push(p);});return g;},[PRACAS]);
+  const byState=useMemo(()=>{
+    const g={};
+    PRACAS.forEach(p=>{
+      const bk=`${p.cidade}-${p.estado}-${mercado}`;
+      if(BASIS_DATA[bk]){(g[p.estado]||=[]).push(p);}
+    });
+    return g;
+  },[PRACAS,mercado,BASIS_DATA]);
+  const availPracas=useMemo(()=>Object.values(byState).flat(),[byState]);
+  const pracaOk=availPracas.some(p=>p.id===pracaId);
+  const effPracaId=pracaOk?pracaId:(availPracas[0]?.id||pracaId);
+  useEffect(()=>{if(!pracaOk&&availPracas.length>0)setPracaId(availPracas[0].id);},[pracaOk,availPracas]);
+  const praca=PRACAS.find(p=>p.id===effPracaId);
+  const pLabel=praca?`${praca.cidade} - ${praca.estado}`:"";
   const bKey=praca?`${praca.cidade}-${praca.estado}-${mercado}`:"";
   const bAll=BASIS_DATA[bKey]||DEFAULT_BASIS;
   const bM=bAll[eMi];
@@ -1794,9 +1805,12 @@ function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
 
   const byState = useMemo(() => {
     const g = {};
-    PRACAS.forEach(p => { (g[p.estado] ||= []).push(p); });
+    PRACAS.forEach(p => {
+      const bk = `${p.cidade}-${p.estado}-${mercado}`;
+      if (BASIS_DATA[bk]) { (g[p.estado] ||= []).push(p); }
+    });
     return g;
-  }, [PRACAS]);
+  }, [PRACAS, mercado, BASIS_DATA]);
 
   // Auto-fetch Chicago and Cambio from dates
   const allK = Object.keys(COTACOES);
@@ -2334,9 +2348,12 @@ function OfertasFirmesPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
 
   const byState = useMemo(() => {
     const g = {};
-    PRACAS.forEach(p => { (g[p.estado] ||= []).push(p); });
+    PRACAS.forEach(p => {
+      const bk = `${p.cidade}-${p.estado}-${mercadoOf}`;
+      if (BASIS_DATA[bk]) { (g[p.estado] ||= []).push(p); }
+    });
     return g;
-  }, [PRACAS]);
+  }, [PRACAS, mercadoOf, BASIS_DATA]);
 
   // Volume conversion
   const volSacas = volUnit === "sacas" ? volQtd : Math.round(volQtd * 16.6667);
