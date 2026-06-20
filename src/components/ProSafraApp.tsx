@@ -465,14 +465,13 @@ function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
 
         {/* Tabela detalhada */}
         <div style={{borderTop:"1px solid rgba(255,255,255,0.06)",paddingTop:12,marginTop:4}}>
-          <div style={{display:"grid",gridTemplateColumns:"90px repeat(5,1fr)",gap:0,fontSize:9,color:"#4B5563",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6,paddingLeft:4}}>
-            <div>Embarque</div><div style={{textAlign:"right"}}>Chicago</div><div style={{textAlign:"right"}}>Basis</div><div style={{textAlign:"right"}}>Câmbio</div><div style={{textAlign:"right"}}>R$/sc Min</div><div style={{textAlign:"right",color:"#457B9D"}}>R$/sc Justo</div>
+          <div style={{display:"grid",gridTemplateColumns:"90px repeat(4,1fr)",gap:0,fontSize:9,color:"#4B5563",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6,paddingLeft:4}}>
+            <div>Embarque</div><div style={{textAlign:"right"}}>Chicago</div><div style={{textAlign:"right"}}>Câmbio</div><div style={{textAlign:"right"}}>R$/sc Min</div><div style={{textAlign:"right",color:"#457B9D"}}>R$/sc Justo</div>
           </div>
           {season.filter(s=>s.has).map(s=>(
-            <div key={s.idx} style={{display:"grid",gridTemplateColumns:"90px repeat(5,1fr)",gap:0,fontSize:11,padding:"5px 4px",borderBottom:"1px solid rgba(255,255,255,0.03)"}}>
+            <div key={s.idx} style={{display:"grid",gridTemplateColumns:"90px repeat(4,1fr)",gap:0,fontSize:11,padding:"5px 4px",borderBottom:"1px solid rgba(255,255,255,0.03)"}}>
               <div style={{color:"#9CA3AF",fontWeight:500}}>{s.label}</div>
               <div style={{textAlign:"right",fontFamily:"'JetBrains Mono',monospace",color:"#6B7280"}}>{s.chi?fmt(s.chi,1):"-"}</div>
-              <div style={{textAlign:"right",fontFamily:"'JetBrains Mono',monospace",color:s.basis>=0?"#22C55E":"#EF4444"}}>{s.basis>=0?"+":""}{fmt(s.basis,1)}</div>
               <div style={{textAlign:"right",fontFamily:"'JetBrains Mono',monospace",color:"#6B7280"}}>{s.dol?fmt(s.dol,4):"-"}</div>
               <div style={{textAlign:"right",fontFamily:"'JetBrains Mono',monospace",color:"#F59E0B"}}>{s.pMin?fmt(s.pMin,0):"-"}</div>
               <div style={{textAlign:"right",fontFamily:"'JetBrains Mono',monospace",color:"#457B9D",fontWeight:600}}>{s.pJusto?fmt(s.pJusto,0):"-"}</div>
@@ -1614,7 +1613,6 @@ function CambioPage({COTACOES, ptax}) {
 // ═══════════════════════════════════════════════════════════════
 
 function ParidadePage({COTACOES}) {
-  const [plano, setPlano] = useState("pro");
   const [entK, setEntK] = useState("4-2026");
   const [pagK, setPagK] = useState("5-2026");
   const [freteRton, setFreteRton] = useState(380);
@@ -1675,12 +1673,6 @@ function ParidadePage({COTACOES}) {
   const freteSaca = freteRton * 60 / 1000;
   const precoPraca = custoPortoBRL - freteSaca;
 
-  const planos = [
-    { id: "basico", label: "Básico" },
-    { id: "pro", label: "Profissional" },
-    { id: "premium", label: "Premium" },
-  ];
-
   function CustoRow({ label, valor, unit, dim, highlight }) {
     return (
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
@@ -1696,22 +1688,12 @@ function ParidadePage({COTACOES}) {
   return (
     <div style={{ maxWidth: 1060, margin: "0 auto", padding: "20px 28px 48px" }}>
 
-      {/* Header + plano */}
+      {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 16 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{ width: 3, height: 18, background: "#E63946", borderRadius: 2 }} />
           <span style={{ fontSize: 15, fontWeight: 700 }}>Paridade de exportação</span>
           <span style={{ color: "#4B5563", fontSize: 11 }}>Preço máximo que a trading consegue pagar</span>
-        </div>
-        <div style={{ display: "flex", gap: 4 }}>
-          {planos.map(p => (
-            <div key={p.id} onClick={() => setPlano(p.id)} style={{
-              padding: "6px 14px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600,
-              background: plano === p.id ? "rgba(230,57,70,0.1)" : "rgba(255,255,255,0.03)",
-              color: plano === p.id ? "#E63946" : "#6B7280",
-              border: `1px solid ${plano === p.id ? "rgba(230,57,70,0.3)" : "rgba(255,255,255,0.06)"}`,
-            }}>{p.label}</div>
-          ))}
         </div>
       </div>
 
@@ -1775,9 +1757,8 @@ function ParidadePage({COTACOES}) {
         </div>
       </div>
 
-      {/* PRO — Componentes */}
-      {(plano === "pro" || plano === "premium") && (
-        <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "18px 22px", marginBottom: 16 }}>
+      {/* Componentes do preço */}
+      <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "18px 22px", marginBottom: 16 }}>
           <div style={{ color: "#F1F5F9", fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Componentes do preço</div>
           <CustoRow label={`Chicago CBOT (${cLabel})`} valor={chicagoCbu} unit="c/bu" />
           <CustoRow label={`Prêmio Brasil — ${MESES[eMi]} ${eYr}`} valor={premioBrasil} unit="c/bu" />
@@ -1791,14 +1772,11 @@ function ParidadePage({COTACOES}) {
             <span style={{ color: "#22C55E", fontSize: 18, fontWeight: 800, fontFamily: "'JetBrains Mono',monospace" }}>R$ {fmt(custoPortoBRL)}/sc</span>
           </div>
         </div>
-      )}
 
-      {/* PREMIUM — Custos internos */}
-      {plano === "premium" && (
-        <div style={{ background: "#0D1117", border: "1px solid rgba(230,57,70,0.15)", borderRadius: 10, padding: "18px 22px", marginBottom: 16 }}>
+      {/* Custos internos da trading */}
+      <div style={{ background: "#0D1117", border: "1px solid rgba(230,57,70,0.15)", borderRadius: 10, padding: "18px 22px", marginBottom: 16 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
             <div style={{ color: "#F1F5F9", fontSize: 13, fontWeight: 600 }}>Custos internos da trading</div>
-            <span style={{ fontSize: 8, color: "#E63946", background: "rgba(230,57,70,0.1)", padding: "2px 8px", borderRadius: 3, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em" }}>Premium</span>
           </div>
           <CustoRow label="Despesas portuárias" valor={despPortuarias} unit="USD/ton" />
           <CustoRow label="ICMS" valor={icms} unit="USD/ton" dim />
@@ -1812,7 +1790,6 @@ function ParidadePage({COTACOES}) {
           </div>
           <div style={{ color: "#374151", fontSize: 9, marginTop: 8 }}>Quanto menor os custos internos, mais a trading consegue pagar. Revisados mensalmente.</div>
         </div>
-      )}
 
       {/* Premissas */}
       <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "14px 18px" }}>
