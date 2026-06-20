@@ -359,6 +359,26 @@ export interface PtaxRow {
   venda: number;
 }
 
+export interface PremioAtualRow {
+  mes_idx: number;
+  ano: number;
+  contrato: string;
+  venda: number;
+  var_dia: number;
+}
+
+export interface PremioHistRow {
+  mes_idx: number;
+  ano: number;
+  premio: number;
+  data_ref: string;
+}
+
+export interface PremiosData {
+  atual: PremioAtualRow[];
+  historico: PremioHistRow[];
+}
+
 export interface SupabaseData {
   cotacoes: Record<string, CotacaoRow>;
   contractsDash: ReturnType<typeof buildContractsDash>;
@@ -367,9 +387,10 @@ export interface SupabaseData {
   defaultBasis: BasisMonth[];
   ptax: PtaxRow | null;
   fundosData: FundosData | null;
+  premiosData: PremiosData | null;
   loading: boolean;
   lastUpdate: string | null;
-  isLive: boolean; // true = Supabase data, false = fallback
+  isLive: boolean;
   refresh: () => void;
 }
 
@@ -379,6 +400,7 @@ export function useSupabaseData(): SupabaseData {
   const [basisData, setBasisData] = useState<Record<string, BasisMonth[]>>({});
   const [ptax, setPtax] = useState<PtaxRow | null>(null);
   const [fundosData, setFundosData] = useState<FundosData | null>(null);
+  const [premiosData, setPremiosData] = useState<PremiosData | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<string | null>(null);
   const [isLive, setIsLive] = useState(false);
@@ -470,6 +492,27 @@ export function useSupabaseData(): SupabaseData {
         const built = buildFundosData(fundosRows as FundosPosRow[]);
         if (built) setFundosData(built);
       }
+
+      // ─── 6. PRÊMIOS PORTO ───
+      const { data: premAtual, error: premErr1 } = await supabase
+        .from("premios_atual")
+        .select("mes_idx, ano, contrato, venda, var_dia")
+        .eq("porto", "Paranaguá")
+        .order("ano", { ascending: true })
+        .order("mes_idx", { ascending: true });
+
+      const { data: premHist, error: premErr2 } = await supabase
+        .from("premios_historico")
+        .select("mes_idx, ano, premio, data_ref")
+        .eq("porto", "Paranaguá")
+        .order("data_ref", { ascending: true });
+
+      if (!premErr1 && premAtual && premAtual.length > 0) {
+        setPremiosData({
+          atual: premAtual as PremioAtualRow[],
+          historico: (premHist || []) as PremioHistRow[],
+        });
+      }
     } catch (e) {
       console.error("useSupabaseData: fetch error, using fallback", e);
     } finally {
@@ -494,6 +537,7 @@ export function useSupabaseData(): SupabaseData {
     defaultBasis: DEFAULT_BASIS,
     ptax,
     fundosData,
+    premiosData,
     loading,
     lastUpdate,
     isLive,

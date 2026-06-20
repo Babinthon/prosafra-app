@@ -474,119 +474,63 @@ const PREMIOS_ATUAIS_INIT = [
   { id: 9, mesIdx: 4, yr: 2027, contrato: "SK7", venda: 10.0, varDia: 0.0 },
 ];
 
-function PremiosPortoPage() {
-  const [premios, setPremios] = useState(PREMIOS_ATUAIS_INIT);
-  const [showAdmin, setShowAdmin] = useState(false);
-  const [editId, setEditId] = useState(null);
-  const [newP, setNewP] = useState({ mesIdx: 4, yr: 2026, contrato: "", venda: "", varDia: "" });
+function PremiosPortoPage({premiosData}) {
+  // Use Supabase data if available, otherwise fallback
+  const hasLive = premiosData && premiosData.atual && premiosData.atual.length > 0;
+  const premios = hasLive
+    ? premiosData.atual.map((p, i) => ({ id: i + 1, mesIdx: p.mes_idx, yr: p.ano, contrato: p.contrato, venda: p.venda, varDia: p.var_dia || 0 }))
+    : PREMIOS_ATUAIS_INIT;
+
+  // Build historico stats per month (min, max, avg from premios_historico)
+  const histStats = useMemo(() => {
+    if (!premiosData?.historico?.length) return {};
+    const byMes = {};
+    for (const h of premiosData.historico) {
+      const key = `${h.mes_idx}-${h.ano}`;
+      if (!byMes[key]) byMes[key] = [];
+      byMes[key].push(h.premio);
+    }
+    const stats = {};
+    for (const [key, vals] of Object.entries(byMes)) {
+      const arr = vals;
+      stats[key] = {
+        min: Math.min(...arr),
+        max: Math.max(...arr),
+        avg: arr.reduce((a, b) => a + b, 0) / arr.length,
+        count: arr.length,
+      };
+    }
+    return stats;
+  }, [premiosData]);
 
   // Sort by date
   const sorted = [...premios].sort((a, b) => (a.yr * 12 + a.mesIdx) - (b.yr * 12 + b.mesIdx));
 
-  function addPremio() {
-    if (!newP.contrato || newP.venda === "") return;
-    setPremios(prev => [...prev, { ...newP, id: Date.now(), venda: parseFloat(newP.venda), varDia: parseFloat(newP.varDia) || 0 }]);
-    setNewP({ mesIdx: 4, yr: 2026, contrato: "", venda: "", varDia: "" });
-  }
-
-  function removePremio(id) { setPremios(prev => prev.filter(p => p.id !== id)); }
-
-  function updatePremio(id, field, val) {
-    setPremios(prev => prev.map(p => p.id === id ? { ...p, [field]: field === "contrato" ? val : parseFloat(val) || 0 } : p));
-  }
-
   return (
     <div style={{ maxWidth: 1060, margin: "0 auto", padding: "20px 28px 48px" }}>
 
-      {/* Toggle admin */}
+      {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{ width: 3, height: 18, background: "#E63946", borderRadius: 2 }} />
           <span style={{ fontSize: 15, fontWeight: 700 }}>Prêmios de Soja — Paranaguá</span>
-          <span style={{ color: "#4B5563", fontSize: 11 }}>Venda • cents/bushel</span>
+          <span style={{ color: "#4B5563", fontSize: 11 }}>Compra • cents/bushel</span>
         </div>
-        <div onClick={() => setShowAdmin(!showAdmin)} style={{
-          background: showAdmin ? "rgba(230,57,70,0.1)" : "rgba(255,255,255,0.03)",
-          border: `1px solid ${showAdmin ? "rgba(230,57,70,0.3)" : "rgba(255,255,255,0.08)"}`,
-          borderRadius: 6, padding: "6px 14px", cursor: "pointer",
-          color: showAdmin ? "#E63946" : "#6B7280", fontSize: 11, fontWeight: 500,
-        }}>
-          {showAdmin ? "✕ Fechar Admin" : "⚙ Admin"}
-        </div>
+        <div style={{ color: "#374151", fontSize: 10 }}>{hasLive ? "✓ Dados ao vivo" : "Dados de exemplo"}</div>
       </div>
-
-      {/* ─── ADMIN PANEL ─── */}
-      {showAdmin && (
-        <div style={{ background: "#0D1117", border: "1px solid rgba(230,57,70,0.2)", borderRadius: 10, padding: "18px", marginBottom: 20 }}>
-          <div style={{ color: "#E63946", fontSize: 12, fontWeight: 600, marginBottom: 12 }}>Painel do fundador — Atualizar prêmios</div>
-
-          {/* Add new */}
-          <div style={{ display: "flex", gap: 8, alignItems: "flex-end", marginBottom: 16, flexWrap: "wrap" }}>
-            <Sel label="Mês embarque" value={`${newP.mesIdx}-${newP.yr}`} onChange={v => { const [m, y] = v.split("-"); setNewP(p => ({ ...p, mesIdx: +m, yr: +y })); }} w={140}>
-              {OPTS.map(o => <option key={`${o.mi}-${o.yr}`} value={`${o.mi}-${o.yr}`}>{o.label}</option>)}
-            </Sel>
-            <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-              <label style={{ fontSize: 9, color: "#6B7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>Contrato ref.</label>
-              <input value={newP.contrato} onChange={e => setNewP(p => ({ ...p, contrato: e.target.value }))} placeholder="SK6"
-                style={{ background: "#111827", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 7, color: "#F1F5F9", padding: "9px 10px", fontSize: 12, outline: "none", width: 70 }} />
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-              <label style={{ fontSize: 9, color: "#6B7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>Venda (c/bu)</label>
-              <input type="number" value={newP.venda} onChange={e => setNewP(p => ({ ...p, venda: e.target.value }))} placeholder="0.0"
-                style={{ background: "#111827", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 7, color: "#F1F5F9", padding: "9px 10px", fontSize: 12, outline: "none", width: 80, fontFamily: "'JetBrains Mono',monospace" }} />
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-              <label style={{ fontSize: 9, color: "#6B7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>Var. dia</label>
-              <input type="number" value={newP.varDia} onChange={e => setNewP(p => ({ ...p, varDia: e.target.value }))} placeholder="0.0"
-                style={{ background: "#111827", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 7, color: "#F1F5F9", padding: "9px 10px", fontSize: 12, outline: "none", width: 70, fontFamily: "'JetBrains Mono',monospace" }} />
-            </div>
-            <div onClick={addPremio} style={{
-              background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)", borderRadius: 7,
-              padding: "9px 16px", cursor: "pointer", color: "#22C55E", fontSize: 12, fontWeight: 600,
-            }}>+ Adicionar</div>
-          </div>
-
-          {/* Existing editable list */}
-          <div style={{ fontSize: 10, color: "#4B5563", marginBottom: 8 }}>Prêmios cadastrados — clique no valor para editar</div>
-          <div style={{ display: "grid", gridTemplateColumns: "130px 70px 90px 70px 40px", gap: 0, fontSize: 11 }}>
-            {["Embarque", "Contrato", "Venda (c/bu)", "Var.", ""].map(h => (
-              <div key={h} style={{ padding: "6px 8px", color: "#4B5563", fontWeight: 600, textTransform: "uppercase", fontSize: 9, letterSpacing: "0.06em", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>{h}</div>
-            ))}
-            {sorted.map(p => (
-              <React.Fragment key={p.id}>
-                <div style={{ padding: "8px 8px", color: "#9CA3AF", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                  {MESES_SHORT[p.mesIdx]}/{String(p.yr).slice(-2)}
-                </div>
-                <div style={{ padding: "8px 8px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                  <input value={p.contrato} onChange={e => updatePremio(p.id, "contrato", e.target.value)}
-                    style={{ background: "transparent", border: "none", color: "#6B7280", fontSize: 11, width: 50, outline: "none", fontFamily: "'JetBrains Mono',monospace" }} />
-                </div>
-                <div style={{ padding: "8px 8px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                  <input type="number" value={p.venda} onChange={e => updatePremio(p.id, "venda", e.target.value)}
-                    style={{ background: "transparent", border: "none", color: "#F1F5F9", fontSize: 12, width: 65, outline: "none", fontFamily: "'JetBrains Mono',monospace", fontWeight: 600 }} />
-                </div>
-                <div style={{ padding: "8px 8px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                  <input type="number" value={p.varDia} onChange={e => updatePremio(p.id, "varDia", e.target.value)}
-                    style={{ background: "transparent", border: "none", color: "#6B7280", fontSize: 11, width: 45, outline: "none", fontFamily: "'JetBrains Mono',monospace" }} />
-                </div>
-                <div onClick={() => removePremio(p.id)} style={{ padding: "8px 4px", borderBottom: "1px solid rgba(255,255,255,0.04)", color: "#EF4444", cursor: "pointer", textAlign: "center", fontSize: 13 }}>✕</div>
-              </React.Fragment>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* ─── PRODUTOR VIEW — TABLE ─── */}
       <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, overflow: "hidden", marginBottom: 20 }}>
         <div style={{ display: "grid", gridTemplateColumns: "140px 80px 100px 100px 1fr 100px", padding: "10px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-          {["Embarque", "Contrato", "Prêmio atual", "Histórico 5a", "Termômetro", "Var. dia"].map(h => (
+          {["Embarque", "Contrato", "Prêmio atual", "Média hist.", "Termômetro", "Var. dia"].map(h => (
             <div key={h} style={{ color: "#4B5563", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>{h}</div>
           ))}
         </div>
         {sorted.map(p => {
-          const hist = PREMIOS_HIST[p.mesIdx] || 30;
+          const hKey = `${p.mesIdx}-${p.yr}`;
+          const hs = histStats[hKey];
+          const hist = hs ? hs.avg : p.venda;
           const diff = p.venda - hist;
-          const diffPct = hist !== 0 ? (diff / Math.abs(hist)) * 100 : 0;
           const isAbove = diff >= 0;
           const color = isAbove ? "#22C55E" : "#EF4444";
           const barMax = 60;
@@ -651,9 +595,9 @@ function PremiosPortoPage() {
       {/* ─── RESUMO VISUAL ─── */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 }}>
         {(() => {
-          const above = sorted.filter(p => p.venda >= (PREMIOS_HIST[p.mesIdx] || 30));
-          const below = sorted.filter(p => p.venda < (PREMIOS_HIST[p.mesIdx] || 30));
-          const avgDiff = sorted.length ? sorted.reduce((s, p) => s + (p.venda - (PREMIOS_HIST[p.mesIdx] || 30)), 0) / sorted.length : 0;
+          const above = sorted.filter(p => { const hs = histStats[`${p.mesIdx}-${p.yr}`]; return p.venda >= (hs ? hs.avg : p.venda); });
+          const below = sorted.filter(p => { const hs = histStats[`${p.mesIdx}-${p.yr}`]; return hs && p.venda < hs.avg; });
+          const avgDiff = sorted.length ? sorted.reduce((s, p) => { const hs = histStats[`${p.mesIdx}-${p.yr}`]; return s + (hs ? p.venda - hs.avg : 0); }, 0) / sorted.length : 0;
           return [
             { label: "Acima do histórico", value: above.length, total: sorted.length, color: "#22C55E" },
             { label: "Abaixo do histórico", value: below.length, total: sorted.length, color: "#EF4444" },
@@ -3047,7 +2991,7 @@ export default function ProSafraApp() {
   const dateStr=time.toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
 
   // ─── SUPABASE DATA HOOK ───
-  const { cotacoes, contractsDash, pracas, basisData, defaultBasis, ptax, fundosData, loading, lastUpdate, isLive } = useSupabaseData();
+  const { cotacoes, contractsDash, pracas, basisData, defaultBasis, ptax, fundosData, premiosData, loading, lastUpdate, isLive } = useSupabaseData();
 
   // Dólar header — read from cotacoes (DOL 1º venc or FX:USDBRL)
   const dolFirst = contractsDash.dolarB3[0];
@@ -3124,7 +3068,7 @@ export default function ProSafraApp() {
 
         {page==="dashboard"&&<DashboardPage goTo={setPage} contractsDash={contractsDash}/>}
         {page==="preco-justo"&&<PrecoJustoPage {...dataProps}/>}
-        {page==="premios"&&<PremiosPortoPage/>}
+        {page==="premios"&&<PremiosPortoPage premiosData={premiosData}/>}
         {page==="analise"&&<AnaliseTecnicaPage COTACOES={cotacoes}/>}
         {page==="fundamentos"&&<FundamentosPage/>}
         {page==="fundos"&&<PosicaoFundosPage fundosData={fundosData}/>}
