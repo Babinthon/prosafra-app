@@ -2990,6 +2990,7 @@ function AdminPage() {
                       <th style={{ textAlign: "left", padding: "8px 12px", color: "#6B7280", fontWeight: 500 }}>Data ref.</th>
                       <th style={{ textAlign: "left", padding: "8px 12px", color: "#6B7280", fontWeight: 500 }}>Embarque</th>
                       <th style={{ textAlign: "right", padding: "8px 12px", color: "#6B7280", fontWeight: 500 }}>Prêmio (c/bu)</th>
+                      <th style={{ textAlign: "center", padding: "8px 12px", color: "#6B7280", fontWeight: 500 }}>Excluir</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -2999,6 +3000,18 @@ function AdminPage() {
                         <td style={{ padding: "6px 12px", color: "#9CA3AF" }}>{MESES_SHORT[h.mes_idx]}/{String(h.ano).slice(-2)}</td>
                         <td style={{ padding: "6px 12px", textAlign: "right", fontFamily: "'JetBrains Mono',monospace", color: h.premio >= 0 ? "#22C55E" : "#EF4444", fontWeight: 600 }}>
                           {h.premio > 0 ? "+" : ""}{h.premio}
+                        </td>
+                        <td style={{ padding: "6px 12px", textAlign: "center" }}>
+                          <span onClick={async () => {
+                            if (!confirm(`Excluir ${MESES_SHORT[h.mes_idx]}/${String(h.ano).slice(-2)} de ${h.data_ref?.split("-").reverse().join("/")}?`)) return;
+                            try {
+                              await fetch("/api/admin", {
+                                method: "POST", headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ password: pw, action: "premios_hist_delete", data: { data_ref: h.data_ref, mes_idx: h.mes_idx, ano: h.ano } }),
+                              });
+                              loadPremios();
+                            } catch {}
+                          }} style={{ color: "#EF4444", cursor: "pointer", fontSize: 11 }}>✕</span>
                         </td>
                       </tr>
                     ))}

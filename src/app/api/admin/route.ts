@@ -91,6 +91,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true });
     }
 
+    if (action === "premios_hist_delete") {
+      const { error } = await supabase
+        .from("premios_historico")
+        .delete()
+        .eq("data_ref", data.data_ref)
+        .eq("mes_idx", data.mes_idx)
+        .eq("ano", data.ano)
+        .eq("porto", "Paranaguá");
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ success: true });
+    }
+
     return NextResponse.json({ error: "Ação desconhecida" }, { status: 400 });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
