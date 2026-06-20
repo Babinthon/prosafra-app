@@ -503,8 +503,13 @@ function PremiosPortoPage({premiosData}) {
     return stats;
   }, [premiosData]);
 
-  // Sort by date
-  const sorted = [...premios].sort((a, b) => (a.yr * 12 + a.mesIdx) - (b.yr * 12 + b.mesIdx));
+  // Sort by date and filter out past months
+  const now = new Date();
+  const curMonth = now.getMonth(); // 0-11
+  const curYear = now.getFullYear();
+  const sorted = [...premios]
+    .filter(p => (p.yr > curYear) || (p.yr === curYear && p.mesIdx >= curMonth))
+    .sort((a, b) => (a.yr * 12 + a.mesIdx) - (b.yr * 12 + b.mesIdx));
 
   return (
     <div style={{ maxWidth: 1060, margin: "0 auto", padding: "20px 28px 48px" }}>
@@ -2781,8 +2786,17 @@ function AdminPage() {
     setPNewContrato(""); setPNewPremio(""); setPNewVar("");
   };
 
-  const removePremioItem = (mi, yr) => {
+  const removePremioItem = async (mi, yr) => {
+    if (!confirm(`Deletar prêmio ${MESES_SHORT[mi]}/${String(yr).slice(-2)}?`)) return;
+    // Remove from local state
     setPItems(prev => prev.filter(p => !(p.mes_idx === mi && p.ano === yr)));
+    // Delete from Supabase
+    try {
+      await fetch("/api/admin", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: pw, action: "premios_delete", data: { mes_idx: mi, ano: yr } }),
+      });
+    } catch {}
   };
 
   const savePremios = async () => {
@@ -2966,12 +2980,35 @@ function AdminPage() {
           </div>
 
           {/* Histórico de lançamentos */}
-          {pHist.length > 0 && (
-            <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: 24 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 16 }}>Histórico de prêmios ({pHist.length} registros)</div>
-              <div style={{ color: "#4B5563", fontSize: 11 }}>Cada lançamento é gravado com a data — isso alimenta o termômetro na tela Prêmios Porto.</div>
-            </div>
-          )}
+          <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: 24 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 16 }}>Histórico de lançamentos ({pHist.length} registros)</div>
+            {pHist.length > 0 ? (
+              <div style={{ overflowX: "auto", maxHeight: 400, overflowY: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)", position: "sticky", top: 0, background: "#0D1117" }}>
+                      <th style={{ textAlign: "left", padding: "8px 12px", color: "#6B7280", fontWeight: 500 }}>Data ref.</th>
+                      <th style={{ textAlign: "left", padding: "8px 12px", color: "#6B7280", fontWeight: 500 }}>Embarque</th>
+                      <th style={{ textAlign: "right", padding: "8px 12px", color: "#6B7280", fontWeight: 500 }}>Prêmio (c/bu)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...pHist].reverse().map((h, i) => (
+                      <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                        <td style={{ padding: "6px 12px", color: "#9CA3AF" }}>{h.data_ref?.split("-").reverse().join("/")}</td>
+                        <td style={{ padding: "6px 12px", color: "#9CA3AF" }}>{MESES_SHORT[h.mes_idx]}/{String(h.ano).slice(-2)}</td>
+                        <td style={{ padding: "6px 12px", textAlign: "right", fontFamily: "'JetBrains Mono',monospace", color: h.premio >= 0 ? "#22C55E" : "#EF4444", fontWeight: 600 }}>
+                          {h.premio > 0 ? "+" : ""}{h.premio}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div style={{ color: "#4B5563", fontSize: 11 }}>Nenhum histórico ainda. Lance prêmios acima e clique "Salvar todos".</div>
+            )}
+          </div>
         </div>
       )}
     </div>
