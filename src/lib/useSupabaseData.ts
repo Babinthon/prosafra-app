@@ -379,6 +379,22 @@ export interface PremiosData {
   historico: PremioHistRow[];
 }
 
+export interface AnaliseRow {
+  sym: string;
+  label: string;
+  produto: string;
+  zona1_valor: number;
+  zona1_label: string;
+  zona2_valor: number;
+  zona2_label: string;
+  zona3_valor: number;
+  zona3_label: string;
+  zona4_valor: number | null;
+  zona4_label: string;
+  leitura: string;
+  updated_at: string;
+}
+
 export interface SupabaseData {
   cotacoes: Record<string, CotacaoRow>;
   contractsDash: ReturnType<typeof buildContractsDash>;
@@ -388,6 +404,7 @@ export interface SupabaseData {
   ptax: PtaxRow | null;
   fundosData: FundosData | null;
   premiosData: PremiosData | null;
+  analiseData: AnaliseRow[];
   loading: boolean;
   lastUpdate: string | null;
   isLive: boolean;
@@ -401,6 +418,7 @@ export function useSupabaseData(): SupabaseData {
   const [ptax, setPtax] = useState<PtaxRow | null>(null);
   const [fundosData, setFundosData] = useState<FundosData | null>(null);
   const [premiosData, setPremiosData] = useState<PremiosData | null>(null);
+  const [analiseData, setAnaliseData] = useState<AnaliseRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<string | null>(null);
   const [isLive, setIsLive] = useState(false);
@@ -513,6 +531,16 @@ export function useSupabaseData(): SupabaseData {
           historico: (premHist || []) as PremioHistRow[],
         });
       }
+
+      // ─── 7. ANÁLISE TÉCNICA ───
+      const { data: analiseRows, error: analiseErr } = await supabase
+        .from("analise_tecnica")
+        .select("*")
+        .order("produto", { ascending: true });
+
+      if (!analiseErr && analiseRows && analiseRows.length > 0) {
+        setAnaliseData(analiseRows as AnaliseRow[]);
+      }
     } catch (e) {
       console.error("useSupabaseData: fetch error, using fallback", e);
     } finally {
@@ -538,6 +566,7 @@ export function useSupabaseData(): SupabaseData {
     ptax,
     fundosData,
     premiosData,
+    analiseData,
     loading,
     lastUpdate,
     isLive,

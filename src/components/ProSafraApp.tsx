@@ -672,15 +672,39 @@ const ANALISE_DATA = {
   },
 };
 
-function AnaliseTecnicaPage({COTACOES}) {
-  const [selSym, setSelSym] = useState("CBOT:ZSK2026");
+function AnaliseTecnicaPage({COTACOES, analiseData}) {
+  // Use Supabase data if available, otherwise fallback to hardcoded
+  const hasLive = analiseData && analiseData.length > 0;
+  const contratos = hasLive
+    ? analiseData.map(a => ({ sym: a.sym, label: a.label, produto: a.produto }))
+    : ANALISE_CONTRATOS;
 
-  const contrato = ANALISE_CONTRATOS.find(c => c.sym === selSym);
+  const [selSym, setSelSym] = useState(contratos[0]?.sym || "CBOT:ZSK2026");
+
+  // Auto-select first available contract when data changes
+  useEffect(() => {
+    if (hasLive && !analiseData.find(a => a.sym === selSym)) {
+      setSelSym(analiseData[0].sym);
+    }
+  }, [analiseData, hasLive]);
+
+  const contrato = contratos.find(c => c.sym === selSym);
   const cotacao = COTACOES[selSym];
   const preco = cotacao ? cotacao.lp : 0;
   const ch = cotacao?.ch || 0;
   const chp = cotacao?.chp || 0;
-  const analise = ANALISE_DATA[selSym];
+
+  // Build analise from Supabase row or fallback
+  const liveRow = hasLive ? analiseData.find(a => a.sym === selSym) : null;
+  const analise = liveRow ? {
+    updatedAt: new Date(liveRow.updated_at).toLocaleDateString("pt-BR"),
+    leitura: liveRow.leitura || "",
+    faixas: [
+      { valor: liveRow.zona1_valor, tipo: "intensificar", label: liveRow.zona1_label, color: "#15803D", desc: "Topo do canal" },
+      { valor: liveRow.zona2_valor, tipo: "buscar", label: liveRow.zona2_label, color: "#22C55E", desc: "Início região de interesse" },
+      { valor: liveRow.zona3_valor, tipo: "segurar", label: liveRow.zona3_label, color: "#F59E0B", desc: "Suporte principal" },
+    ],
+  } : ANALISE_DATA[selSym];
 
   // Determine which zone the current price is in
   let zonaAtual = null;
@@ -717,10 +741,10 @@ function AnaliseTecnicaPage({COTACOES}) {
       <div style={{ display: "flex", gap: 12, alignItems: "flex-end", marginBottom: 20 }}>
         <Sel label="Contrato" value={selSym} onChange={setSelSym} w={280}>
           <optgroup label="Soja CBOT">
-            {ANALISE_CONTRATOS.filter(c => c.produto === "Soja").map(c => <option key={c.sym} value={c.sym}>{c.label}</option>)}
+            {contratos.filter(c => c.produto === "Soja").map(c => <option key={c.sym} value={c.sym}>{c.label}</option>)}
           </optgroup>
           <optgroup label="Milho CBOT">
-            {ANALISE_CONTRATOS.filter(c => c.produto === "Milho").map(c => <option key={c.sym} value={c.sym}>{c.label}</option>)}
+            {contratos.filter(c => c.produto === "Milho").map(c => <option key={c.sym} value={c.sym}>{c.label}</option>)}
           </optgroup>
         </Sel>
         {analise && <span style={{ color: "#374151", fontSize: 10, paddingBottom: 10 }}>Atualizado em {analise.updatedAt}</span>}
@@ -833,20 +857,6 @@ function AnaliseTecnicaPage({COTACOES}) {
               <span style={{ color: "#374151", fontSize: 9 }}>Atualizado {analise.updatedAt}</span>
             </div>
             <div style={{ color: "#9CA3AF", fontSize: 12, lineHeight: 1.7 }}>{analise.leitura}</div>
-          </div>
-
-          {/* Imagem do gráfico */}
-          <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "18px 22px" }}>
-            <div style={{ color: "#F1F5F9", fontSize: 13, fontWeight: 600, marginBottom: 10 }}>Gráfico técnico</div>
-            {analise.imageUrl ? (
-              <img src={analise.imageUrl} alt="Análise técnica" style={{ width: "100%", borderRadius: 8, border: "1px solid rgba(255,255,255,0.06)" }} />
-            ) : (
-              <div style={{ height: 300, background: "rgba(255,255,255,0.02)", borderRadius: 8, border: "1px dashed rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 8 }}>
-                <span style={{ color: "#374151", fontSize: 32 }}>△</span>
-                <span style={{ color: "#4B5563", fontSize: 12 }}>Imagem do gráfico será publicada pelo fundador via Admin</span>
-                <span style={{ color: "#374151", fontSize: 10 }}>Upload semanal com a análise atualizada</span>
-              </div>
-            )}
           </div>
 
           {/* Tabela de pontos */}
@@ -2715,6 +2725,18 @@ function AdminPage() {
   const [pLoading, setPLoading] = useState(false);
   const [pHist, setPHist] = useState([]);
 
+  // Analise state
+  const [aItems, setAItems] = useState([]);
+  const [aSym, setASym] = useState("CBOT:ZSN2026");
+  const [aLabel, setALabel] = useState("Soja Jul/26 (ZSN2026)");
+  const [aProduto, setAProduto] = useState("Soja");
+  const [aZ1, setAZ1] = useState("");
+  const [aZ2, setAZ2] = useState("");
+  const [aZ3, setAZ3] = useState("");
+  const [aLeitura, setALeitura] = useState("");
+  const [aMsg, setAMsg] = useState("");
+  const [aLoading, setALoading] = useState(false);
+
   const doLogin = async () => {
     setAuthErr("");
     try {
@@ -2724,7 +2746,7 @@ function AdminPage() {
         body: JSON.stringify({ password: pw, action: "auth_check" }),
       });
       const j = await res.json();
-      if (j.success) { setAuthed(true); loadFundos(); loadPremios(); }
+      if (j.success) { setAuthed(true); loadFundos(); loadPremios(); loadAnalise(); }
       else setAuthErr(j.error || "Senha incorreta");
     } catch { setAuthErr("Erro de conexão"); }
   };
@@ -2815,6 +2837,55 @@ function AdminPage() {
     setPLoading(false);
   };
 
+  // ─── Analise functions ───
+  const loadAnalise = async () => {
+    try {
+      const res = await fetch("/api/admin?type=analise");
+      const j = await res.json();
+      if (j.data) setAItems(j.data);
+    } catch {}
+  };
+
+  const editAnalise = (item) => {
+    setASym(item.sym);
+    setALabel(item.label);
+    setAProduto(item.produto);
+    setAZ1(String(item.zona1_valor));
+    setAZ2(String(item.zona2_valor));
+    setAZ3(String(item.zona3_valor));
+    setALeitura(item.leitura || "");
+  };
+
+  const saveAnalise = async () => {
+    if (!aSym || !aZ1 || !aZ2 || !aZ3) { setAMsg("Preencha contrato e as 3 zonas"); return; }
+    setALoading(true); setAMsg("");
+    try {
+      const res = await fetch("/api/admin", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: pw, action: "analise_upsert", data: {
+          sym: aSym, label: aLabel, produto: aProduto,
+          zona1_valor: parseFloat(aZ1), zona2_valor: parseFloat(aZ2), zona3_valor: parseFloat(aZ3),
+          leitura: aLeitura,
+        }}),
+      });
+      const j = await res.json();
+      if (j.success) { setAMsg("✓ Análise salva"); loadAnalise(); }
+      else setAMsg(`Erro: ${j.error}`);
+    } catch { setAMsg("Erro de conexão"); }
+    setALoading(false);
+  };
+
+  const deleteAnalise = async (sym) => {
+    if (!confirm(`Remover análise de ${sym}?`)) return;
+    try {
+      await fetch("/api/admin", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: pw, action: "analise_delete", data: { sym } }),
+      });
+      loadAnalise();
+    } catch {}
+  };
+
   const inputStyle = { background: "#0D1117", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: "8px 12px", color: "#F1F5F9", fontSize: 13, outline: "none", width: "100%" };
   const btnStyle = { background: "#E63946", border: "none", borderRadius: 7, padding: "10px 24px", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" };
 
@@ -2850,7 +2921,7 @@ function AdminPage() {
 
       {/* Tabs */}
       <div style={{ display: "flex", gap: 6, marginBottom: 24 }}>
-        {[{ id: "fundos", label: "Posição Fundos" }, { id: "premios", label: "Prêmios Porto" }].map(t => (
+        {[{ id: "fundos", label: "Posição Fundos" }, { id: "premios", label: "Prêmios Porto" }, { id: "analise", label: "Análise Técnica" }].map(t => (
           <div key={t.id} onClick={() => setTab(t.id)} style={{
             padding: "8px 20px", borderRadius: 7, cursor: "pointer", fontSize: 12, fontWeight: 600,
             background: tab === t.id ? "rgba(230,57,70,0.1)" : "rgba(255,255,255,0.03)",
@@ -3024,6 +3095,96 @@ function AdminPage() {
           </div>
         </div>
       )}
+
+      {/* ═══ ANÁLISE TÉCNICA TAB ═══ */}
+      {tab === "analise" && (
+        <div>
+          <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: 24, marginBottom: 20 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>Publicar análise técnica</div>
+            <div style={{ color: "#6B7280", fontSize: 11, marginBottom: 16 }}>Defina o contrato, as 3 zonas de preço e a leitura do mercado</div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 14 }}>
+              <div>
+                <label style={{ color: "#6B7280", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Contrato (símbolo)</label>
+                <input value={aSym} onChange={e => setASym(e.target.value)} placeholder="CBOT:ZSN2026" style={inputStyle} />
+              </div>
+              <div>
+                <label style={{ color: "#6B7280", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Nome para exibição</label>
+                <input value={aLabel} onChange={e => setALabel(e.target.value)} placeholder="Soja Jul/26 (ZSN2026)" style={inputStyle} />
+              </div>
+              <div>
+                <label style={{ color: "#6B7280", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Produto</label>
+                <select value={aProduto} onChange={e => setAProduto(e.target.value)} style={inputStyle}>
+                  <option value="Soja">Soja</option>
+                  <option value="Milho">Milho</option>
+                </select>
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 14 }}>
+              <div>
+                <label style={{ color: "#15803D", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Zona 1 — Intensificar (c/bu)</label>
+                <input type="number" value={aZ1} onChange={e => setAZ1(e.target.value)} placeholder="1255" style={{ ...inputStyle, fontFamily: "'JetBrains Mono',monospace" }} />
+              </div>
+              <div>
+                <label style={{ color: "#22C55E", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Zona 2 — Buscar negócios (c/bu)</label>
+                <input type="number" value={aZ2} onChange={e => setAZ2(e.target.value)} placeholder="1192" style={{ ...inputStyle, fontFamily: "'JetBrains Mono',monospace" }} />
+              </div>
+              <div>
+                <label style={{ color: "#F59E0B", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Zona 3 — Segurar (c/bu)</label>
+                <input type="number" value={aZ3} onChange={e => setAZ3(e.target.value)} placeholder="1162" style={{ ...inputStyle, fontFamily: "'JetBrains Mono',monospace" }} />
+              </div>
+            </div>
+
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ color: "#6B7280", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Leitura do mercado</label>
+              <textarea value={aLeitura} onChange={e => setALeitura(e.target.value)} placeholder="Seguimos em tendência de alta..." rows={3}
+                style={{ ...inputStyle, resize: "vertical" }} />
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <button onClick={saveAnalise} disabled={aLoading} style={{ ...btnStyle, opacity: aLoading ? 0.6 : 1 }}>
+                {aLoading ? "Salvando..." : "Salvar análise"}
+              </button>
+              {aMsg && <span style={{ fontSize: 12, color: aMsg.startsWith("✓") ? "#22C55E" : "#EF4444" }}>{aMsg}</span>}
+            </div>
+          </div>
+
+          {/* Análises publicadas */}
+          <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: 24 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 16 }}>Análises publicadas ({aItems.length})</div>
+            {aItems.length > 0 ? (
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                <thead>
+                  <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+                    <th style={{ textAlign: "left", padding: "8px 12px", color: "#6B7280", fontWeight: 500 }}>Contrato</th>
+                    <th style={{ textAlign: "right", padding: "8px 12px", color: "#15803D", fontWeight: 500 }}>Intensificar</th>
+                    <th style={{ textAlign: "right", padding: "8px 12px", color: "#22C55E", fontWeight: 500 }}>Buscar</th>
+                    <th style={{ textAlign: "right", padding: "8px 12px", color: "#F59E0B", fontWeight: 500 }}>Segurar</th>
+                    <th style={{ textAlign: "center", padding: "8px 12px", color: "#6B7280", fontWeight: 500 }}>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {aItems.map(a => (
+                    <tr key={a.sym} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                      <td style={{ padding: "8px 12px", color: "#9CA3AF" }}>{a.label}</td>
+                      <td style={{ padding: "8px 12px", textAlign: "right", fontFamily: "'JetBrains Mono',monospace", color: "#15803D" }}>{a.zona1_valor}</td>
+                      <td style={{ padding: "8px 12px", textAlign: "right", fontFamily: "'JetBrains Mono',monospace", color: "#22C55E" }}>{a.zona2_valor}</td>
+                      <td style={{ padding: "8px 12px", textAlign: "right", fontFamily: "'JetBrains Mono',monospace", color: "#F59E0B" }}>{a.zona3_valor}</td>
+                      <td style={{ padding: "8px 12px", textAlign: "center" }}>
+                        <span onClick={() => editAnalise(a)} style={{ color: "#457B9D", cursor: "pointer", fontSize: 10, marginRight: 10 }}>✎ editar</span>
+                        <span onClick={() => deleteAnalise(a.sym)} style={{ color: "#EF4444", cursor: "pointer", fontSize: 10 }}>✕ excluir</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div style={{ color: "#4B5563", fontSize: 11 }}>Nenhuma análise publicada. Preencha acima e clique "Salvar análise".</div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -3041,7 +3202,7 @@ export default function ProSafraApp() {
   const dateStr=time.toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
 
   // ─── SUPABASE DATA HOOK ───
-  const { cotacoes, contractsDash, pracas, basisData, defaultBasis, ptax, fundosData, premiosData, loading, lastUpdate, isLive } = useSupabaseData();
+  const { cotacoes, contractsDash, pracas, basisData, defaultBasis, ptax, fundosData, premiosData, analiseData, loading, lastUpdate, isLive } = useSupabaseData();
 
   // Dólar header — read from cotacoes (DOL 1º venc or FX:USDBRL)
   const dolFirst = contractsDash.dolarB3[0];
@@ -3119,7 +3280,7 @@ export default function ProSafraApp() {
         {page==="dashboard"&&<DashboardPage goTo={setPage} contractsDash={contractsDash}/>}
         {page==="preco-justo"&&<PrecoJustoPage {...dataProps}/>}
         {page==="premios"&&<PremiosPortoPage premiosData={premiosData}/>}
-        {page==="analise"&&<AnaliseTecnicaPage COTACOES={cotacoes}/>}
+        {page==="analise"&&<AnaliseTecnicaPage COTACOES={cotacoes} analiseData={analiseData}/>}
         {page==="fundamentos"&&<FundamentosPage/>}
         {page==="fundos"&&<PosicaoFundosPage fundosData={fundosData}/>}
         {page==="cambio"&&<CambioPage COTACOES={cotacoes} ptax={ptax}/>}

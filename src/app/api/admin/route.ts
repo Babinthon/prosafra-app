@@ -103,6 +103,34 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true });
     }
 
+    // ─── ANÁLISE TÉCNICA ───
+    if (action === "analise_upsert") {
+      const row = {
+        sym: data.sym,
+        label: data.label,
+        produto: data.produto,
+        zona1_valor: data.zona1_valor,
+        zona1_label: data.zona1_label || "Intensificar negócios",
+        zona2_valor: data.zona2_valor,
+        zona2_label: data.zona2_label || "Buscar negócios",
+        zona3_valor: data.zona3_valor,
+        zona3_label: data.zona3_label || "Segurar",
+        zona4_valor: data.zona4_valor || null,
+        zona4_label: data.zona4_label || "Preço desfavorável",
+        leitura: data.leitura || "",
+        updated_at: new Date().toISOString(),
+      };
+      const { error } = await supabase.from("analise_tecnica").upsert(row, { onConflict: "sym" });
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ success: true });
+    }
+
+    if (action === "analise_delete") {
+      const { error } = await supabase.from("analise_tecnica").delete().eq("sym", data.sym);
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ success: true });
+    }
+
     return NextResponse.json({ error: "Ação desconhecida" }, { status: 400 });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
@@ -141,6 +169,15 @@ export async function GET(request: Request) {
     if (e2) return NextResponse.json({ error: e2.message }, { status: 500 });
 
     return NextResponse.json({ atual: atual || [], historico: hist || [] });
+  }
+
+  if (type === "analise") {
+    const { data, error } = await supabase
+      .from("analise_tecnica")
+      .select("*")
+      .order("produto", { ascending: true });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ data: data || [] });
   }
 
   return NextResponse.json({ error: "type param required" }, { status: 400 });
