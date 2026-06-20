@@ -6,51 +6,93 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-// PTAX via AwesomeAPI (economia.awesomeapi.com.br) — gratuita, sem bloqueio
-// Retorna cotação comercial compra/venda do dólar
+// PTAX — Tenta BCB oficial primeiro, depois AwesomeAPI como fallback
 
-async function fetchPtax(): Promise<{
+async function fetchPtaxBCB(): Promise<{
   dataRef: string;
   compra: number;
   venda: number;
 } | null> {
   try {
-    // Buscar últimos 5 dias de cotação USD-BRL
-    const url = "https://economia.awesomeapi.com.br/json/daily/USD-BRL/5";
+    const today = new Date();
+    const start = new Date(today);
+    start.setDate(start.getDate() - 10);
+
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const fmtBCB = (d: Date) => `'${pad(d.getMonth() + 1)}-${pad(d.getDate())}-${d.getFullYear()}'`;
+
+    const url = `https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/CotacaoDolarPeriodo(dataInicial=@dataInicial,dataFinalCotacao=@dataFinalCotacao)?@dataInicial=${fmtBCB(start)}&@dataFinalCotacao=${fmtBCB(today)}&$orderby=dataHoraCotacao%20desc&$top=10&$format=json`;
+
+    console.log("BCB PTAX URL:", url);
 
     const res = await fetch(url, {
       headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(10000), // 10s timeout
     });
 
     if (!res.ok) {
-      console.error(`AwesomeAPI error: ${res.status}`);
+      console.error(`BCB PTAX error: ${res.status}`);
       return null;
     }
 
-    const data = await res.json();
+    const json = await res.json();
+    const values = json?.value;
 
-    if (!data || data.length === 0) {
-      console.error("AwesomeAPI: no data returned");
+    if (!values || values.length === 0) {
+      console.error("BCB PTAX: no data");
       return null;
     }
 
-    // Primeiro item é o mais recente
-    const latest = data[0];
-
-    // timestamp é Unix em segundos
-    const dt = new Date(parseInt(latest.timestamp) * 1000);
-    const pad = (n: number) => String(n).padStart(2, "0");
-    const dataRef = `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
+    // Pegar fechamento mais recente
+    const closing = values.find((v: any) => v.tipoBoletim === "Fechamento") || values[0];
+    const dataRef = closing.dataHoraCotacao.split(" ")[0]; // "2026-06-19"
 
     return {
       dataRef,
-      compra: parseFloat(latest.bid),
-      venda: parseFloat(latest.ask),
+      compra: closing.cotacaoCompra,
+      venda: closing.cotacaoVenda,
     };
   } catch (e: any) {
-    console.error("PTAX fetch error:", e.message);
+    console.error("BCB PTAX fetch failed:", e.message);
     return null;
   }
+}
+
+async function fetchPtaxAwesome(): Promise<{
+  dataRef: string;
+  compra: number;
+  venda: number;
+} | null> {
+  try {
+    const url = "https://economia.awesomeapi.com.br/json/daily/USD-BRL/5";
+    const res = await fetch(url, { headers: { Accept: "application/json" } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data || data.length === 0) return null;
+    const latest = data[0];
+    const dt = new Date(parseInt(latest.timestamp) * 1000);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const dataRef = `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
+    return { dataRef, compra: parseFloat(latest.bid), venda: parseFloat(latest.ask) };
+  } catch { return null; }
+}
+
+async function fetchPtax(): Promise<{
+  dataRef: string;
+  compra: number;
+  venda: number;
+  fonte: string;
+} | null> {
+  // Tentar BCB oficial primeiro
+  const bcb = await fetchPtaxBCB();
+  if (bcb) return { ...bcb, fonte: "BCB/PTAX" };
+
+  // Fallback: AwesomeAPI
+  console.log("BCB failed, trying AwesomeAPI...");
+  const awesome = await fetchPtaxAwesome();
+  if (awesome) return { ...awesome, fonte: "AwesomeAPI" };
+
+  return null;
 }
 
 export async function GET(request: Request) {
@@ -91,6 +133,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       success: true,
+      fonte: ptax.fonte,
       data: {
         data_ref: ptax.dataRef,
         compra: ptax.compra,
