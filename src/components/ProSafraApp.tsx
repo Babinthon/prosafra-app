@@ -1835,16 +1835,27 @@ function ParidadePage({COTACOES}) {
 function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
   const mercado = "Soja Exportação"; // Custo carrego é só soja inicialmente
   const [pracaId, setPracaId] = useState(1);
-  const [dtEntrega, setDtEntrega] = useState("2026-05-01");
-  const [dtPagto, setDtPagto] = useState("2026-05-05");
-  const [dtEntregaFut, setDtEntregaFut] = useState("2026-12-01");
-  const [dtPagtoFut, setDtPagtoFut] = useState("2026-12-05");
+
+  // Datas padrão calculadas na abertura da aba, a partir da data atual
+  const _hoje = new Date();
+  const _fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const _addDias = (d: Date, n: number) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+  const _addMeses = (d: Date, n: number) => { const x = new Date(d); x.setMonth(x.getMonth() + n); return x; };
+  const _entregaPadrao = _fmt(_hoje);                               // entrega = hoje
+  const _pagtoPadrao = _fmt(_addDias(_hoje, 30));                   // pagamento = hoje + 30 dias
+  const _entregaFutPadrao = _fmt(_addMeses(_hoje, 5));             // projeção = hoje + 5 meses
+  const _pagtoFutPadrao = _fmt(_addDias(_addMeses(_hoje, 5), 30)); // pagamento futuro = entrega futura + 30 dias
+
+  const [dtEntrega, setDtEntrega] = useState(_entregaPadrao);
+  const [dtPagto, setDtPagto] = useState(_pagtoPadrao);
+  const [dtEntregaFut, setDtEntregaFut] = useState(_entregaFutPadrao);
+  const [dtPagtoFut, setDtPagtoFut] = useState(_pagtoFutPadrao);
   const [volume, setVolume] = useState(10000);
   const [precoInput, setPrecoInput] = useState(110);
   const [moeda, setMoeda] = useState("BRL");
   const [armMes, setArmMes] = useState(0.35);
   const [quebraAm, setQuebraAm] = useState(0.30);
-  const [finAm, setFinAm] = useState(1.25);
+  const [finAm, setFinAm] = useState(1);
   const [subTab, setSubTab] = useState("calc");
   const [posicoes, setPosicoes] = useState([]);
 
