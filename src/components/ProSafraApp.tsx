@@ -3378,10 +3378,11 @@ export default function ProSafraApp() {
   // ─── SUPABASE DATA HOOK ───
   const { cotacoes, contractsDash, pracas, basisData, defaultBasis, ptax, fundosData, premiosData, analiseData, fundamentosData, loading, lastUpdate, isLive } = useSupabaseData();
 
-  // Dólar header — read from cotacoes (DOL 1º venc or FX:USDBRL)
+  // Dólar header — prioridade: PTAX BCB > FX spot > DOL futuro
   const dolFirst = contractsDash.dolarB3[0];
-  const fxSpot = cotacoes["FX:USDBRL"];
-  const headerDol = dolFirst ? dolFirst.lp / 1000 : (fxSpot ? fxSpot.lp : 5.008);
+  const fxSpot = cotacoes["FX_IDC:USDBRL"];
+  const headerDol = ptax ? ptax.venda : (fxSpot ? fxSpot.lp : (dolFirst ? dolFirst.lp / 1000 : 5.15));
+  const headerDolLabel = ptax ? "PTAX" : "USD/BRL";
   const headerDolStr = fmt(headerDol, 4);
 
   // Shorthand props for pages that need all data
@@ -3443,7 +3444,7 @@ export default function ProSafraApp() {
           </div>
           <div style={{display:"flex",alignItems:"center",gap:14}}>
             <div style={{background:"rgba(69,123,157,0.1)",border:"1px solid rgba(69,123,157,0.2)",borderRadius:7,padding:"7px 14px",display:"flex",alignItems:"center",gap:10}}>
-              <span style={{color:"#457B9D",fontSize:10,fontWeight:500,textTransform:"uppercase",letterSpacing:"0.06em"}}>USD/BRL</span>
+              <span style={{color:"#457B9D",fontSize:10,fontWeight:500,textTransform:"uppercase",letterSpacing:"0.06em"}}>{headerDolLabel}</span>
               <span style={{color:"#F1F5F9",fontSize:15,fontWeight:700,fontFamily:"'JetBrains Mono',monospace"}}>R$ {headerDolStr}</span>
             </div>
             <div style={{width:7,height:7,borderRadius:"50%",background:isLive?"#22C55E":"#F59E0B",boxShadow:isLive?"0 0 6px #22C55E44":"0 0 6px #F59E0B44"}}/>

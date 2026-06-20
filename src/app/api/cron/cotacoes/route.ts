@@ -40,7 +40,7 @@ const BATCHES = [
   // Batch 5: Dólar restante (3) + FX spot (1)
   [
     "BMFBOVESPA:DOLQ2027", "BMFBOVESPA:DOLV2027", "BMFBOVESPA:DOLF2028",
-    "FX:USDBRL",
+    "FX_IDC:USDBRL",
   ],
 ];
 

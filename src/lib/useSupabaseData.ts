@@ -86,7 +86,7 @@ const COTACOES_FALLBACK: Record<string, CotacaoRow> = {
   "BMFBOVESPA:DOLN2027":{lp:5483.75,ch:-15,chp:-0.27,hi:5483.75,lo:5483.75,vol:0},
   "BMFBOVESPA:DOLQ2027":{lp:5517.46,ch:-15.5,chp:-0.28,hi:5517.46,lo:5517.46,vol:0},
   "BMFBOVESPA:DOLV2027":{lp:5586.1,ch:-17,chp:-0.3,hi:5586.1,lo:5586.1,vol:0},
-  "FX:USDBRL":{lp:5.008,ch:-0.01,chp:-0.2,hi:5.02,lo:4.99,vol:0},
+  "FX_IDC:USDBRL":{lp:5.15,ch:-0.01,chp:-0.17,hi:5.16,lo:5.14,vol:0},
 };
 
 const PRACAS_FALLBACK: PracaRow[] = [
@@ -196,7 +196,7 @@ function buildContractsDash(cotacoes: Record<string, CotacaoRow>) {
     } else if (symbol.includes("DOL")) {
       dolarB3.push(item);
     }
-    // skip FX:USDBRL — it's not a contract
+    // skip FX_IDC:USDBRL — it's not a contract
   }
 
   // Sort each group by year then month code
