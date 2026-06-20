@@ -131,6 +131,37 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true });
     }
 
+    // ─── FUNDAMENTOS USDA ───
+    if (action === "fundamentos_upsert") {
+      // When saving, first fetch current to preserve as "anterior"
+      const { data: existing } = await supabase.from("fundamentos_usda").select("*").eq("produto", data.produto).single();
+      
+      const row: any = { ...data, updated_at: new Date().toISOString() };
+      
+      // If exists and safra changed, shift current to anterior
+      if (existing && data.shift_anterior) {
+        row.prod_mundo_ant = existing.prod_mundo;
+        row.consumo_mundo_ant = existing.consumo_mundo;
+        row.export_mundo_ant = existing.export_mundo;
+        row.estoque_mundo_ant = existing.estoque_mundo;
+        row.rel_estoque_uso_ant = existing.rel_estoque_uso;
+        row.brasil_prod_ant = existing.brasil_prod;
+        row.brasil_exp_ant = existing.brasil_exp;
+        row.eua_prod_ant = existing.eua_prod;
+        row.eua_exp_ant = existing.eua_exp;
+        row.argentina_prod_ant = existing.argentina_prod;
+        row.argentina_exp_ant = existing.argentina_exp;
+        row.china_consumo_ant = existing.china_consumo;
+        row.china_import_ant = existing.china_import;
+        row.safra_anterior = existing.safra_atual;
+      }
+      delete row.shift_anterior;
+
+      const { error } = await supabase.from("fundamentos_usda").upsert(row, { onConflict: "produto" });
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ success: true });
+    }
+
     return NextResponse.json({ error: "Ação desconhecida" }, { status: 400 });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
@@ -176,6 +207,14 @@ export async function GET(request: Request) {
       .from("analise_tecnica")
       .select("*")
       .order("produto", { ascending: true });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ data: data || [] });
+  }
+
+  if (type === "fundamentos") {
+    const { data, error } = await supabase
+      .from("fundamentos_usda")
+      .select("*");
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ data: data || [] });
   }

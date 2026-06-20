@@ -395,6 +395,28 @@ export interface AnaliseRow {
   updated_at: string;
 }
 
+export interface FundamentosRow {
+  produto: string;
+  safra_atual: string;
+  safra_anterior: string;
+  prod_mundo: number; prod_mundo_ant: number;
+  consumo_mundo: number; consumo_mundo_ant: number;
+  export_mundo: number; export_mundo_ant: number;
+  estoque_mundo: number; estoque_mundo_ant: number;
+  rel_estoque_uso: number; rel_estoque_uso_ant: number;
+  brasil_prod: number; brasil_prod_ant: number;
+  brasil_exp: number; brasil_exp_ant: number;
+  eua_prod: number; eua_prod_ant: number;
+  eua_exp: number; eua_exp_ant: number;
+  argentina_prod: number; argentina_prod_ant: number;
+  argentina_exp: number; argentina_exp_ant: number;
+  china_consumo: number; china_consumo_ant: number;
+  china_import: number; china_import_ant: number;
+  leitura: string;
+  leitura_date: string;
+  updated_at: string;
+}
+
 export interface SupabaseData {
   cotacoes: Record<string, CotacaoRow>;
   contractsDash: ReturnType<typeof buildContractsDash>;
@@ -405,6 +427,7 @@ export interface SupabaseData {
   fundosData: FundosData | null;
   premiosData: PremiosData | null;
   analiseData: AnaliseRow[];
+  fundamentosData: FundamentosRow[];
   loading: boolean;
   lastUpdate: string | null;
   isLive: boolean;
@@ -419,6 +442,7 @@ export function useSupabaseData(): SupabaseData {
   const [fundosData, setFundosData] = useState<FundosData | null>(null);
   const [premiosData, setPremiosData] = useState<PremiosData | null>(null);
   const [analiseData, setAnaliseData] = useState<AnaliseRow[]>([]);
+  const [fundamentosData, setFundamentosData] = useState<FundamentosRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<string | null>(null);
   const [isLive, setIsLive] = useState(false);
@@ -541,6 +565,15 @@ export function useSupabaseData(): SupabaseData {
       if (!analiseErr && analiseRows && analiseRows.length > 0) {
         setAnaliseData(analiseRows as AnaliseRow[]);
       }
+
+      // ─── 8. FUNDAMENTOS USDA ───
+      const { data: fundRows, error: fundErr } = await supabase
+        .from("fundamentos_usda")
+        .select("*");
+
+      if (!fundErr && fundRows && fundRows.length > 0) {
+        setFundamentosData(fundRows as FundamentosRow[]);
+      }
     } catch (e) {
       console.error("useSupabaseData: fetch error, using fallback", e);
     } finally {
@@ -567,6 +600,7 @@ export function useSupabaseData(): SupabaseData {
     fundosData,
     premiosData,
     analiseData,
+    fundamentosData,
     loading,
     lastUpdate,
     isLive,

@@ -950,9 +950,31 @@ const USDA_DATA = {
   leituraDate: "12/04/2026",
 };
 
-function FundamentosPage() {
+function FundamentosPage({fundamentosData}) {
   const [produto, setProduto] = useState("soja");
-  const d = USDA_DATA[produto];
+
+  // Use Supabase data if available
+  const liveRow = fundamentosData?.find(r => r.produto === produto);
+  const hasLive = !!liveRow;
+
+  const d = hasLive ? {
+    safraAtual: liveRow.safra_atual,
+    safraAnterior: liveRow.safra_anterior,
+    mundo: {
+      producao: { atual: liveRow.prod_mundo, anterior: liveRow.prod_mundo_ant },
+      consumo: { atual: liveRow.consumo_mundo, anterior: liveRow.consumo_mundo_ant },
+      exportacao: { atual: liveRow.export_mundo, anterior: liveRow.export_mundo_ant },
+      estoqueFinal: { atual: liveRow.estoque_mundo, anterior: liveRow.estoque_mundo_ant },
+    },
+    paises: [
+      { nome: "Brasil", prod: liveRow.brasil_prod, prodAnt: liveRow.brasil_prod_ant, exp: liveRow.brasil_exp, expAnt: liveRow.brasil_exp_ant },
+      { nome: "EUA", prod: liveRow.eua_prod, prodAnt: liveRow.eua_prod_ant, exp: liveRow.eua_exp, expAnt: liveRow.eua_exp_ant },
+      { nome: "Argentina", prod: liveRow.argentina_prod, prodAnt: liveRow.argentina_prod_ant, exp: liveRow.argentina_exp, expAnt: liveRow.argentina_exp_ant },
+      { nome: "China", prod: 0, prodAnt: 0, exp: 0, expAnt: 0, consumo: liveRow.china_consumo, consumoAnt: liveRow.china_consumo_ant, importacao: liveRow.china_import, impAnt: liveRow.china_import_ant },
+    ],
+    relEstoqueUso: liveRow.rel_estoque_uso,
+    relEstoqueUsoAnt: liveRow.rel_estoque_uso_ant,
+  } : USDA_DATA[produto];
 
   const estoqueNivel = d.relEstoqueUso < 20 ? "apertado" : d.relEstoqueUso < 30 ? "equilibrado" : "folgado";
   const estoqueColor = estoqueNivel === "apertado" ? "#EF4444" : estoqueNivel === "equilibrado" ? "#F59E0B" : "#22C55E";
@@ -1104,9 +1126,9 @@ function FundamentosPage() {
       <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "18px 22px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
           <div style={{ color: "#F1F5F9", fontSize: 13, fontWeight: 600 }}>Análise dos números</div>
-          <span style={{ color: "#374151", fontSize: 9 }}>Atualizado {USDA_DATA.leituraDate}</span>
+          <span style={{ color: "#374151", fontSize: 9 }}>Atualizado {hasLive ? liveRow.leitura_date : USDA_DATA.leituraDate}</span>
         </div>
-        <div style={{ color: "#9CA3AF", fontSize: 12, lineHeight: 1.7 }}>{USDA_DATA.leitura}</div>
+        <div style={{ color: "#9CA3AF", fontSize: 12, lineHeight: 1.7 }}>{hasLive ? (liveRow.leitura || "Sem leitura cadastrada") : USDA_DATA.leitura}</div>
       </div>
     </div>
   );
@@ -2737,6 +2759,21 @@ function AdminPage() {
   const [aMsg, setAMsg] = useState("");
   const [aLoading, setALoading] = useState(false);
 
+  // Fundamentos state
+  const [uProduto, setUProduto] = useState("soja");
+  const [uData, setUData] = useState({
+    safra_atual:"2025/26", safra_anterior:"2024/25",
+    prod_mundo:"", consumo_mundo:"", export_mundo:"", estoque_mundo:"", rel_estoque_uso:"",
+    prod_mundo_ant:"", consumo_mundo_ant:"", export_mundo_ant:"", estoque_mundo_ant:"", rel_estoque_uso_ant:"",
+    brasil_prod:"", brasil_exp:"", brasil_prod_ant:"", brasil_exp_ant:"",
+    eua_prod:"", eua_exp:"", eua_prod_ant:"", eua_exp_ant:"",
+    argentina_prod:"", argentina_exp:"", argentina_prod_ant:"", argentina_exp_ant:"",
+    china_consumo:"", china_import:"", china_consumo_ant:"", china_import_ant:"",
+    leitura:"", leitura_date:"",
+  });
+  const [uMsg, setUMsg] = useState("");
+  const [uLoading, setULoading] = useState(false);
+
   const doLogin = async () => {
     setAuthErr("");
     try {
@@ -2746,7 +2783,7 @@ function AdminPage() {
         body: JSON.stringify({ password: pw, action: "auth_check" }),
       });
       const j = await res.json();
-      if (j.success) { setAuthed(true); loadFundos(); loadPremios(); loadAnalise(); }
+      if (j.success) { setAuthed(true); loadFundos(); loadPremios(); loadAnalise(); loadFundamentos(); }
       else setAuthErr(j.error || "Senha incorreta");
     } catch { setAuthErr("Erro de conexão"); }
   };
@@ -2886,6 +2923,46 @@ function AdminPage() {
     } catch {}
   };
 
+  // ─── Fundamentos functions ───
+  const loadFundamentos = async () => {
+    try {
+      const res = await fetch("/api/admin?type=fundamentos");
+      const j = await res.json();
+      if (j.data) {
+        const row = j.data.find(r => r.produto === uProduto);
+        if (row) {
+          const d = {};
+          for (const k of Object.keys(uData)) { d[k] = row[k] !== null && row[k] !== undefined ? String(row[k]) : ""; }
+          setUData(d);
+        }
+      }
+    } catch {}
+  };
+
+  const saveFundamentos = async () => {
+    setULoading(true); setUMsg("");
+    try {
+      const numFields = ["prod_mundo","consumo_mundo","export_mundo","estoque_mundo","rel_estoque_uso",
+        "prod_mundo_ant","consumo_mundo_ant","export_mundo_ant","estoque_mundo_ant","rel_estoque_uso_ant",
+        "brasil_prod","brasil_exp","brasil_prod_ant","brasil_exp_ant",
+        "eua_prod","eua_exp","eua_prod_ant","eua_exp_ant",
+        "argentina_prod","argentina_exp","argentina_prod_ant","argentina_exp_ant",
+        "china_consumo","china_import","china_consumo_ant","china_import_ant"];
+      const payload = { produto: uProduto };
+      for (const [k, v] of Object.entries(uData)) {
+        payload[k] = numFields.includes(k) ? (v ? parseFloat(v) : null) : v;
+      }
+      const res = await fetch("/api/admin", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: pw, action: "fundamentos_upsert", data: payload }),
+      });
+      const j = await res.json();
+      if (j.success) setUMsg("✓ Fundamentos salvos");
+      else setUMsg(`Erro: ${j.error}`);
+    } catch { setUMsg("Erro de conexão"); }
+    setULoading(false);
+  };
+
   const inputStyle = { background: "#0D1117", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: "8px 12px", color: "#F1F5F9", fontSize: 13, outline: "none", width: "100%" };
   const btnStyle = { background: "#E63946", border: "none", borderRadius: 7, padding: "10px 24px", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" };
 
@@ -2921,7 +2998,7 @@ function AdminPage() {
 
       {/* Tabs */}
       <div style={{ display: "flex", gap: 6, marginBottom: 24 }}>
-        {[{ id: "fundos", label: "Posição Fundos" }, { id: "premios", label: "Prêmios Porto" }, { id: "analise", label: "Análise Técnica" }].map(t => (
+        {[{ id: "fundos", label: "Posição Fundos" }, { id: "premios", label: "Prêmios Porto" }, { id: "analise", label: "Análise Técnica" }, { id: "usda", label: "Fundamentos USDA" }].map(t => (
           <div key={t.id} onClick={() => setTab(t.id)} style={{
             padding: "8px 20px", borderRadius: 7, cursor: "pointer", fontSize: 12, fontWeight: 600,
             background: tab === t.id ? "rgba(230,57,70,0.1)" : "rgba(255,255,255,0.03)",
@@ -3185,6 +3262,102 @@ function AdminPage() {
           </div>
         </div>
       )}
+      {/* ═══ FUNDAMENTOS USDA TAB ═══ */}
+      {tab === "usda" && (
+        <div>
+          <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: 24 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 600 }}>Fundamentos USDA/WASDE</div>
+                <div style={{ color: "#6B7280", fontSize: 11 }}>Preencha os números do último relatório (milhões de toneladas)</div>
+              </div>
+              <div style={{ display: "flex", gap: 6 }}>
+                {["soja","milho"].map(p => (
+                  <div key={p} onClick={() => { setUProduto(p); setTimeout(loadFundamentos, 100); }} style={{
+                    padding: "6px 16px", borderRadius: 6, cursor: "pointer", fontSize: 12, fontWeight: 600,
+                    background: uProduto === p ? "rgba(230,57,70,0.1)" : "rgba(255,255,255,0.03)",
+                    color: uProduto === p ? "#E63946" : "#6B7280",
+                    border: `1px solid ${uProduto === p ? "rgba(230,57,70,0.3)" : "rgba(255,255,255,0.06)"}`,
+                    textTransform: "capitalize",
+                  }}>{p}</div>
+                ))}
+              </div>
+            </div>
+
+            {/* Safras */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 20 }}>
+              <div>
+                <label style={{ color: "#6B7280", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Safra atual</label>
+                <input value={uData.safra_atual} onChange={e => setUData(d => ({...d, safra_atual: e.target.value}))} placeholder="2025/26" style={inputStyle} />
+              </div>
+              <div>
+                <label style={{ color: "#6B7280", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Safra anterior</label>
+                <input value={uData.safra_anterior} onChange={e => setUData(d => ({...d, safra_anterior: e.target.value}))} placeholder="2024/25" style={inputStyle} />
+              </div>
+              <div>
+                <label style={{ color: "#6B7280", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Data do relatório</label>
+                <input value={uData.leitura_date} onChange={e => setUData(d => ({...d, leitura_date: e.target.value}))} placeholder="Jun/2026" style={inputStyle} />
+              </div>
+            </div>
+
+            {/* MUNDO */}
+            <div style={{ color: "#E63946", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Mundo</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 8, marginBottom: 16 }}>
+              {[["prod_mundo","Produção"],["consumo_mundo","Consumo"],["export_mundo","Exportação"],["estoque_mundo","Est. Final"],["rel_estoque_uso","Est/Uso %"]].map(([k,l]) => (
+                <div key={k}>
+                  <label style={{ color: "#22C55E", fontSize: 9, display: "block", marginBottom: 2 }}>{l} (atual)</label>
+                  <input type="number" value={uData[k]} onChange={e => setUData(d => ({...d, [k]: e.target.value}))} style={{ ...inputStyle, fontSize: 12, fontFamily: "'JetBrains Mono',monospace", padding: "6px 8px" }} />
+                </div>
+              ))}
+              {[["prod_mundo_ant","Produção"],["consumo_mundo_ant","Consumo"],["export_mundo_ant","Exportação"],["estoque_mundo_ant","Est. Final"],["rel_estoque_uso_ant","Est/Uso %"]].map(([k,l]) => (
+                <div key={k}>
+                  <label style={{ color: "#6B7280", fontSize: 9, display: "block", marginBottom: 2 }}>{l} (ant.)</label>
+                  <input type="number" value={uData[k]} onChange={e => setUData(d => ({...d, [k]: e.target.value}))} style={{ ...inputStyle, fontSize: 12, fontFamily: "'JetBrains Mono',monospace", padding: "6px 8px" }} />
+                </div>
+              ))}
+            </div>
+
+            {/* PAÍSES */}
+            <div style={{ color: "#E63946", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Principais países</div>
+            <div style={{ display: "grid", gridTemplateColumns: "80px repeat(4,1fr)", gap: 8, marginBottom: 4, fontSize: 9, color: "#4B5563" }}>
+              <div></div><div>Prod. atual</div><div>Prod. ant.</div><div>Exp. atual</div><div>Exp. ant.</div>
+            </div>
+            {[["brasil","Brasil"],["eua","EUA"],["argentina","Argentina"]].map(([k,l]) => (
+              <div key={k} style={{ display: "grid", gridTemplateColumns: "80px repeat(4,1fr)", gap: 8, marginBottom: 6 }}>
+                <div style={{ color: "#9CA3AF", fontSize: 11, paddingTop: 6 }}>{l}</div>
+                <input type="number" value={uData[`${k}_prod`]} onChange={e => setUData(d => ({...d, [`${k}_prod`]: e.target.value}))} style={{ ...inputStyle, fontSize: 12, fontFamily: "'JetBrains Mono',monospace", padding: "6px 8px" }} />
+                <input type="number" value={uData[`${k}_prod_ant`]} onChange={e => setUData(d => ({...d, [`${k}_prod_ant`]: e.target.value}))} style={{ ...inputStyle, fontSize: 12, fontFamily: "'JetBrains Mono',monospace", padding: "6px 8px" }} />
+                <input type="number" value={uData[`${k}_exp`]} onChange={e => setUData(d => ({...d, [`${k}_exp`]: e.target.value}))} style={{ ...inputStyle, fontSize: 12, fontFamily: "'JetBrains Mono',monospace", padding: "6px 8px" }} />
+                <input type="number" value={uData[`${k}_exp_ant`]} onChange={e => setUData(d => ({...d, [`${k}_exp_ant`]: e.target.value}))} style={{ ...inputStyle, fontSize: 12, fontFamily: "'JetBrains Mono',monospace", padding: "6px 8px" }} />
+              </div>
+            ))}
+            <div style={{ display: "grid", gridTemplateColumns: "80px repeat(4,1fr)", gap: 8, marginBottom: 16, fontSize: 9, color: "#4B5563" }}>
+              <div></div><div>Consumo atual</div><div>Consumo ant.</div><div>Import. atual</div><div>Import. ant.</div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "80px repeat(4,1fr)", gap: 8, marginBottom: 16 }}>
+              <div style={{ color: "#9CA3AF", fontSize: 11, paddingTop: 6 }}>China</div>
+              <input type="number" value={uData.china_consumo} onChange={e => setUData(d => ({...d, china_consumo: e.target.value}))} style={{ ...inputStyle, fontSize: 12, fontFamily: "'JetBrains Mono',monospace", padding: "6px 8px" }} />
+              <input type="number" value={uData.china_consumo_ant} onChange={e => setUData(d => ({...d, china_consumo_ant: e.target.value}))} style={{ ...inputStyle, fontSize: 12, fontFamily: "'JetBrains Mono',monospace", padding: "6px 8px" }} />
+              <input type="number" value={uData.china_import} onChange={e => setUData(d => ({...d, china_import: e.target.value}))} style={{ ...inputStyle, fontSize: 12, fontFamily: "'JetBrains Mono',monospace", padding: "6px 8px" }} />
+              <input type="number" value={uData.china_import_ant} onChange={e => setUData(d => ({...d, china_import_ant: e.target.value}))} style={{ ...inputStyle, fontSize: 12, fontFamily: "'JetBrains Mono',monospace", padding: "6px 8px" }} />
+            </div>
+
+            {/* Leitura */}
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ color: "#6B7280", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Leitura do relatório</label>
+              <textarea value={uData.leitura} onChange={e => setUData(d => ({...d, leitura: e.target.value}))} placeholder="O relatório indica..." rows={3}
+                style={{ ...inputStyle, resize: "vertical" }} />
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <button onClick={saveFundamentos} disabled={uLoading} style={{ ...btnStyle, opacity: uLoading ? 0.6 : 1 }}>
+                {uLoading ? "Salvando..." : `Salvar ${uProduto}`}
+              </button>
+              {uMsg && <span style={{ fontSize: 12, color: uMsg.startsWith("✓") ? "#22C55E" : "#EF4444" }}>{uMsg}</span>}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -3202,7 +3375,7 @@ export default function ProSafraApp() {
   const dateStr=time.toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
 
   // ─── SUPABASE DATA HOOK ───
-  const { cotacoes, contractsDash, pracas, basisData, defaultBasis, ptax, fundosData, premiosData, analiseData, loading, lastUpdate, isLive } = useSupabaseData();
+  const { cotacoes, contractsDash, pracas, basisData, defaultBasis, ptax, fundosData, premiosData, analiseData, fundamentosData, loading, lastUpdate, isLive } = useSupabaseData();
 
   // Dólar header — read from cotacoes (DOL 1º venc or FX:USDBRL)
   const dolFirst = contractsDash.dolarB3[0];
@@ -3281,7 +3454,7 @@ export default function ProSafraApp() {
         {page==="preco-justo"&&<PrecoJustoPage {...dataProps}/>}
         {page==="premios"&&<PremiosPortoPage premiosData={premiosData}/>}
         {page==="analise"&&<AnaliseTecnicaPage COTACOES={cotacoes} analiseData={analiseData}/>}
-        {page==="fundamentos"&&<FundamentosPage/>}
+        {page==="fundamentos"&&<FundamentosPage fundamentosData={fundamentosData}/>}
         {page==="fundos"&&<PosicaoFundosPage fundosData={fundosData}/>}
         {page==="cambio"&&<CambioPage COTACOES={cotacoes} ptax={ptax}/>}
         {page==="paridade"&&<ParidadePage COTACOES={cotacoes}/>}
