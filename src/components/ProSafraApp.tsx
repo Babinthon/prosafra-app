@@ -1354,8 +1354,6 @@ function PosicaoFundosPage({fundosData}) {
 // ═══════════════════════════════════════════════════════════════
 
 const DOL_CONTRACTS = [
-  { sym: "BMFBOVESPA:DOLK2026", mo: "Mai/26", mes: "Maio 2026" },
-  { sym: "BMFBOVESPA:DOLM2026", mo: "Jun/26", mes: "Junho 2026" },
   { sym: "BMFBOVESPA:DOLN2026", mo: "Jul/26", mes: "Julho 2026" },
   { sym: "BMFBOVESPA:DOLQ2026", mo: "Ago/26", mes: "Agosto 2026" },
   { sym: "BMFBOVESPA:DOLU2026", mo: "Set/26", mes: "Setembro 2026" },
@@ -1366,9 +1364,12 @@ const DOL_CONTRACTS = [
   { sym: "BMFBOVESPA:DOLG2027", mo: "Fev/27", mes: "Fevereiro 2027" },
   { sym: "BMFBOVESPA:DOLH2027", mo: "Mar/27", mes: "Março 2027" },
   { sym: "BMFBOVESPA:DOLJ2027", mo: "Abr/27", mes: "Abril 2027" },
+  { sym: "BMFBOVESPA:DOLK2027", mo: "Mai/27", mes: "Maio 2027" },
+  { sym: "BMFBOVESPA:DOLM2027", mo: "Jun/27", mes: "Junho 2027" },
   { sym: "BMFBOVESPA:DOLN2027", mo: "Jul/27", mes: "Julho 2027" },
   { sym: "BMFBOVESPA:DOLQ2027", mo: "Ago/27", mes: "Agosto 2027" },
   { sym: "BMFBOVESPA:DOLV2027", mo: "Out/27", mes: "Outubro 2027" },
+  { sym: "BMFBOVESPA:DOLF2028", mo: "Jan/28", mes: "Janeiro 2028" },
 ];
 
 function CambioPage({COTACOES, ptax}) {

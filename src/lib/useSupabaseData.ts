@@ -155,10 +155,25 @@ function buildContractsDash(cotacoes: Record<string, CotacaoRow>) {
   // Sort order for contract codes
   const codeOrder = "FGHJKMNQUVXZ";
 
+  // Filter expired contracts based on current date
+  const now = new Date();
+  const curMonth = now.getMonth(); // 0-11
+  const curYear = now.getFullYear();
+
   const entries = Object.entries(cotacoes);
 
   for (const [symbol, cot] of entries) {
     const clean = symbol.includes(":") ? symbol.split(":")[1] : symbol;
+
+    // Extract month code and year to filter expired
+    const contractCode = clean.replace(/\d+/g, "").slice(-1);
+    const contractYear = parseInt(clean.slice(-4));
+    const contractMonthIdx = codeOrder.indexOf(contractCode); // 0-11 roughly
+    // Map code to actual month: F=0(Jan), G=1(Feb), H=2(Mar), J=3(Apr), K=4(May), M=5(Jun), N=6(Jul), Q=7(Aug), U=8(Sep), V=9(Oct), X=10(Nov), Z=11(Dec)
+    if (contractYear < curYear || (contractYear === curYear && contractMonthIdx < curMonth)) {
+      continue; // Skip expired contract
+    }
+
     const mo = symToMonthLabel(symbol);
 
     const item: ContractDash = {
