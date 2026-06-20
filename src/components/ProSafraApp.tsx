@@ -57,9 +57,16 @@ const NAV = [
 ];
 
 function buildOpts() {
+  const now = new Date();
+  const curMonth = now.getMonth(); // 0-11
+  const curYear = now.getFullYear();
   const o=[];
-  for(let m=3;m<=11;m++) o.push({mi:m,yr:2026,label:`${MESES[m]} 2026`});
-  for(let m=0;m<=9;m++) o.push({mi:m,yr:2027,label:`${MESES[m]} 2027`});
+  // Generate 18 months forward from current month
+  for(let n=0;n<18;n++){
+    const mi=(curMonth+n)%12;
+    const yr=curYear+Math.floor((curMonth+n)/12);
+    o.push({mi,yr,label:`${MESES[mi]} ${yr}`});
+  }
   return o;
 }
 const OPTS = buildOpts();
@@ -215,8 +222,14 @@ function DashboardPage({goTo, contractsDash}) {
 function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
   const [mercado,setMercado]=useState("Soja Exportação");
   const [pracaId,setPracaId]=useState(1);
-  const [entK,setEntK]=useState("4-2026");
-  const [pagK,setPagK]=useState("5-2026");
+  // Default to current month and next month for payment
+  const now = new Date();
+  const defMi = now.getMonth();
+  const defYr = now.getFullYear();
+  const defPagMi = (defMi + 1) % 12;
+  const defPagYr = defMi === 11 ? defYr + 1 : defYr;
+  const [entK,setEntK]=useState(`${defMi}-${defYr}`);
+  const [pagK,setPagK]=useState(`${defPagMi}-${defPagYr}`);
   const [offer,setOffer]=useState(0);
 
   const [eMi,eYr]=entK.split("-").map(Number);
@@ -263,22 +276,24 @@ function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
   const pJustoU=calcUSD(chi,bM.medio);
   const pMaxU=calcUSD(chi,bM.basis_max);
 
-  // Seasonality: Apr/26 → Apr/27
+  // Seasonality: current month → 12 months forward
   const dolKeys=allK.filter(k=>k.includes("DOL"));
   const season=useMemo(()=>{
+    const curM = new Date().getMonth();
+    const curY = new Date().getFullYear();
     const ms=[];
     for(let n=0;n<13;n++){
-      const mi=(3+n)%12;
-      const yr=2026+Math.floor((3+n)/12);
+      const mi=(curM+n)%12;
+      const yr=curY+Math.floor((curM+n)/12);
       const b=bAll[mi];
-      const isPast=yr<2026||(yr===2026&&mi<3);
       const rawC=isSoja?buildSoja(mi,yr):buildMilho(mi,yr);
       const cs=findClosest(rawC,allK,COTACOES); const cc=COTACOES[cs]; const ch=cc?cc.lp:null;
       const rawD=buildDol(mi,yr);
       const ds=findClosest(rawD,dolKeys,COTACOES); const dc=COTACOES[ds]; const md=dc?dc.lp/1000:null;
-      const has=!isPast&&ch!==null&&md!==null;
+      const has=ch!==null&&md!==null;
       ms.push({label:`${MESES_SHORT[mi]}/${String(yr).slice(-2)}`,basis:b.medio,bMin:b.basis_min,bMax:b.basis_max,has,
-        pMin:has?calc(ch,b.basis_min,md):null,pJusto:has?calc(ch,b.medio,md):null,pMax:has?calc(ch,b.basis_max,md):null,idx:n});
+        pMin:has?calc(ch,b.basis_min,md):null,pJusto:has?calc(ch,b.medio,md):null,pMax:has?calc(ch,b.basis_max,md):null,idx:n,
+        chi:ch,dol:md,mi,yr});
     }
     return ms;
   },[bAll,isSoja,allK,dolKeys]);
@@ -287,9 +302,6 @@ function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
   const sAllP=sWD.flatMap(s=>[s.pMin,s.pMax]);
   const sMin=sAllP.length?Math.min(...sAllP):0;
   const sMax=sAllP.length?Math.max(...sAllP):1;
-  const sR=sMax-sMin||1;
-  const bAbsMax=Math.max(...season.filter(s=>!s.has).map(s=>Math.abs(s.basis)),1);
-  const barH=130;
 
   const oR=pMax-pMin;
   const oP=oR>0?Math.max(0,Math.min(1,(offer-pMin)/oR)):0.5;
@@ -377,44 +389,95 @@ function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
         </>}
       </div>
 
-      {/* Sazonalidade Abr/26 → Abr/27 */}
+      {/* Sazonalidade — curva de preço futuro */}
       <div style={{background:"#0D1117",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:"18px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}}>
           <div>
-            <div style={{color:"#F1F5F9",fontSize:13,fontWeight:600}}>Sazonalidade de preço — Abr/26 a Abr/27</div>
-            <div style={{color:"#6B7280",fontSize:10,marginTop:2}}>Preço Justo por mês (Chicago ref. + basis 5 anos × dólar projetado ao mês)</div>
+            <div style={{color:"#F1F5F9",fontSize:13,fontWeight:600}}>Curva de preço projetado — {isSoja?"Soja":"Milho"}</div>
+            <div style={{color:"#6B7280",fontSize:10,marginTop:2}}>Preço justo R$/saca por mês de embarque • Chicago + basis × câmbio</div>
           </div>
           <div style={{display:"flex",gap:14,flexWrap:"wrap",justifyContent:"flex-end"}}>
-            <Legend color="#457B9D22" border="#457B9D44" text="Faixa min–max (R$/sc)"/>
+            <Legend color="#457B9D22" border="#457B9D44" text="Faixa min–max"/>
             <Legend color="#457B9D" text="Preço justo" dot/>
-            <Legend color="#37415133" border="#37415166" text="Sem cotação (basis c/bu)"/>
           </div>
         </div>
-        <div style={{display:"flex",alignItems:"flex-end",gap:2,height:barH+60,paddingTop:20,position:"relative"}}>
-          {season.map(s=>{
-            if(s.has){
-              const bBot=((s.pMin-sMin)/sR)*barH+16;
-              const bTop=((s.pMax-sMin)/sR)*barH+16;
-              const jP=((s.pJusto-sMin)/sR)*barH+16;
-              return <div key={s.idx} style={{flex:1,position:"relative",height:"100%"}}>
-                <div style={{position:"absolute",bottom:bTop+6,left:"50%",transform:"translateX(-50%)",fontSize:7,fontFamily:"'JetBrains Mono',monospace",color:"#9CA3AF",fontWeight:500,whiteSpace:"nowrap"}}>{fmt(s.pJusto,0)}</div>
-                <div style={{position:"absolute",bottom:bBot+20,left:"15%",right:"15%",height:bTop-bBot,background:"rgba(69,123,157,0.1)",border:"1px solid rgba(69,123,157,0.15)",borderRadius:3}}/>
-                <div style={{position:"absolute",bottom:jP+20-3,left:"50%",transform:"translateX(-50%)",width:6,height:6,borderRadius:"50%",background:"#457B9D"}}/>
-                <div style={{position:"absolute",bottom:0,left:"50%",transform:"translateX(-50%)",fontSize:7,fontWeight:500,color:"#9CA3AF",whiteSpace:"nowrap"}}>{s.label}</div>
-              </div>;
-            } else {
-              const bH=(Math.abs(s.basis)/bAbsMax)*60+12;
-              return <div key={s.idx} style={{flex:1,position:"relative",height:"100%"}}>
-                <div style={{position:"absolute",bottom:bH+26,left:"50%",transform:"translateX(-50%)",fontSize:7,fontFamily:"'JetBrains Mono',monospace",color:"#4B5563",fontWeight:400,whiteSpace:"nowrap"}}>{fmt(s.basis,0)}</div>
-                <div style={{position:"absolute",bottom:20,left:"22%",right:"22%",height:bH,background:"rgba(55,65,81,0.15)",border:"1px dashed rgba(55,65,81,0.3)",borderRadius:3}}/>
-                <div style={{position:"absolute",bottom:bH+14,left:"50%",transform:"translateX(-50%)",fontSize:6,color:"#374151",whiteSpace:"nowrap"}}>c/bu</div>
-                <div style={{position:"absolute",bottom:0,left:"50%",transform:"translateX(-50%)",fontSize:7,fontWeight:400,color:"#4B5563",whiteSpace:"nowrap"}}>{s.label}</div>
-              </div>;
-            }
-          })}
-        </div>
-        <div style={{borderTop:"1px solid rgba(255,255,255,0.04)",marginTop:10,paddingTop:8,display:"flex",justifyContent:"space-between",color:"#374151",fontSize:9}}>
-          <span>Meses tracejados: sem contrato — exibem apenas basis histórico (c/bu)</span><span>R$/saca</span>
+
+        {/* SVG Chart */}
+        {sWD.length > 0 && (() => {
+          const W = 760, H = 200, padL = 60, padR = 20, padT = 25, padB = 35;
+          const chartW = W - padL - padR;
+          const chartH = H - padT - padB;
+          const margin = (sMax - sMin) * 0.1 || 10;
+          const yMin = sMin - margin;
+          const yMax = sMax + margin;
+          const yRange = yMax - yMin || 1;
+
+          const xStep = sWD.length > 1 ? chartW / (sWD.length - 1) : chartW;
+          const toX = (i) => padL + i * xStep;
+          const toY = (v) => padT + chartH - ((v - yMin) / yRange) * chartH;
+
+          // Build paths
+          const justoPts = sWD.map((s, i) => `${toX(i)},${toY(s.pJusto)}`);
+          const minPts = sWD.map((s, i) => `${toX(i)},${toY(s.pMin)}`);
+          const maxPts = sWD.map((s, i) => `${toX(i)},${toY(s.pMax)}`);
+          const bandPath = `M${maxPts.join(" L")} L${[...minPts].reverse().join(" L")} Z`;
+
+          // Y axis labels (5 ticks)
+          const yTicks = [];
+          for (let i = 0; i <= 4; i++) {
+            const v = yMin + (yRange * i) / 4;
+            yTicks.push({ v, y: toY(v) });
+          }
+
+          return (
+            <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", marginBottom: 10 }}>
+              {/* Grid lines */}
+              {yTicks.map((t, i) => (
+                <g key={i}>
+                  <line x1={padL} y1={t.y} x2={W - padR} y2={t.y} stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
+                  <text x={padL - 8} y={t.y + 3} fill="#4B5563" fontSize="8" textAnchor="end" fontFamily="'JetBrains Mono',monospace">{fmt(t.v, 0)}</text>
+                </g>
+              ))}
+
+              {/* Band (min-max area) */}
+              <path d={bandPath} fill="rgba(69,123,157,0.12)" stroke="none" />
+
+              {/* Max line */}
+              <polyline points={maxPts.join(" ")} fill="none" stroke="rgba(69,123,157,0.25)" strokeWidth="1" strokeDasharray="4,3" />
+
+              {/* Min line */}
+              <polyline points={minPts.join(" ")} fill="none" stroke="rgba(69,123,157,0.25)" strokeWidth="1" strokeDasharray="4,3" />
+
+              {/* Justo line */}
+              <polyline points={justoPts.join(" ")} fill="none" stroke="#457B9D" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+
+              {/* Dots + labels */}
+              {sWD.map((s, i) => (
+                <g key={i}>
+                  <circle cx={toX(i)} cy={toY(s.pJusto)} r="4" fill="#457B9D" stroke="#0D1117" strokeWidth="2" />
+                  <text x={toX(i)} y={toY(s.pJusto) - 10} fill="#9CA3AF" fontSize="7.5" textAnchor="middle" fontFamily="'JetBrains Mono',monospace" fontWeight="600">{fmt(s.pJusto, 0)}</text>
+                  <text x={toX(i)} y={H - 8} fill="#9CA3AF" fontSize="7.5" textAnchor="middle" fontWeight="500">{s.label}</text>
+                </g>
+              ))}
+            </svg>
+          );
+        })()}
+
+        {/* Tabela detalhada */}
+        <div style={{borderTop:"1px solid rgba(255,255,255,0.06)",paddingTop:12,marginTop:4}}>
+          <div style={{display:"grid",gridTemplateColumns:"90px repeat(5,1fr)",gap:0,fontSize:9,color:"#4B5563",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6,paddingLeft:4}}>
+            <div>Embarque</div><div style={{textAlign:"right"}}>Chicago</div><div style={{textAlign:"right"}}>Basis</div><div style={{textAlign:"right"}}>Câmbio</div><div style={{textAlign:"right"}}>R$/sc Min</div><div style={{textAlign:"right",color:"#457B9D"}}>R$/sc Justo</div>
+          </div>
+          {season.filter(s=>s.has).map(s=>(
+            <div key={s.idx} style={{display:"grid",gridTemplateColumns:"90px repeat(5,1fr)",gap:0,fontSize:11,padding:"5px 4px",borderBottom:"1px solid rgba(255,255,255,0.03)"}}>
+              <div style={{color:"#9CA3AF",fontWeight:500}}>{s.label}</div>
+              <div style={{textAlign:"right",fontFamily:"'JetBrains Mono',monospace",color:"#6B7280"}}>{s.chi?fmt(s.chi,1):"-"}</div>
+              <div style={{textAlign:"right",fontFamily:"'JetBrains Mono',monospace",color:s.basis>=0?"#22C55E":"#EF4444"}}>{s.basis>=0?"+":""}{fmt(s.basis,1)}</div>
+              <div style={{textAlign:"right",fontFamily:"'JetBrains Mono',monospace",color:"#6B7280"}}>{s.dol?fmt(s.dol,4):"-"}</div>
+              <div style={{textAlign:"right",fontFamily:"'JetBrains Mono',monospace",color:"#F59E0B"}}>{s.pMin?fmt(s.pMin,0):"-"}</div>
+              <div style={{textAlign:"right",fontFamily:"'JetBrains Mono',monospace",color:"#457B9D",fontWeight:600}}>{s.pJusto?fmt(s.pJusto,0):"-"}</div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
