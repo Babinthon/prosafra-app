@@ -77,6 +77,7 @@ const NAV = [
   {id:"paridade",label:"Paridade",icon:"⬡"},
   {id:"carrego",label:"Custo Carrego",icon:"⊞"},
   {id:"ofertas",label:"Ofertas Firmes",icon:"✉"},
+  {id:"mercado",label:"Mercado",icon:"≣"},
   {id:"consultoria",label:"Consultoria",icon:"★"},
   {id:"admin",label:"Admin",icon:"⚙"},
 ];
@@ -184,7 +185,110 @@ function DashSection({title,sub,color,contracts,unit,isDol,defOpen=false}) {
   );
 }
 
-function DashboardPage({goTo, contractsDash}) {
+function bzPrecoJusto(praca, COTACOES, BASIS_DATA, DEFAULT_BASIS, eMi, eYr, pMi, pYr){
+  const mercado="Soja Exportação";
+  const bKey=praca?`${praca.cidade}-${praca.estado}-${mercado}`:"";
+  const bAll=BASIS_DATA[bKey]||DEFAULT_BASIS;
+  const bM=(bAll&&bAll[eMi])||{medio:-100};
+  const allK=Object.keys(COTACOES);
+  const dolKeys=allK.filter(k=>k.includes("DOL"));
+  const csym=findClosest(buildSoja(eMi,eYr),allK,COTACOES);
+  const chi=COTACOES[csym]?COTACOES[csym].lp:1150;
+  const dsym=findClosest(buildDol(pMi,pYr),dolKeys,COTACOES);
+  const dol=COTACOES[dsym]?COTACOES[dsym].lp/1000:5.05;
+  return {pj:calc(chi,bM.medio,dol), csym, chi};
+}
+
+function DashboardPage({goTo, PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, premiosData, analiseData, fundosData}) {
+  const mercado="Soja Exportação";
+  const [pracaId,setPracaId]=useState(null);
+  useEffect(()=>{try{const r=localStorage.getItem("bz_praca_ref"); if(r) setPracaId(parseInt(r));}catch(e){}},[]);
+  useEffect(()=>{if(pracaId!=null){try{localStorage.setItem("bz_praca_ref",String(pracaId));}catch(e){}}},[pracaId]);
+
+  const byState=useMemo(()=>{
+    const g={};
+    PRACAS.forEach(p=>{const bk=`${p.cidade}-${p.estado}-${mercado}`; if(BASIS_DATA[bk]){(g[p.estado]||=[]).push(p);}});
+    return g;
+  },[PRACAS,BASIS_DATA]);
+  const availPracas=useMemo(()=>Object.values(byState).flat(),[byState]);
+  const effId=availPracas.some(p=>p.id===pracaId)?pracaId:(availPracas[0]?.id);
+  const praca=PRACAS.find(p=>p.id===effId);
+  const pLabel=praca?`${praca.cidade} - ${praca.estado}`:"—";
+
+  const now=new Date();
+  const pag30=new Date(now); pag30.setDate(pag30.getDate()+30);
+  const disp=bzPrecoJusto(praca,COTACOES,BASIS_DATA,DEFAULT_BASIS,now.getMonth(),now.getFullYear(),pag30.getMonth(),pag30.getFullYear());
+  const fut=bzPrecoJusto(praca,COTACOES,BASIS_DATA,DEFAULT_BASIS,2,2027,3,2027);
+
+  const fd = fundosData&&fundosData.soja ? fundosData.soja : null;
+  const fundosSig = fd ? (fd.posAtual>=0 ? {tag:"Favorável",txt:"Fundos comprados"} : {tag:"Atenção",txt:"Fundos vendidos"}) : {tag:"Neutro",txt:"Sem leitura"};
+  let premioSig={tag:"Neutro",txt:"Sem leitura"};
+  if(premiosData&&premiosData.atual&&premiosData.atual.length){
+    const curM=now.getMonth();
+    const pr=premiosData.atual.slice().sort((a,b)=>Math.abs(a.mes_idx-curM)-Math.abs(b.mes_idx-curM))[0];
+    if(pr){const up=(pr.var_dia||0)>=0; premioSig={tag:up?"Favorável":"Neutro",txt:`Prêmio ${pr.venda>=0?"+":""}${fmt(pr.venda,0)} c/bu`};}
+  }
+  let tecSig={tag:"Neutro",txt:"Sem leitura"};
+  if(analiseData&&analiseData.length){
+    const row=analiseData.find(a=>a.sym===disp.csym)||analiseData.find(a=>(a.produto||"").toLowerCase()==="soja");
+    if(row){
+      const zs=[{v:row.zona1_valor,t:"Favorável",l:row.zona1_label},{v:row.zona2_valor,t:"Favorável",l:row.zona2_label},{v:row.zona3_valor,t:"Neutro",l:row.zona3_label}].filter(z=>typeof z.v==="number").sort((a,b)=>a.v-b.v);
+      if(zs.length){
+        if(disp.chi<zs[0].v){tecSig={tag:"Atenção",txt:"Abaixo do suporte"};}
+        else{for(let i=zs.length-1;i>=0;i--){if(disp.chi>=zs[i].v){tecSig={tag:zs[i].t,txt:zs[i].l||"Em zona mapeada"};break;}}}
+      }
+    }
+  }
+  const sigs=[["Prêmio porto",premioSig],["Análise técnica",tecSig],["Fundos",fundosSig]];
+  const TAG={"Favorável":["#4E7C5A","#E6EEE7"],"Neutro":["#8A7E6F","#F0ECE3"],"Atenção":["#B67A33","#FBF4E6"]};
+
+  function Card({tag,c,ent,pag,accent}){
+    return (
+      <div style={{background:BZ.surface,border:`1px solid ${BZ.border}`,borderRadius:14,padding:"18px 20px",borderTop:`3px solid ${accent}`}}>
+        <span style={{fontSize:10,color:BZ.textFaint,textTransform:"uppercase",letterSpacing:"0.07em",fontWeight:600}}>{tag}</span>
+        <div style={{display:"flex",alignItems:"baseline",gap:7,marginTop:8}}><span style={{fontSize:32,fontWeight:800,color:BZ.brownDeep,fontFamily:"'JetBrains Mono',monospace",lineHeight:1}}>R$ {fmt(c.pj)}</span><span style={{fontSize:12,color:BZ.textFaint}}>/saca</span></div>
+        <div style={{fontSize:10,color:BZ.textMute,marginTop:6}}>{ent} • {pag}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{maxWidth:1100,margin:"0 auto",padding:"20px 28px"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",flexWrap:"wrap",gap:12,marginBottom:14}}>
+        <Sel label="Praça de referência" value={effId} onChange={v=>setPracaId(+v)} w={240} grow>
+          {Object.entries(byState).sort().map(([st,cs])=><optgroup key={st} label={st}>{cs.map(c=><option key={c.id} value={c.id}>{c.cidade} - {c.estado}</option>)}</optgroup>)}
+        </Sel>
+        <span style={{fontSize:9,color:BZ.textFaint}}>Referência usada em todas as telas</span>
+      </div>
+
+      <div style={{fontSize:12,color:BZ.textMute,marginBottom:12}}>Quanto sua soja vale hoje em <b style={{color:BZ.brownDeep,fontWeight:600}}>{pLabel}</b></div>
+
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(250px,1fr))",gap:14,marginBottom:16}}>
+        <Card tag="Soja disponível" c={disp} ent="Entrega imediata" pag="Pagamento em 30 dias" accent={BZ.gold}/>
+        <Card tag="Soja futuro" c={fut} ent="Entrega Mar/27" pag="Pagamento 30/04/27" accent={BZ.bronze}/>
+      </div>
+
+      <div style={{background:BZ.surface,border:`1px solid ${BZ.border}`,borderRadius:14,padding:"16px 18px",marginBottom:16}}>
+        <div style={{fontSize:12,fontWeight:600,color:BZ.brownDeep,marginBottom:12}}>Leitura do momento</div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:9}}>
+          {sigs.map(([nome,s],i)=>{const t=TAG[s.tag]||TAG.Neutro;return (
+            <span key={i} style={{display:"inline-flex",alignItems:"center",gap:8,background:BZ.surfaceAlt,border:`1px solid ${BZ.borderSoft}`,borderRadius:10,padding:"8px 12px"}}>
+              <span style={{fontSize:11,color:BZ.brown}}>{nome}</span>
+              <span style={{fontSize:10,color:BZ.textMute}}>{s.txt}</span>
+              <span style={{fontSize:9,fontWeight:600,color:t[0],background:t[1],padding:"2px 8px",borderRadius:12}}>{s.tag}</span>
+            </span>
+          );})}
+        </div>
+      </div>
+
+      <div onClick={()=>goTo("mercado")} style={{textAlign:"center",padding:"10px",cursor:"pointer",color:BZ.bronze,fontSize:12,fontWeight:500}}>
+        Ver mercado (bolsa) — Chicago, B3, contratos →
+      </div>
+    </div>
+  );
+}
+
+function MercadoPage({goTo, contractsDash}) {
   const sLead = contractsDash.sojaCbot[0];
   const mcLead = contractsDash.milhoCbot[0];
   const mbLead = contractsDash.milhoB3[0];
@@ -3664,6 +3768,7 @@ export default function ProSafraApp() {
               {!isMobile&&page==="dashboard"&&<span style={{color:BZ.textFaint,fontSize:11,marginLeft:10}}>{dateStr}</span>}
               {!isMobile&&page==="preco-justo"&&<span style={{color:BZ.textMute,fontSize:11,marginLeft:8}}>Regiões de preço para negociação</span>}
               {!isMobile&&page==="resultado"&&<span style={{color:BZ.textMute,fontSize:11,marginLeft:8}}>Receita bruta e resultado por cenário</span>}
+              {!isMobile&&page==="mercado"&&<span style={{color:BZ.textMute,fontSize:11,marginLeft:8}}>Cotações de bolsa — Chicago, B3 e contratos</span>}
               {!isMobile&&page==="premios"&&<span style={{color:BZ.textMute,fontSize:11,marginLeft:8}}>Prêmios de exportação — Base Paranaguá</span>}
               {!isMobile&&page==="analise"&&<span style={{color:BZ.textMute,fontSize:11,marginLeft:8}}>Regiões de preço em Chicago — Análise semanal</span>}
               {!isMobile&&page==="fundamentos"&&<span style={{color:BZ.textMute,fontSize:11,marginLeft:8}}>Oferta e demanda mundial — Dados USDA/WASDE</span>}
@@ -3685,7 +3790,8 @@ export default function ProSafraApp() {
           </div>
         </div>
 
-        {page==="dashboard"&&<DashboardPage goTo={setPage} contractsDash={contractsDash}/>}
+        {page==="dashboard"&&<DashboardPage goTo={setPage} premiosData={premiosData} analiseData={analiseData} fundosData={fundosData} {...dataProps}/>}
+        {page==="mercado"&&<MercadoPage goTo={setPage} contractsDash={contractsDash}/>}
         {page==="preco-justo"&&<PrecoJustoPage {...dataProps}/>}
         {page==="resultado"&&<ResultadoPage {...dataProps}/>}
         {page==="premios"&&<PremiosPortoPage premiosData={premiosData}/>}
@@ -3697,7 +3803,7 @@ export default function ProSafraApp() {
         {page==="carrego"&&<CustoCarregoPage {...dataProps}/>}
         {page==="ofertas"&&<OfertasFirmesPage {...dataProps}/>}
         {page==="admin"&&<AdminPage/>}
-        {!["dashboard","preco-justo","resultado","premios","analise","fundamentos","fundos","cambio","paridade","carrego","ofertas","admin"].includes(page)&&(
+        {!["dashboard","preco-justo","resultado","premios","analise","fundamentos","fundos","cambio","paridade","carrego","ofertas","mercado","admin"].includes(page)&&(
           <div style={{padding:"60px 28px",textAlign:"center"}}>
             <div style={{fontSize:40,marginBottom:16,opacity:0.3,color:BZ.bronze}}>{NAV.find(n=>n.id===page)?.icon}</div>
             <div style={{color:BZ.textMute,fontSize:14}}>{NAV.find(n=>n.id===page)?.label} — Em construção</div>
