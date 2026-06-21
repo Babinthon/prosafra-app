@@ -68,7 +68,6 @@ function BZLogo({size=34}) {
 const NAV = [
   {id:"dashboard",label:"Dashboard",icon:"◉"},
   {id:"preco-justo",label:"Preço Justo",icon:"◎"},
-  {id:"resultado",label:"Resultado",icon:"▦"},
   {id:"premios",label:"Prêmios Porto",icon:"⚓"},
   {id:"analise",label:"Análise Técnica",icon:"△"},
   {id:"fundamentos",label:"Fundamentos",icon:"▤"},
@@ -199,11 +198,49 @@ function bzPrecoJusto(praca, COTACOES, BASIS_DATA, DEFAULT_BASIS, eMi, eYr, pMi,
   return {pj:calc(chi,bM.medio,dol), csym, chi};
 }
 
+function bzScenarioSignals(eMi,eYr,csym,chi,premiosData,analiseData,fundosData){
+  let premio={tag:"Neutro",txt:"Sem leitura"};
+  if(premiosData&&premiosData.atual&&premiosData.atual.length){
+    const pr=premiosData.atual.slice().sort((a,b)=>Math.abs(a.mes_idx-eMi)-Math.abs(b.mes_idx-eMi))[0];
+    if(pr){const up=(pr.var_dia||0)>=0; premio={tag:up?"Favorável":"Neutro",txt:`${pr.venda>=0?"+":""}${fmt(pr.venda,0)} c/bu`};}
+  }
+  let tec={tag:"Neutro",txt:"Sem leitura"};
+  if(analiseData&&analiseData.length){
+    const row=analiseData.find(a=>a.sym===csym)||analiseData.find(a=>(a.produto||"").toLowerCase()==="soja");
+    if(row){
+      const zs=[{v:row.zona1_valor,t:"Favorável",l:row.zona1_label},{v:row.zona2_valor,t:"Favorável",l:row.zona2_label},{v:row.zona3_valor,t:"Neutro",l:row.zona3_label}].filter(z=>typeof z.v==="number").sort((a,b)=>a.v-b.v);
+      if(zs.length){
+        if(chi<zs[0].v){tec={tag:"Atenção",txt:"Abaixo do suporte"};}
+        else{for(let i=zs.length-1;i>=0;i--){if(chi>=zs[i].v){tec={tag:zs[i].t,txt:zs[i].l||"Zona mapeada"};break;}}}
+      }
+    }
+  }
+  const fd=fundosData&&fundosData.soja?fundosData.soja:null;
+  const fundos=fd?(fd.posAtual>=0?{tag:"Favorável",txt:"Comprados"}:{tag:"Atenção",txt:"Vendidos"}):{tag:"Neutro",txt:"Sem leitura"};
+  return [["Prêmio",premio],["Técnica",tec],["Fundos",fundos]];
+}
+
 function DashboardPage({goTo, PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, premiosData, analiseData, fundosData}) {
   const mercado="Soja Exportação";
-  const [pracaId,setPracaId]=useState(null);
-  useEffect(()=>{try{const r=localStorage.getItem("bz_praca_ref"); if(r) setPracaId(parseInt(r));}catch(e){}},[]);
-  useEffect(()=>{if(pracaId!=null){try{localStorage.setItem("bz_praca_ref",String(pracaId));}catch(e){}}},[pracaId]);
+  const [pracaIds,setPracaIds]=useState([]);
+  const [activeId,setActiveId]=useState(null);
+  const [custo,setCusto]=useState(5500);
+  const [prod,setProd]=useState(60);
+  const [cenario,setCenario]=useState("disp");
+
+  useEffect(()=>{try{
+    const raw=localStorage.getItem("bz_pracas");
+    let list=raw?JSON.parse(raw):[];
+    if(!Array.isArray(list))list=[];
+    if(!list.length){const r=localStorage.getItem("bz_praca_ref"); if(r)list=[parseInt(r)];}
+    setPracaIds(list); if(list.length)setActiveId(list[0]);
+    const c=localStorage.getItem("bz_custo"); if(c)setCusto(parseFloat(c));
+    const q=localStorage.getItem("bz_prod"); if(q)setProd(parseFloat(q));
+  }catch(e){}},[]);
+  useEffect(()=>{try{localStorage.setItem("bz_pracas",JSON.stringify(pracaIds));}catch(e){}},[pracaIds]);
+  useEffect(()=>{try{localStorage.setItem("bz_custo",String(custo));}catch(e){}},[custo]);
+  useEffect(()=>{try{localStorage.setItem("bz_prod",String(prod));}catch(e){}},[prod]);
+  useEffect(()=>{if(activeId!=null){try{localStorage.setItem("bz_praca_ref",String(activeId));}catch(e){}}},[activeId]);
 
   const byState=useMemo(()=>{
     const g={};
@@ -211,77 +248,152 @@ function DashboardPage({goTo, PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, premi
     return g;
   },[PRACAS,BASIS_DATA]);
   const availPracas=useMemo(()=>Object.values(byState).flat(),[byState]);
-  const effId=availPracas.some(p=>p.id===pracaId)?pracaId:(availPracas[0]?.id);
+
+  useEffect(()=>{
+    if(pracaIds.length===0&&availPracas.length>0){const id=availPracas[0].id; setPracaIds([id]); setActiveId(id);}
+  },[availPracas]);
+
+  const effId=availPracas.some(p=>p.id===activeId)?activeId:(pracaIds.find(id=>availPracas.some(p=>p.id===id))??availPracas[0]?.id);
   const praca=PRACAS.find(p=>p.id===effId);
   const pLabel=praca?`${praca.cidade} - ${praca.estado}`:"—";
+  const savedPracas=pracaIds.map(id=>PRACAS.find(p=>p.id===id)).filter(Boolean);
+  const addable=availPracas.filter(p=>!pracaIds.includes(p.id));
+
+  function addPraca(id){ if(id&&!pracaIds.includes(id)){setPracaIds([...pracaIds,id]); setActiveId(id);} }
+  function removePraca(id){ const nl=pracaIds.filter(x=>x!==id); setPracaIds(nl); if(activeId===id)setActiveId(nl[0]??null); }
 
   const now=new Date();
   const pag30=new Date(now); pag30.setDate(pag30.getDate()+30);
   const disp=bzPrecoJusto(praca,COTACOES,BASIS_DATA,DEFAULT_BASIS,now.getMonth(),now.getFullYear(),pag30.getMonth(),pag30.getFullYear());
   const fut=bzPrecoJusto(praca,COTACOES,BASIS_DATA,DEFAULT_BASIS,2,2027,3,2027);
+  const dispSig=bzScenarioSignals(now.getMonth(),now.getFullYear(),disp.csym,disp.chi,premiosData,analiseData,fundosData);
+  const futSig=bzScenarioSignals(2,2027,fut.csym,fut.chi,premiosData,analiseData,fundosData);
 
-  const fd = fundosData&&fundosData.soja ? fundosData.soja : null;
-  const fundosSig = fd ? (fd.posAtual>=0 ? {tag:"Favorável",txt:"Fundos comprados"} : {tag:"Atenção",txt:"Fundos vendidos"}) : {tag:"Neutro",txt:"Sem leitura"};
-  let premioSig={tag:"Neutro",txt:"Sem leitura"};
-  if(premiosData&&premiosData.atual&&premiosData.atual.length){
-    const curM=now.getMonth();
-    const pr=premiosData.atual.slice().sort((a,b)=>Math.abs(a.mes_idx-curM)-Math.abs(b.mes_idx-curM))[0];
-    if(pr){const up=(pr.var_dia||0)>=0; premioSig={tag:up?"Favorável":"Neutro",txt:`Prêmio ${pr.venda>=0?"+":""}${fmt(pr.venda,0)} c/bu`};}
-  }
-  let tecSig={tag:"Neutro",txt:"Sem leitura"};
-  if(analiseData&&analiseData.length){
-    const row=analiseData.find(a=>a.sym===disp.csym)||analiseData.find(a=>(a.produto||"").toLowerCase()==="soja");
-    if(row){
-      const zs=[{v:row.zona1_valor,t:"Favorável",l:row.zona1_label},{v:row.zona2_valor,t:"Favorável",l:row.zona2_label},{v:row.zona3_valor,t:"Neutro",l:row.zona3_label}].filter(z=>typeof z.v==="number").sort((a,b)=>a.v-b.v);
-      if(zs.length){
-        if(disp.chi<zs[0].v){tecSig={tag:"Atenção",txt:"Abaixo do suporte"};}
-        else{for(let i=zs.length-1;i>=0;i--){if(disp.chi>=zs[i].v){tecSig={tag:zs[i].t,txt:zs[i].l||"Em zona mapeada"};break;}}}
-      }
-    }
-  }
-  const sigs=[["Prêmio porto",premioSig],["Análise técnica",tecSig],["Fundos",fundosSig]];
+  const pj=cenario==="disp"?disp.pj:fut.pj;
+  const custoN=parseFloat(custo)||0, prodN=parseFloat(prod)||0;
+  const recJusto=prodN*pj, resJusto=recJusto-custoN, be=prodN?custoN/prodN:0;
+  const rowSel=nearestVal(RES_PRODS,prodN), colSel=nearestVal(RES_PRECOS,pj);
+  const fmtBR=n=>Math.round(n).toLocaleString("pt-BR");
   const TAG={"Favorável":["#4E7C5A","#E6EEE7"],"Neutro":["#8A7E6F","#F0ECE3"],"Atenção":["#B67A33","#FBF4E6"]};
+  const inpStyle={display:"flex",alignItems:"center",background:"#F6F3ED",border:`1px solid #E4DECF`,borderRadius:7,padding:"0 9px"};
+  const inpField={background:"transparent",border:"none",color:BZ.brownDeep,padding:"9px 4px",fontSize:14,fontWeight:600,fontFamily:"'JetBrains Mono',monospace",outline:"none"};
 
-  function Card({tag,c,ent,pag,accent}){
+  function SigRow({sigs}){
+    return (
+      <div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:13}}>
+        {sigs.map(([nome,s],i)=>{const t=TAG[s.tag]||TAG.Neutro;return (
+          <span key={i} style={{display:"inline-flex",alignItems:"center",gap:6,background:BZ.surfaceAlt,border:`1px solid ${BZ.borderSoft}`,borderRadius:9,padding:"6px 9px"}}>
+            <span style={{fontSize:10,color:BZ.brown,fontWeight:500}}>{nome}</span>
+            <span style={{fontSize:9,color:BZ.textMute}}>{s.txt}</span>
+            <span style={{fontSize:8,fontWeight:700,color:t[0],background:t[1],padding:"2px 6px",borderRadius:10,whiteSpace:"nowrap"}}>{s.tag}</span>
+          </span>
+        );})}
+      </div>
+    );
+  }
+  function ScCard({tag,c,ent,pag,accent,sigs}){
     return (
       <div style={{background:BZ.surface,border:`1px solid ${BZ.border}`,borderRadius:14,padding:"18px 20px",borderTop:`3px solid ${accent}`}}>
         <span style={{fontSize:10,color:BZ.textFaint,textTransform:"uppercase",letterSpacing:"0.07em",fontWeight:600}}>{tag}</span>
         <div style={{display:"flex",alignItems:"baseline",gap:7,marginTop:8}}><span style={{fontSize:32,fontWeight:800,color:BZ.brownDeep,fontFamily:"'JetBrains Mono',monospace",lineHeight:1}}>R$ {fmt(c.pj)}</span><span style={{fontSize:12,color:BZ.textFaint}}>/saca</span></div>
         <div style={{fontSize:10,color:BZ.textMute,marginTop:6}}>{ent} • {pag}</div>
+        <SigRow sigs={sigs}/>
       </div>
     );
   }
 
   return (
     <div style={{maxWidth:1100,margin:"0 auto",padding:"20px 28px"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",flexWrap:"wrap",gap:12,marginBottom:14}}>
-        <Sel label="Praça de referência" value={effId} onChange={v=>setPracaId(+v)} w={240} grow>
-          {Object.entries(byState).sort().map(([st,cs])=><optgroup key={st} label={st}>{cs.map(c=><option key={c.id} value={c.id}>{c.cidade} - {c.estado}</option>)}</optgroup>)}
-        </Sel>
-        <span style={{fontSize:9,color:BZ.textFaint}}>Referência usada em todas as telas</span>
+      <div style={{marginBottom:16}}>
+        <div style={{fontSize:9,color:BZ.textMute,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:7}}>Minhas regiões</div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:7,alignItems:"center"}}>
+          {savedPracas.map(p=>{const act=p.id===effId;return (
+            <span key={p.id} onClick={()=>setActiveId(p.id)} style={{display:"inline-flex",alignItems:"center",gap:7,cursor:"pointer",
+              background:act?BZ.goldSoft:BZ.surface,border:`1px solid ${act?BZ.goldBorder:BZ.border}`,color:act?BZ.brown:BZ.textMute,
+              borderRadius:20,padding:"6px 13px",fontSize:12,fontWeight:act?600:500}}>
+              {p.cidade} - {p.estado}
+              {savedPracas.length>1&&<span onClick={e=>{e.stopPropagation();removePraca(p.id);}} style={{fontSize:14,color:BZ.textFaint,lineHeight:1,marginLeft:1}}>×</span>}
+            </span>
+          );})}
+          {addable.length>0&&(
+            <select value="" onChange={e=>addPraca(+e.target.value)} style={{border:`1px dashed ${BZ.goldBorder}`,background:BZ.surface,color:BZ.bronze,borderRadius:20,padding:"7px 13px",fontSize:12,fontWeight:600,cursor:"pointer",outline:"none"}}>
+              <option value="">+ região</option>
+              {Object.entries(byState).sort().map(([st,cs])=><optgroup key={st} label={st}>{cs.filter(c=>!pracaIds.includes(c.id)).map(c=><option key={c.id} value={c.id}>{c.cidade} - {c.estado}</option>)}</optgroup>)}
+            </select>
+          )}
+        </div>
       </div>
 
       <div style={{fontSize:12,color:BZ.textMute,marginBottom:12}}>Quanto sua soja vale hoje em <b style={{color:BZ.brownDeep,fontWeight:600}}>{pLabel}</b></div>
 
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(250px,1fr))",gap:14,marginBottom:16}}>
-        <Card tag="Soja disponível" c={disp} ent="Entrega imediata" pag="Pagamento em 30 dias" accent={BZ.gold}/>
-        <Card tag="Soja futuro" c={fut} ent="Entrega Mar/27" pag="Pagamento 30/04/27" accent={BZ.bronze}/>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(290px,1fr))",gap:14,marginBottom:22}}>
+        <ScCard tag="Soja disponível" c={disp} ent="Entrega imediata" pag="Pag. 30 dias" accent={BZ.gold} sigs={dispSig}/>
+        <ScCard tag="Soja futuro" c={fut} ent="Entrega Mar/27" pag="Pag. 30/04/27" accent={BZ.bronze} sigs={futSig}/>
       </div>
 
-      <div style={{background:BZ.surface,border:`1px solid ${BZ.border}`,borderRadius:14,padding:"16px 18px",marginBottom:16}}>
-        <div style={{fontSize:12,fontWeight:600,color:BZ.brownDeep,marginBottom:12}}>Leitura do momento</div>
-        <div style={{display:"flex",flexWrap:"wrap",gap:9}}>
-          {sigs.map(([nome,s],i)=>{const t=TAG[s.tag]||TAG.Neutro;return (
-            <span key={i} style={{display:"inline-flex",alignItems:"center",gap:8,background:BZ.surfaceAlt,border:`1px solid ${BZ.borderSoft}`,borderRadius:10,padding:"8px 12px"}}>
-              <span style={{fontSize:11,color:BZ.brown}}>{nome}</span>
-              <span style={{fontSize:10,color:BZ.textMute}}>{s.txt}</span>
-              <span style={{fontSize:9,fontWeight:600,color:t[0],background:t[1],padding:"2px 8px",borderRadius:12}}>{s.tag}</span>
-            </span>
-          );})}
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",flexWrap:"wrap",gap:12,marginBottom:14}}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <div style={{width:3,height:18,background:BZ.gold,borderRadius:2}}/>
+          <span style={{fontSize:15,fontWeight:700,color:BZ.brownDeep}}>Análise de resultado</span>
+          <span style={{color:BZ.textMute,fontSize:11}}>Receita bruta por cenário</span>
+        </div>
+        <div style={{display:"flex",gap:5,background:BZ.surfaceAlt,border:`1px solid ${BZ.border}`,borderRadius:8,padding:3}}>
+          {[["disp","Disponível"],["fut","Futuro Mar/27"]].map(([k,l])=>(
+            <div key={k} onClick={()=>setCenario(k)} style={{padding:"6px 12px",borderRadius:6,cursor:"pointer",fontSize:11,fontWeight:600,background:cenario===k?BZ.goldSoft:"transparent",color:cenario===k?BZ.brown:BZ.textMute}}>{l}</div>
+          ))}
         </div>
       </div>
 
-      <div onClick={()=>goTo("mercado")} style={{textAlign:"center",padding:"10px",cursor:"pointer",color:BZ.bronze,fontSize:12,fontWeight:500}}>
+      <div style={{display:"flex",gap:14,flexWrap:"wrap",marginBottom:14,alignItems:"flex-end"}}>
+        <div>
+          <label style={{fontSize:9,color:BZ.textMute,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",display:"block",marginBottom:3}}>Custo / hectare</label>
+          <div style={inpStyle}><span style={{fontSize:12,color:BZ.textFaint}}>R$</span><input type="number" value={custo} onChange={e=>setCusto(e.target.value)} style={{...inpField,width:90}}/></div>
+        </div>
+        <div>
+          <label style={{fontSize:9,color:BZ.textMute,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",display:"block",marginBottom:3}}>Produtividade</label>
+          <div style={inpStyle}><input type="number" value={prod} onChange={e=>setProd(e.target.value)} style={{...inpField,width:54}}/><span style={{fontSize:11,color:BZ.textFaint}}>sc/ha</span></div>
+        </div>
+        <div style={{background:BZ.surface,border:`1px solid ${BZ.border}`,borderRadius:10,padding:"9px 16px"}}>
+          <div style={{fontSize:9,color:BZ.textFaint,textTransform:"uppercase",letterSpacing:"0.05em"}}>Preço justo {cenario==="disp"?"disponível":"futuro"} (R$ {fmt(pj)}/sc)</div>
+          <div style={{fontSize:13,color:BZ.brownDeep,marginTop:3}}>Receita <b style={{fontWeight:600}}>R$ {fmtBR(recJusto)}/ha</b> · Resultado <b style={{fontWeight:600,color:resJusto>=0?"#2F6A45":"#8A3D31"}}>{resJusto>=0?"+":""}R$ {fmtBR(resJusto)}/ha</b></div>
+        </div>
+        <div style={{background:BZ.surface,border:`1px solid ${BZ.border}`,borderRadius:10,padding:"9px 16px"}}>
+          <div style={{fontSize:9,color:BZ.textFaint,textTransform:"uppercase",letterSpacing:"0.05em"}}>Ponto de equilíbrio</div>
+          <div style={{fontSize:18,fontWeight:700,color:BZ.brown,fontFamily:"'JetBrains Mono',monospace",marginTop:2}}>R$ {fmt(be)}<span style={{fontSize:11,fontWeight:400,color:BZ.textFaint}}>/sc</span></div>
+        </div>
+      </div>
+
+      <div style={{display:"flex",gap:16,marginBottom:9,flexWrap:"wrap",alignItems:"center"}}>
+        <span style={{display:"flex",alignItems:"center",gap:6,fontSize:10,color:BZ.textMute}}><span style={{width:10,height:10,borderRadius:2,background:"#A9CBB0"}}/>Lucro bruto</span>
+        <span style={{display:"flex",alignItems:"center",gap:6,fontSize:10,color:BZ.textMute}}><span style={{width:10,height:10,borderRadius:2,background:"#E2B8AE"}}/>Prejuízo</span>
+        <span style={{display:"flex",alignItems:"center",gap:6,fontSize:10,color:BZ.textMute}}><span style={{width:10,height:10,borderRadius:2,border:`2px solid ${BZ.gold}`}}/>Você hoje</span>
+        <span style={{fontSize:9,color:BZ.textFaint,marginLeft:"auto"}}>Receita bruta = produtividade × preço. Não inclui impostos nem frete.</span>
+      </div>
+
+      <div style={{overflowX:"auto",paddingBottom:4}}>
+        <table style={{borderCollapse:"separate",borderSpacing:3,width:"100%",minWidth:860}}>
+          <tbody>
+            <tr>
+              <th style={{textAlign:"left",fontSize:9,color:BZ.textFaint,textTransform:"uppercase",letterSpacing:"0.05em",fontWeight:600,padding:"4px 6px"}}>Prod./Preço</th>
+              {RES_PRECOS.map(p=><th key={p} style={{fontSize:10,color:p===colSel?BZ.brown:BZ.textMute,fontWeight:600,padding:"4px 2px",fontFamily:"'JetBrains Mono',monospace"}}>R$ {p}</th>)}
+            </tr>
+            {RES_PRODS.map(pr=>(
+              <tr key={pr}>
+                <td style={{fontSize:10,color:pr===rowSel?BZ.brown:BZ.textMute,fontWeight:600,padding:"4px 6px",whiteSpace:"nowrap"}}>{pr} sc</td>
+                {RES_PRECOS.map(pc=>{
+                  const rec=pr*pc, res=rec-custoN, cc=bzCellColor(res), me=(pr===rowSel&&pc===colSel);
+                  return <td key={pc} style={{background:cc.bg,borderRadius:6,padding:"6px 3px",textAlign:"center",boxShadow:me?`0 0 0 2px ${BZ.gold}`:"none"}}>
+                    <div style={{fontSize:10.5,fontWeight:600,color:"#3A2E22",fontFamily:"'JetBrains Mono',monospace",lineHeight:1.25}}>{fmtBR(rec)}</div>
+                    <div style={{fontSize:8.5,color:cc.fg,fontFamily:"'JetBrains Mono',monospace",lineHeight:1.2}}>{res>=0?"+":""}{fmtBR(res)}</div>
+                  </td>;
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div onClick={()=>goTo("mercado")} style={{textAlign:"center",padding:"16px 10px 2px",cursor:"pointer",color:BZ.bronze,fontSize:12,fontWeight:500}}>
         Ver mercado (bolsa) — Chicago, B3, contratos →
       </div>
     </div>
@@ -3767,7 +3879,6 @@ export default function ProSafraApp() {
               <span style={{fontSize:16,fontWeight:700,color:BZ.brownDeep}}>{page==="dashboard"?greeting:NAV.find(n=>n.id===page)?.label||""}</span>
               {!isMobile&&page==="dashboard"&&<span style={{color:BZ.textFaint,fontSize:11,marginLeft:10}}>{dateStr}</span>}
               {!isMobile&&page==="preco-justo"&&<span style={{color:BZ.textMute,fontSize:11,marginLeft:8}}>Regiões de preço para negociação</span>}
-              {!isMobile&&page==="resultado"&&<span style={{color:BZ.textMute,fontSize:11,marginLeft:8}}>Receita bruta e resultado por cenário</span>}
               {!isMobile&&page==="mercado"&&<span style={{color:BZ.textMute,fontSize:11,marginLeft:8}}>Cotações de bolsa — Chicago, B3 e contratos</span>}
               {!isMobile&&page==="premios"&&<span style={{color:BZ.textMute,fontSize:11,marginLeft:8}}>Prêmios de exportação — Base Paranaguá</span>}
               {!isMobile&&page==="analise"&&<span style={{color:BZ.textMute,fontSize:11,marginLeft:8}}>Regiões de preço em Chicago — Análise semanal</span>}
@@ -3793,7 +3904,6 @@ export default function ProSafraApp() {
         {page==="dashboard"&&<DashboardPage goTo={setPage} premiosData={premiosData} analiseData={analiseData} fundosData={fundosData} {...dataProps}/>}
         {page==="mercado"&&<MercadoPage goTo={setPage} contractsDash={contractsDash}/>}
         {page==="preco-justo"&&<PrecoJustoPage {...dataProps}/>}
-        {page==="resultado"&&<ResultadoPage {...dataProps}/>}
         {page==="premios"&&<PremiosPortoPage premiosData={premiosData}/>}
         {page==="analise"&&<AnaliseTecnicaPage COTACOES={cotacoes} analiseData={analiseData}/>}
         {page==="fundamentos"&&<FundamentosPage fundamentosData={fundamentosData}/>}
@@ -3803,7 +3913,7 @@ export default function ProSafraApp() {
         {page==="carrego"&&<CustoCarregoPage {...dataProps}/>}
         {page==="ofertas"&&<OfertasFirmesPage {...dataProps}/>}
         {page==="admin"&&<AdminPage/>}
-        {!["dashboard","preco-justo","resultado","premios","analise","fundamentos","fundos","cambio","paridade","carrego","ofertas","mercado","admin"].includes(page)&&(
+        {!["dashboard","preco-justo","premios","analise","fundamentos","fundos","cambio","paridade","carrego","ofertas","mercado","admin"].includes(page)&&(
           <div style={{padding:"60px 28px",textAlign:"center"}}>
             <div style={{fontSize:40,marginBottom:16,opacity:0.3,color:BZ.bronze}}>{NAV.find(n=>n.id===page)?.icon}</div>
             <div style={{color:BZ.textMute,fontSize:14}}>{NAV.find(n=>n.id===page)?.label} — Em construção</div>
