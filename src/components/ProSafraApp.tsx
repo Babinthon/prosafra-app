@@ -540,7 +540,7 @@ function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRef, 
         <Sel label="Mercado" value={mercado} onChange={setMercado} w={170}>
           <option value="Soja Exportação">Soja Exportação</option>
           <option value="Milho Exportação">Milho Exportação</option>
-          <option value="Milho Interno (B3)">Milho Interno (B3)</option>
+          <option value="Milho B3">Milho Interno (B3)</option>
         </Sel>
         <Sel label="Praça" value={effPracaId} onChange={v=>setPracaId(+v)} w={220} grow>
           {Object.entries(byState).sort().map(([st,cs])=><optgroup key={st} label={st}>{cs.map(c=><option key={c.id} value={c.id}>{c.cidade} - {c.estado}</option>)}</optgroup>)}
@@ -1527,9 +1527,9 @@ function PosicaoFundosPage({fundosData}) {
       </div>
 
       {/* Posição atual + sentimento */}
-      <div style={{ display: "flex", gap: 14, marginBottom: 20 }}>
+      <div style={{ display: "flex", gap: 14, marginBottom: 20, flexWrap: "wrap" }}>
         {/* Posição atual */}
-        <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "20px 24px", flex: 1, position: "relative", overflow: "hidden" }}>
+        <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "20px 24px", flex: "1 1 220px", minWidth: 200, position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: sentColor }} />
           <div style={{ color: "#8A7E6F", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Posição líquida atual</div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 6 }}>
@@ -1542,7 +1542,7 @@ function PosicaoFundosPage({fundosData}) {
         </div>
 
         {/* Sentimento */}
-        <div style={{ background: `${sentColor}0D`, border: `1px solid ${sentColor}33`, borderRadius: 10, padding: "20px 24px", flex: 1 }}>
+        <div style={{ background: `${sentColor}0D`, border: `1px solid ${sentColor}33`, borderRadius: 10, padding: "20px 24px", flex: "1 1 200px", minWidth: 180 }}>
           <div style={{ color: "#8A7E6F", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Sentimento</div>
           <div style={{ color: sentColor, fontSize: 20, fontWeight: 700, marginBottom: 4 }}>{sentIcon} {sentimento}</div>
           <div style={{ color: "#6B6052", fontSize: 11 }}>{sentDesc}</div>
@@ -1701,8 +1701,8 @@ function CambioPage({COTACOES, ptax}) {
       </div>
 
       {/* Ptax + Dólar comercial */}
-      <div style={{ display: "flex", gap: 14, marginBottom: 14 }}>
-        <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "16px 20px", flex: 1, position: "relative", overflow: "hidden" }}>
+      <div style={{ display: "flex", gap: 14, marginBottom: 14, flexWrap: "wrap" }}>
+        <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "16px 20px", flex: "1 1 240px", minWidth: 200, position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: "#D5A246" }} />
           <div style={{ color: "#8A7E6F", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Ptax — dia anterior (BCB)</div>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
@@ -1719,7 +1719,7 @@ function CambioPage({COTACOES, ptax}) {
           <div style={{ color: "#C2B7A6", fontSize: 9, marginTop: 6 }}>{ptax ? `Ref: ${ptax.data_ref.split("-").reverse().join("/")}` : "Sem dados"} — Fonte: Banco Central do Brasil</div>
         </div>
 
-        <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "16px 20px", flex: 1, position: "relative", overflow: "hidden" }}>
+        <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "16px 20px", flex: "1 1 240px", minWidth: 200, position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: "#B67A33" }} />
           <div style={{ color: "#8A7E6F", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Dólar comercial — hoje</div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
@@ -1733,8 +1733,8 @@ function CambioPage({COTACOES, ptax}) {
       </div>
 
       {/* Spot + resumo */}
-      <div style={{ display: "flex", gap: 14, marginBottom: 20 }}>
-        <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "18px 22px", flex: 1, position: "relative", overflow: "hidden" }}>
+      <div style={{ display: "flex", gap: 14, marginBottom: 20, flexWrap: "wrap" }}>
+        <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "18px 22px", flex: "1 1 240px", minWidth: 200, position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: "#B67A33" }} />
           <div style={{ color: "#8A7E6F", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Dólar 1º vencimento (spot ref.)</div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
@@ -2711,7 +2711,7 @@ _Gerado via BZ Grãos_`;
         <Sel label="Produto / Mercado" value={mercadoOf} onChange={setMercadoOf} w={200}>
           <option value="Soja Exportação">Soja Exportação</option>
           <option value="Milho Exportação">Milho Exportação</option>
-          <option value="Milho Interno (B3)">Milho Interno (B3)</option>
+          <option value="Milho B3">Milho Interno (B3)</option>
         </Sel>
       </div>
 
