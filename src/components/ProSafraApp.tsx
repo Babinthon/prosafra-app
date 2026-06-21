@@ -220,14 +220,15 @@ function bzScenarioSignals(eMi,eYr,csym,chi,premiosData,analiseData,fundosData){
   return [["Prêmio",premio],["Técnica",tec],["Fundos",fundos]];
 }
 
-function DashboardPage({goTo, PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, premiosData, analiseData, fundosData}) {
+function DashboardPage({goTo, PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, premiosData, analiseData, fundosData, pracaRef, pracaList, selectPraca, removePraca}) {
   const mercado="Soja Exportação";
-  const [pracaIds,setPracaIds]=useState([]);
-  const [activeId,setActiveId]=useState(null);
   const [custo,setCusto]=useState(5500);
   const [prod,setProd]=useState(60);
   const [cenario,setCenario]=useState("disp");
-  const hydrated=useRef(false);
+  const custoHyd=useRef(false);
+  useEffect(()=>{ if(custoHyd.current) return; try{const c=localStorage.getItem("bz_custo"); if(c)setCusto(parseFloat(c)); const q=localStorage.getItem("bz_prod"); if(q)setProd(parseFloat(q));}catch(e){} custoHyd.current=true; },[]);
+  useEffect(()=>{ if(custoHyd.current){try{localStorage.setItem("bz_custo",String(custo));}catch(e){}} },[custo]);
+  useEffect(()=>{ if(custoHyd.current){try{localStorage.setItem("bz_prod",String(prod));}catch(e){}} },[prod]);
 
   const byState=useMemo(()=>{
     const g={};
@@ -236,44 +237,11 @@ function DashboardPage({goTo, PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, premi
   },[PRACAS,BASIS_DATA]);
   const availPracas=useMemo(()=>Object.values(byState).flat(),[byState]);
 
-  // Hidratação única: região ativa = a última salva (bz_praca_ref), nunca a primeira da lista
-  useEffect(()=>{
-    if(hydrated.current) return;
-    try{
-      const c=localStorage.getItem("bz_custo"); if(c)setCusto(parseFloat(c));
-      const q=localStorage.getItem("bz_prod"); if(q)setProd(parseFloat(q));
-      const raw=localStorage.getItem("bz_pracas");
-      let list=raw?JSON.parse(raw):[];
-      if(!Array.isArray(list))list=[];
-      const refRaw=localStorage.getItem("bz_praca_ref");
-      const ref=(refRaw!=null&&refRaw!=="")?parseInt(refRaw):null;
-      if(ref!=null&&!list.includes(ref))list=[...list,ref];
-      if(list.length){
-        setPracaIds(list);
-        setActiveId(ref!=null?ref:list[0]);
-        hydrated.current=true;
-      } else if(availPracas.length>0){
-        const id=availPracas[0].id;
-        setPracaIds([id]); setActiveId(id);
-        hydrated.current=true;
-      }
-    }catch(e){}
-  },[availPracas]);
-
-  // Persistência (só após hidratar, para não sobrescrever o que já está salvo)
-  useEffect(()=>{if(hydrated.current){try{localStorage.setItem("bz_pracas",JSON.stringify(pracaIds));}catch(e){}}},[pracaIds]);
-  useEffect(()=>{if(hydrated.current&&activeId!=null){try{localStorage.setItem("bz_praca_ref",String(activeId));}catch(e){}}},[activeId]);
-  useEffect(()=>{if(hydrated.current){try{localStorage.setItem("bz_custo",String(custo));}catch(e){}}},[custo]);
-  useEffect(()=>{if(hydrated.current){try{localStorage.setItem("bz_prod",String(prod));}catch(e){}}},[prod]);
-
-  const effId=availPracas.some(p=>p.id===activeId)?activeId:(pracaIds.find(id=>availPracas.some(p=>p.id===id))??availPracas[0]?.id);
+  const effId=(pracaRef!=null&&PRACAS.some(p=>p.id===pracaRef))?pracaRef:(availPracas[0]?.id);
   const praca=PRACAS.find(p=>p.id===effId);
   const pLabel=praca?`${praca.cidade} - ${praca.estado}`:"—";
-  const savedPracas=pracaIds.map(id=>PRACAS.find(p=>p.id===id)).filter(Boolean);
-  const addable=availPracas.filter(p=>!pracaIds.includes(p.id));
-
-  function addPraca(id){ if(id&&!pracaIds.includes(id)){setPracaIds([...pracaIds,id]); setActiveId(id);} }
-  function removePraca(id){ const nl=pracaIds.filter(x=>x!==id); setPracaIds(nl); if(activeId===id)setActiveId(nl[0]??null); }
+  const savedPracas=(pracaList||[]).map(id=>PRACAS.find(p=>p.id===id)).filter(Boolean);
+  const addable=availPracas.filter(p=>!(pracaList||[]).includes(p.id));
 
   const now=new Date();
   const pag30=new Date(now); pag30.setDate(pag30.getDate()+30);
@@ -321,7 +289,7 @@ function DashboardPage({goTo, PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, premi
         <div style={{fontSize:9,color:BZ.textMute,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:7}}>Minhas regiões</div>
         <div style={{display:"flex",flexWrap:"wrap",gap:7,alignItems:"center"}}>
           {savedPracas.map(p=>{const act=p.id===effId;return (
-            <span key={p.id} onClick={()=>setActiveId(p.id)} style={{display:"inline-flex",alignItems:"center",gap:7,cursor:"pointer",
+            <span key={p.id} onClick={()=>selectPraca(p.id)} style={{display:"inline-flex",alignItems:"center",gap:7,cursor:"pointer",
               background:act?BZ.goldSoft:BZ.surface,border:`1px solid ${act?BZ.goldBorder:BZ.border}`,color:act?BZ.brown:BZ.textMute,
               borderRadius:20,padding:"6px 13px",fontSize:12,fontWeight:act?600:500}}>
               {p.cidade} - {p.estado}
@@ -329,9 +297,9 @@ function DashboardPage({goTo, PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, premi
             </span>
           );})}
           {addable.length>0&&(
-            <select value="" onChange={e=>addPraca(+e.target.value)} style={{border:`1px dashed ${BZ.goldBorder}`,background:BZ.surface,color:BZ.bronze,borderRadius:20,padding:"7px 13px",fontSize:12,fontWeight:600,cursor:"pointer",outline:"none"}}>
+            <select value="" onChange={e=>selectPraca(+e.target.value)} style={{border:`1px dashed ${BZ.goldBorder}`,background:BZ.surface,color:BZ.bronze,borderRadius:20,padding:"7px 13px",fontSize:12,fontWeight:600,cursor:"pointer",outline:"none"}}>
               <option value="">+ região</option>
-              {Object.entries(byState).sort().map(([st,cs])=><optgroup key={st} label={st}>{cs.filter(c=>!pracaIds.includes(c.id)).map(c=><option key={c.id} value={c.id}>{c.cidade} - {c.estado}</option>)}</optgroup>)}
+              {Object.entries(byState).sort().map(([st,cs])=><optgroup key={st} label={st}>{cs.filter(c=>!(pracaList||[]).includes(c.id)).map(c=><option key={c.id} value={c.id}>{c.cidade} - {c.estado}</option>)}</optgroup>)}
             </select>
           )}
         </div>
@@ -472,9 +440,9 @@ function MercadoPage({goTo, contractsDash}) {
 // PREÇO JUSTO PAGE
 // ═══════════════════════════════════════════════════════════════
 
-function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
+function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRef, selectPraca}) {
   const [mercado,setMercado]=useState("Soja Exportação");
-  const [pracaId,setPracaId]=useState(null);
+  const pracaId=pracaRef; const setPracaId=selectPraca;
   // Default to current month and next month for payment
   const now = new Date();
   const defMi = now.getMonth();
@@ -484,8 +452,6 @@ function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
   const [entK,setEntK]=useState(`${defMi}-${defYr}`);
   const [pagK,setPagK]=useState(`${defPagMi}-${defPagYr}`);
   const [offer,setOffer]=useState(0);
-  useEffect(()=>{try{const r=localStorage.getItem("bz_praca_ref"); if(r)setPracaId(parseInt(r));}catch(e){}},[]);
-  useEffect(()=>{if(pracaId!=null){try{localStorage.setItem("bz_praca_ref",String(pracaId));}catch(e){}}},[pracaId]);
 
   const [eMi,eYr]=entK.split("-").map(Number);
   const [pMi,pYr]=pagK.split("-").map(Number);
@@ -501,7 +467,6 @@ function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
   const availPracas=useMemo(()=>Object.values(byState).flat(),[byState]);
   const pracaOk=availPracas.some(p=>p.id===pracaId);
   const effPracaId=pracaOk?pracaId:(availPracas[0]?.id||pracaId);
-  useEffect(()=>{if(!pracaOk&&availPracas.length>0)setPracaId(availPracas[0].id);},[pracaOk,availPracas]);
   const praca=PRACAS.find(p=>p.id===effPracaId);
   const pLabel=praca?`${praca.cidade} - ${praca.estado}`:"";
   const bKey=praca?`${praca.cidade}-${praca.estado}-${mercado}`:"";
@@ -2065,12 +2030,10 @@ function ParidadePage({COTACOES}) {
 // CUSTO CARREGO PAGE
 // ═══════════════════════════════════════════════════════════════
 
-function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
+function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRef, selectPraca}) {
   const mercado = "Soja Exportação"; // Custo carrego é só soja inicialmente
-  const [pracaId, setPracaId] = useState(1);
-  const _carregoHyd = useRef(false);
-  useEffect(()=>{ if(_carregoHyd.current) return; if(!PRACAS||PRACAS.length===0) return; try{ const r=localStorage.getItem("bz_praca_ref"); if(r){const n=parseInt(r); if(PRACAS.some(p=>p.id===n)) setPracaId(n);} }catch(e){} _carregoHyd.current=true; },[PRACAS]);
-  useEffect(()=>{ if(_carregoHyd.current&&pracaId!=null){ try{localStorage.setItem("bz_praca_ref",String(pracaId));}catch(e){} } },[pracaId]);
+  const pracaId=(pracaRef!=null&&PRACAS.some(p=>p.id===pracaRef))?pracaRef:(PRACAS.find(p=>BASIS_DATA[`${p.cidade}-${p.estado}-${mercado}`])?.id ?? PRACAS[0]?.id);
+  const setPracaId=selectPraca;
 
   // Datas padrão calculadas na abertura da aba, a partir da data atual
   const _hoje = new Date();
@@ -2619,16 +2582,14 @@ function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
 // OFERTAS FIRMES PAGE
 // ═══════════════════════════════════════════════════════════════
 
-function OfertasFirmesPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
+function OfertasFirmesPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRef, selectPraca}) {
   const [nome, setNome] = useState("");
   const [fazenda, setFazenda] = useState("");
   const [mercadoOf, setMercadoOf] = useState("Soja Exportação");
   const [volUnit, setVolUnit] = useState("sacas");
   const [volQtd, setVolQtd] = useState(5000);
-  const [pracaId, setPracaId] = useState(1);
-  const _ofertasHyd = useRef(false);
-  useEffect(()=>{ if(_ofertasHyd.current) return; if(!PRACAS||PRACAS.length===0) return; try{ const r=localStorage.getItem("bz_praca_ref"); if(r){const n=parseInt(r); if(PRACAS.some(p=>p.id===n)) setPracaId(n);} }catch(e){} _ofertasHyd.current=true; },[PRACAS]);
-  useEffect(()=>{ if(_ofertasHyd.current&&pracaId!=null){ try{localStorage.setItem("bz_praca_ref",String(pracaId));}catch(e){} } },[pracaId]);
+  const pracaId=(pracaRef!=null&&PRACAS.some(p=>p.id===pracaRef))?pracaRef:(PRACAS.find(p=>BASIS_DATA[`${p.cidade}-${p.estado}-${mercadoOf}`])?.id ?? PRACAS[0]?.id);
+  const setPracaId=selectPraca;
   const [entK, setEntK] = useState("4-2026");
   const [pagK, setPagK] = useState("5-2026");
   const [modalidade, setModalidade] = useState("FOB");
@@ -3853,6 +3814,36 @@ export default function ProSafraApp() {
   // Shorthand props for pages that need all data
   const dataProps = { PRACAS: pracas, COTACOES: cotacoes, BASIS_DATA: basisData, DEFAULT_BASIS: defaultBasis };
 
+  // ─── REGIÃO GLOBAL: fonte única da verdade (lida/escrita só aqui) ───
+  const [pracaList,setPracaList]=useState([]);
+  const [pracaRef,setPracaRef]=useState(null);
+  const regHydrated=useRef(false);
+  useEffect(()=>{
+    if(regHydrated.current) return;
+    if(!pracas||pracas.length===0) return;
+    try{
+      const raw=localStorage.getItem("bz_pracas"); let list=raw?JSON.parse(raw):[];
+      if(!Array.isArray(list)) list=[];
+      const refRaw=localStorage.getItem("bz_praca_ref");
+      let ref=(refRaw!=null&&refRaw!=="")?parseInt(refRaw):null;
+      list=list.filter(id=>pracas.some(p=>p.id===id));
+      if(ref!=null&&!pracas.some(p=>p.id===ref)) ref=null;
+      if(!list.length){
+        const firstSoja=pracas.find(p=>basisData[`${p.cidade}-${p.estado}-Soja Exportação`])||pracas[0];
+        if(firstSoja) list=[firstSoja.id];
+      }
+      if(ref==null&&list.length) ref=list[0];
+      if(ref!=null&&!list.includes(ref)) list=[...list,ref];
+      setPracaList(list); setPracaRef(ref);
+      regHydrated.current=true;
+    }catch(e){}
+  },[pracas,basisData]);
+  useEffect(()=>{ if(regHydrated.current){ try{localStorage.setItem("bz_pracas",JSON.stringify(pracaList));}catch(e){} } },[pracaList]);
+  useEffect(()=>{ if(regHydrated.current&&pracaRef!=null){ try{localStorage.setItem("bz_praca_ref",String(pracaRef));}catch(e){} } },[pracaRef]);
+  const selectPraca=(id)=>{ if(id==null||isNaN(id)) return; setPracaRef(id); setPracaList(prev=>prev.includes(id)?prev:[...prev,id]); };
+  const removePracaG=(id)=>{ setPracaList(prev=>{const nl=prev.filter(x=>x!==id); if(pracaRef===id) setPracaRef(nl.length?nl[0]:null); return nl;}); };
+  const regionProps = { pracaRef, pracaList, selectPraca, removePraca: removePracaG };
+
   return (
     <div style={{display:"flex",minHeight:"100vh",background:BZ.bg,fontFamily:"'Outfit',sans-serif",color:BZ.text}}>
       <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
@@ -3923,17 +3914,17 @@ export default function ProSafraApp() {
           </div>
         </div>
 
-        {page==="dashboard"&&<DashboardPage goTo={setPage} premiosData={premiosData} analiseData={analiseData} fundosData={fundosData} {...dataProps}/>}
+        {page==="dashboard"&&<DashboardPage goTo={setPage} premiosData={premiosData} analiseData={analiseData} fundosData={fundosData} {...dataProps} {...regionProps}/>}
         {page==="mercado"&&<MercadoPage goTo={setPage} contractsDash={contractsDash}/>}
-        {page==="preco-justo"&&<PrecoJustoPage {...dataProps}/>}
+        {page==="preco-justo"&&<PrecoJustoPage {...dataProps} {...regionProps}/>}
         {page==="premios"&&<PremiosPortoPage premiosData={premiosData}/>}
         {page==="analise"&&<AnaliseTecnicaPage COTACOES={cotacoes} analiseData={analiseData}/>}
         {page==="fundamentos"&&<FundamentosPage fundamentosData={fundamentosData}/>}
         {page==="fundos"&&<PosicaoFundosPage fundosData={fundosData}/>}
         {page==="cambio"&&<CambioPage COTACOES={cotacoes} ptax={ptax}/>}
         {page==="paridade"&&<ParidadePage COTACOES={cotacoes}/>}
-        {page==="carrego"&&<CustoCarregoPage {...dataProps}/>}
-        {page==="ofertas"&&<OfertasFirmesPage {...dataProps}/>}
+        {page==="carrego"&&<CustoCarregoPage {...dataProps} {...regionProps}/>}
+        {page==="ofertas"&&<OfertasFirmesPage {...dataProps} {...regionProps}/>}
         {page==="admin"&&<AdminPage/>}
         {!["dashboard","preco-justo","premios","analise","fundamentos","fundos","cambio","paridade","carrego","ofertas","mercado","admin"].includes(page)&&(
           <div style={{padding:"60px 28px",textAlign:"center"}}>
