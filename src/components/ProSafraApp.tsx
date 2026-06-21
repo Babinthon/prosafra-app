@@ -242,6 +242,8 @@ function DashboardPage({goTo, PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, premi
   const pLabel=praca?`${praca.cidade} - ${praca.estado}`:"—";
   const savedPracas=(pracaList||[]).map(id=>PRACAS.find(p=>p.id===id)).filter(Boolean);
   const addable=availPracas.filter(p=>!(pracaList||[]).includes(p.id));
+  const [dbg,setDbg]=useState({ref:"?",list:"?"});
+  useEffect(()=>{try{setDbg({ref:localStorage.getItem("bz_praca_ref"),list:localStorage.getItem("bz_pracas")});}catch(e){}},[pracaRef,pracaList]);
 
   const now=new Date();
   const pag30=new Date(now); pag30.setDate(pag30.getDate()+30);
@@ -285,6 +287,9 @@ function DashboardPage({goTo, PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, premi
 
   return (
     <div style={{maxWidth:1100,margin:"0 auto",padding:"20px 28px"}}>
+      <div style={{fontSize:10,fontFamily:"'JetBrains Mono',monospace",color:"#8A3D31",background:"#FBF0EE",border:"1px solid #E2B8AE",borderRadius:8,padding:"8px 10px",marginBottom:14,wordBreak:"break-all"}}>
+        🔧 diagnóstico — storage.bz_praca_ref=<b>{String(dbg.ref)}</b> · storage.bz_pracas=<b>{String(dbg.list)}</b> · memória pracaRef=<b>{String(pracaRef)}</b> · exibindo=<b>{pLabel}</b>
+      </div>
       <div style={{marginBottom:16}}>
         <div style={{fontSize:9,color:BZ.textMute,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:7}}>Minhas regiões</div>
         <div style={{display:"flex",flexWrap:"wrap",gap:7,alignItems:"center"}}>
@@ -3845,7 +3850,7 @@ export default function ProSafraApp() {
   // Persistência SÍNCRONA no momento do clique (não depende de efeito)
   const _persistRef=(id)=>{ try{localStorage.setItem("bz_praca_ref",String(id));}catch(e){} };
   const _persistList=(arr)=>{ try{localStorage.setItem("bz_pracas",JSON.stringify(arr));}catch(e){} };
-  const selectPraca=(id)=>{ if(id==null||isNaN(id)) return; setPracaRef(id); _persistRef(id); setPracaList(prev=>{const nl=prev.includes(id)?prev:[...prev,id]; _persistList(nl); return nl;}); };
+  const selectPraca=(id)=>{ if(id==null||isNaN(id)) return; setPracaRef(id); _persistRef(id); setPracaList(prev=>{const nl=prev.includes(id)?prev:[...prev,id]; _persistList(nl); return nl;}); try{console.log("[BZ] selectPraca",id,"=> wrote bz_praca_ref, readback=",localStorage.getItem("bz_praca_ref"));}catch(e){} };
   const removePracaG=(id)=>{ setPracaList(prev=>{const nl=prev.filter(x=>x!==id); _persistList(nl); if(pracaRef===id){const nx=nl.length?nl[0]:null; setPracaRef(nx); if(nx!=null)_persistRef(nx);} return nl;}); };
   const regionProps = { pracaRef, pracaList, selectPraca, removePraca: removePracaG };
 
