@@ -2655,7 +2655,7 @@ function OfertasFirmesPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRe
   function gerarTexto() {
     const coordLine = modalidade === "FOB" && coordenadas ? `\n*Localização (FOB):* ${coordenadas}` : "";
     const simbolo = moedaOferta === "BRL" ? "R$" : "US$";
-    return `*OFERTA FIRME — ProSafra*
+    return `*OFERTA FIRME — BZ Grãos*
 ━━━━━━━━━━━━━━━━━━
 *Cliente:* ${nome || "—"}
 *Fazenda:* ${fazenda || "—"}
@@ -2668,7 +2668,7 @@ function OfertasFirmesPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRe
 *Funrural:* ${funrural === "descontado" ? "Descontado no preço" : "Por conta do comprador (em folha)"}${coordLine}
 ━━━━━━━━━━━━━━━━━━
 _Oferta válida para o dia de hoje_
-_Gerado via ProSafra_`;
+_Gerado via BZ Grãos_`;
   }
 
   function copiarOferta() {
@@ -2944,7 +2944,7 @@ _Gerado via ProSafra_`;
                   {/* Buttons */}
                   <div style={{ display: "flex", gap: 6 }}>
                     <div onClick={() => {
-                      const txt = `*OFERTA FIRME — ProSafra*
+                      const txt = `*OFERTA FIRME — BZ Grãos*
 ━━━━━━━━━━━━━━━━━━
 *Cliente:* ${o.nome || "—"}
 *Fazenda:* ${o.fazenda || "—"}
@@ -2956,7 +2956,7 @@ _Gerado via ProSafra_`;
 *Modalidade:* ${o.modalidade}
 ━━━━━━━━━━━━━━━━━━
 _Cotações atualizadas em ${new Date().toLocaleDateString("pt-BR")}_
-_Gerado via ProSafra_`;
+_Gerado via BZ Grãos_`;
                       navigator.clipboard.writeText(txt);
                       setHistorico(prev => prev.map(p => p.id === o.id ? { ...p, chicago: chiHj, dolar: dolHj, data: new Date().toLocaleDateString("pt-BR") } : p));
                     }} style={{
@@ -2964,7 +2964,7 @@ _Gerado via ProSafra_`;
                       borderRadius: 5, padding: "6px 14px", cursor: "pointer", fontSize: 10, fontWeight: 600, color: "#B67A33",
                     }}>Atualizar cotações e copiar</div>
                     <div onClick={() => {
-                      const txt = `*OFERTA FIRME — ProSafra*
+                      const txt = `*OFERTA FIRME — BZ Grãos*
 ━━━━━━━━━━━━━━━━━━
 *Cliente:* ${o.nome || "—"}
 *Fazenda:* ${o.fazenda || "—"}
@@ -2976,7 +2976,7 @@ _Gerado via ProSafra_`;
 *Modalidade:* ${o.modalidade}
 ━━━━━━━━━━━━━━━━━━
 _Oferta reenviada_
-_Gerado via ProSafra_`;
+_Gerado via BZ Grãos_`;
                       navigator.clipboard.writeText(txt);
                     }} style={{
                       background: "#F5F1EA", border: "1px solid #ECE7DD",
@@ -3245,7 +3245,7 @@ function AdminPage() {
     return (
       <div style={{ maxWidth: 400, margin: "80px auto", padding: "0 28px" }}>
         <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 12, padding: 32 }}>
-          <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>⚙ Admin ProSafra</div>
+          <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>⚙ Admin BZ Grãos</div>
           <div style={{ color: "#8A7E6F", fontSize: 12, marginBottom: 24 }}>Digite a senha para acessar o painel</div>
           <input type="password" value={pw} onChange={e => setPw(e.target.value)} onKeyDown={e => e.key === "Enter" && doLogin()} placeholder="Senha" style={{ ...inputStyle, marginBottom: 14 }} />
           {authErr && <div style={{ color: "#B0503F", fontSize: 12, marginBottom: 10 }}>{authErr}</div>}
@@ -3822,12 +3822,13 @@ export default function ProSafraApp() {
     if(regHydrated.current) return;
     if(!pracas||pracas.length===0) return;
     try{
-      const raw=localStorage.getItem("bz_pracas"); let list=raw?JSON.parse(raw):[];
-      if(!Array.isArray(list)) list=[];
+      const raw=localStorage.getItem("bz_pracas");
+      let stored=raw?JSON.parse(raw):[];
+      if(!Array.isArray(stored)) stored=[];
+      let list=stored.map(sid=>{const m=pracas.find(p=>String(p.id)===String(sid)); return m?m.id:null;}).filter(x=>x!=null);
       const refRaw=localStorage.getItem("bz_praca_ref");
-      let ref=(refRaw!=null&&refRaw!=="")?parseInt(refRaw):null;
-      list=list.filter(id=>pracas.some(p=>p.id===id));
-      if(ref!=null&&!pracas.some(p=>p.id===ref)) ref=null;
+      let ref=null;
+      if(refRaw!=null&&refRaw!==""){const m=pracas.find(p=>String(p.id)===String(refRaw)); if(m) ref=m.id;}
       if(!list.length){
         const firstSoja=pracas.find(p=>basisData[`${p.cidade}-${p.estado}-Soja Exportação`])||pracas[0];
         if(firstSoja) list=[firstSoja.id];
@@ -3838,10 +3839,14 @@ export default function ProSafraApp() {
       regHydrated.current=true;
     }catch(e){}
   },[pracas,basisData]);
+  // Backup via efeito (após hidratar)
   useEffect(()=>{ if(regHydrated.current){ try{localStorage.setItem("bz_pracas",JSON.stringify(pracaList));}catch(e){} } },[pracaList]);
   useEffect(()=>{ if(regHydrated.current&&pracaRef!=null){ try{localStorage.setItem("bz_praca_ref",String(pracaRef));}catch(e){} } },[pracaRef]);
-  const selectPraca=(id)=>{ if(id==null||isNaN(id)) return; setPracaRef(id); setPracaList(prev=>prev.includes(id)?prev:[...prev,id]); };
-  const removePracaG=(id)=>{ setPracaList(prev=>{const nl=prev.filter(x=>x!==id); if(pracaRef===id) setPracaRef(nl.length?nl[0]:null); return nl;}); };
+  // Persistência SÍNCRONA no momento do clique (não depende de efeito)
+  const _persistRef=(id)=>{ try{localStorage.setItem("bz_praca_ref",String(id));}catch(e){} };
+  const _persistList=(arr)=>{ try{localStorage.setItem("bz_pracas",JSON.stringify(arr));}catch(e){} };
+  const selectPraca=(id)=>{ if(id==null||isNaN(id)) return; setPracaRef(id); _persistRef(id); setPracaList(prev=>{const nl=prev.includes(id)?prev:[...prev,id]; _persistList(nl); return nl;}); };
+  const removePracaG=(id)=>{ setPracaList(prev=>{const nl=prev.filter(x=>x!==id); _persistList(nl); if(pracaRef===id){const nx=nl.length?nl[0]:null; setPracaRef(nx); if(nx!=null)_persistRef(nx);} return nl;}); };
   const regionProps = { pracaRef, pracaList, selectPraca, removePraca: removePracaG };
 
   return (
@@ -3857,7 +3862,7 @@ export default function ProSafraApp() {
         : {width:sbOpen?230:0,minHeight:"100vh",background:BZ.surface,borderRight:`1px solid ${BZ.border}`,display:"flex",flexDirection:"column",overflow:"hidden",transition:"width 0.3s cubic-bezier(0.4,0,0.2,1)",flexShrink:0}}>
         <div style={{padding:"18px 16px 16px",borderBottom:`1px solid ${BZ.borderSoft}`}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <BZLogo size={34}/>
+            <img src="/bzgraos-emblem.svg" alt="BZ Grãos" width={36} height={36} style={{display:"block",flexShrink:0}}/>
             <div><div style={{fontSize:15,fontWeight:700,letterSpacing:"-0.01em"}}><span style={{color:BZ.brownDeep}}>BZ</span> <span style={{color:BZ.bronze}}>Grãos</span></div><div style={{fontSize:8,color:BZ.textFaint,marginTop:1,letterSpacing:"0.06em"}}>BAZAM AGRONEGÓCIOS</div></div>
           </div>
         </div>
@@ -3935,7 +3940,7 @@ export default function ProSafraApp() {
 
         <div style={{borderTop:"1px solid #F2EEE6",margin:"0 28px",paddingTop:14,paddingBottom:20,display:"flex",justifyContent:"space-between",color:"#C2B7A6",fontSize:9}}>
           <span>Fonte: TradingView Data via RapidAPI • Supabase{isLive?" ✓":""} • {lastUpdate ? `Atualizado: ${new Date(lastUpdate).toLocaleTimeString("pt-BR")}` : "Dados com delay 10-15min"}</span>
-          <span>ProSafra © 2026 — O que realmente vale seu grão</span>
+          <span>BZ Grãos © 2026 — O que realmente vale seu grão</span>
         </div>
       </div>
     </div>

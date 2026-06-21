@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ProSafra — O que realmente vale seu grão",
+  title: "BZ Grãos — O que realmente vale seu grão",
   description: "Plataforma de inteligência de preço para produtores de grãos no Brasil",
 };
 
