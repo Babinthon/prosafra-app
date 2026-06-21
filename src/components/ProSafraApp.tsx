@@ -102,10 +102,10 @@ const OPTS = buildOpts();
 function Sel({label,value,onChange,children,w,grow}) {
   return (
     <div style={{display:"flex",flexDirection:"column",gap:3,minWidth:w,flex:grow?1:undefined}}>
-      <label style={{fontSize:9,color:"#6B7280",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em"}}>{label}</label>
+      <label style={{fontSize:9,color:"#8A7E6F",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em"}}>{label}</label>
       <select value={value} onChange={e=>onChange(e.target.value)} style={{
-        background:"#111827",border:"1px solid rgba(255,255,255,0.08)",borderRadius:7,
-        color:"#F1F5F9",padding:"9px 10px",fontSize:12,fontFamily:"'Outfit',sans-serif",
+        background:"#F6F3ED",border:"1px solid #E4DECF",borderRadius:7,
+        color:"#4A2C16",padding:"9px 10px",fontSize:12,fontFamily:"'Outfit',sans-serif",
         cursor:"pointer",outline:"none",appearance:"none",
         backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M2 4L5 7L8 4' fill='none' stroke='%236B7280' stroke-width='1.5'/%3E%3C/svg%3E")`,
         backgroundRepeat:"no-repeat",backgroundPosition:"right 10px center",paddingRight:28,
@@ -122,7 +122,7 @@ function Chg({ch,chp}) {
 function Legend({color,border,text,dot}) {
   return <div style={{display:"flex",alignItems:"center",gap:4}}>
     <div style={{width:dot?7:10,height:dot?7:6,borderRadius:dot?"50%":2,background:color,border:border?`1px solid ${border}`:"none"}}/>
-    <span style={{color:"#6B7280",fontSize:9}}>{text}</span>
+    <span style={{color:"#8A7E6F",fontSize:9}}>{text}</span>
   </div>;
 }
 
@@ -329,15 +329,15 @@ function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
   const oR=pMax-pMin;
   const oP=oR>0?Math.max(0,Math.min(1,(offer-pMin)/oR)):0.5;
   let oC,oL;
-  if(offer<pMin){oC="#EF4444";oL="Abaixo da região mínima — preço ruim";}
-  else if(offer<pJusto){oC="#F59E0B";oL="Entre Mínimo e Justo — abaixo do ideal";}
-  else if(offer<pMax){oC="#22C55E";oL="Na região do Preço Justo — boa negociação";}
-  else{oC="#10B981";oL="Acima do Agressivo — oportunidade rara";}
+  if(offer<pMin){oC="#B0503F";oL="Abaixo da região mínima — preço ruim";}
+  else if(offer<pJusto){oC="#D5A246";oL="Entre Mínimo e Justo — abaixo do ideal";}
+  else if(offer<pMax){oC="#4E7C5A";oL="Na região do Preço Justo — boa negociação";}
+  else{oC="#4E7C5A";oL="Acima do Agressivo — oportunidade rara";}
 
   return (
     <div style={{maxWidth:1060,margin:"0 auto",padding:"20px 28px 48px"}}>
       {/* Seletores */}
-      <div style={{background:"#0D1117",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:"16px 18px",marginBottom:16,display:"flex",gap:10,flexWrap:"wrap",alignItems:"flex-end"}}>
+      <div style={{background:"#FFFFFF",border:"1px solid #ECE7DD",borderRadius:10,padding:"16px 18px",marginBottom:16,display:"flex",gap:10,flexWrap:"wrap",alignItems:"flex-end"}}>
         <Sel label="Mercado" value={mercado} onChange={setMercado} w={170}>
           <option value="Soja Exportação">Soja Exportação</option>
           <option value="Milho Exportação">Milho Exportação</option>
@@ -356,42 +356,42 @@ function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
 
       {/* Dados de mercado */}
       <div style={{display:"flex",gap:12,marginBottom:16}}>
-        <MktCard label={`Chicago ${isSoja?"Soja":"Milho"} — ${cLabel}`} value={fmt(chi)} unit="c/bu" sym={cShort} ch={cCh} chp={cChp} color="#22C55E" fb={cFB}/>
-        <MktCard label={`Dólar projetado — ${MESES[pMi]} ${pYr}`} value={`R$ ${fmt(dol,4)}`} sym={dShort} ch={dCh} chp={dChp} color="#457B9D" fb={dFB} fd={4}/>
-        <div style={{background:"#0D1117",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:"14px 18px",minWidth:155}}>
-          <div style={{color:"#6B7280",fontSize:9,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:5}}>Basis histórico — {MESES[eMi]}</div>
+        <MktCard label={`Chicago ${isSoja?"Soja":"Milho"} — ${cLabel}`} value={fmt(chi)} unit="c/bu" sym={cShort} ch={cCh} chp={cChp} color="#4E7C5A" fb={cFB}/>
+        <MktCard label={`Dólar projetado — ${MESES[pMi]} ${pYr}`} value={`R$ ${fmt(dol,4)}`} sym={dShort} ch={dCh} chp={dChp} color="#B67A33" fb={dFB} fd={4}/>
+        <div style={{background:"#FFFFFF",border:"1px solid #ECE7DD",borderRadius:10,padding:"14px 18px",minWidth:155}}>
+          <div style={{color:"#8A7E6F",fontSize:9,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:5}}>Basis histórico — {MESES[eMi]}</div>
           <div style={{display:"flex",alignItems:"baseline",gap:4,marginBottom:3}}>
-            <span style={{fontSize:22,fontWeight:700,color:"#F59E0B",fontFamily:"'JetBrains Mono',monospace"}}>{fmt(bM.medio,0)}</span>
-            <span style={{color:"#4B5563",fontSize:10}}>c/bu</span>
+            <span style={{fontSize:22,fontWeight:700,color:"#D5A246",fontFamily:"'JetBrains Mono',monospace"}}>{fmt(bM.medio,0)}</span>
+            <span style={{color:"#A89C8A",fontSize:10}}>c/bu</span>
           </div>
-          <div style={{color:"#374151",fontSize:9}}>Min {fmt(bM.basis_min,0)} | Max {fmt(bM.basis_max,0)}</div>
-          <div style={{color:"#374151",fontSize:8,marginTop:3}}>Média 5 anos • {pLabel}</div>
+          <div style={{color:"#C2B7A6",fontSize:9}}>Min {fmt(bM.basis_min,0)} | Max {fmt(bM.basis_max,0)}</div>
+          <div style={{color:"#C2B7A6",fontSize:8,marginTop:3}}>Média 5 anos • {pLabel}</div>
         </div>
       </div>
 
       {/* 3 regiões */}
       <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
-        <div style={{width:3,height:18,background:"#E63946",borderRadius:2}}/>
+        <div style={{width:3,height:18,background:"#D5A246",borderRadius:2}}/>
         <span style={{fontSize:15,fontWeight:700}}>Regiões de preço</span>
-        <span style={{color:"#4B5563",fontSize:11}}>{pLabel} — {MESES[eMi]} {eYr}</span>
+        <span style={{color:"#A89C8A",fontSize:11}}>{pLabel} — {MESES[eMi]} {eYr}</span>
       </div>
       <div style={{display:"flex",gap:14,marginBottom:20,alignItems:"stretch"}}>
-        <RegCard label="Preço Mínimo" brl={pMin} usd={pMinU} basis={bM.basis_min} color="#F59E0B" sub="Abaixo disso, preço está ruim"/>
-        <RegCard label="Preço Justo" brl={pJusto} usd={pJustoU} basis={bM.medio} color="#22C55E" hl sub="Região ideal para negociar"/>
-        <RegCard label="Preço Agressivo" brl={pMax} usd={pMaxU} basis={bM.basis_max} color="#10B981" sub="Oportunidade excepcional, raro"/>
+        <RegCard label="Preço Mínimo" brl={pMin} usd={pMinU} basis={bM.basis_min} color="#D5A246" sub="Abaixo disso, preço está ruim"/>
+        <RegCard label="Preço Justo" brl={pJusto} usd={pJustoU} basis={bM.medio} color="#4E7C5A" hl sub="Região ideal para negociar"/>
+        <RegCard label="Preço Agressivo" brl={pMax} usd={pMaxU} basis={bM.basis_max} color="#4E7C5A" sub="Oportunidade excepcional, raro"/>
       </div>
 
       {/* Oferta */}
-      <div style={{background:"#0D1117",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:"18px",marginBottom:20}}>
-        <div style={{color:"#F1F5F9",fontSize:13,fontWeight:600,marginBottom:3}}>Análise de oferta recebida</div>
-        <div style={{color:"#6B7280",fontSize:10,marginBottom:14}}>Informe o preço que te ofereceram e veja onde se posiciona</div>
+      <div style={{background:"#FFFFFF",border:"1px solid #ECE7DD",borderRadius:10,padding:"18px",marginBottom:20}}>
+        <div style={{color:"#4A2C16",fontSize:13,fontWeight:600,marginBottom:3}}>Análise de oferta recebida</div>
+        <div style={{color:"#8A7E6F",fontSize:10,marginBottom:14}}>Informe o preço que te ofereceram e veja onde se posiciona</div>
         <div style={{display:"flex",gap:12,alignItems:"flex-end",marginBottom:16}}>
           <div>
-            <label style={{fontSize:9,color:"#6B7280",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",display:"block",marginBottom:3}}>Recebi oferta de</label>
+            <label style={{fontSize:9,color:"#8A7E6F",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",display:"block",marginBottom:3}}>Recebi oferta de</label>
             <div style={{display:"flex",alignItems:"center"}}>
-              <span style={{background:"#1F2937",border:"1px solid rgba(255,255,255,0.08)",borderRight:"none",borderRadius:"7px 0 0 7px",padding:"9px 10px",color:"#6B7280",fontSize:12}}>R$</span>
-              <input type="number" value={offer||""} onChange={e=>setOffer(parseFloat(e.target.value)||0)} placeholder="0,00" style={{background:"#111827",border:"1px solid rgba(255,255,255,0.08)",borderRadius:"0 7px 7px 0",color:"#F1F5F9",padding:"9px 10px",fontSize:15,fontFamily:"'JetBrains Mono',monospace",fontWeight:600,outline:"none",width:130}}/>
-              <span style={{color:"#4B5563",fontSize:11,marginLeft:6}}>/saca</span>
+              <span style={{background:"#EFE8DB",border:"1px solid #E4DECF",borderRight:"none",borderRadius:"7px 0 0 7px",padding:"9px 10px",color:"#8A7E6F",fontSize:12}}>R$</span>
+              <input type="number" value={offer||""} onChange={e=>setOffer(parseFloat(e.target.value)||0)} placeholder="0,00" style={{background:"#F6F3ED",border:"1px solid #E4DECF",borderRadius:"0 7px 7px 0",color:"#4A2C16",padding:"9px 10px",fontSize:15,fontFamily:"'JetBrains Mono',monospace",fontWeight:600,outline:"none",width:130}}/>
+              <span style={{color:"#A89C8A",fontSize:11,marginLeft:6}}>/saca</span>
             </div>
           </div>
           {offer>0&&<div style={{background:`${oC}11`,border:`1px solid ${oC}33`,borderRadius:7,padding:"9px 14px",flex:1}}><div style={{color:oC,fontSize:12,fontWeight:600}}>{oL}</div></div>}
@@ -399,29 +399,29 @@ function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
         {offer>0&&<>
           <div style={{position:"relative",height:36,marginBottom:2}}>
             <div style={{display:"flex",height:10,borderRadius:5,overflow:"hidden",marginTop:13}}>
-              <div style={{flex:1,background:"#F59E0B33"}}/><div style={{flex:1,background:"#22C55E33"}}/><div style={{flex:1,background:"#10B98133"}}/>
+              <div style={{flex:1,background:"#D5A24633"}}/><div style={{flex:1,background:"#4E7C5A33"}}/><div style={{flex:1,background:"#4E7C5A33"}}/>
             </div>
             <div style={{position:"absolute",top:0,left:`${Math.max(2,Math.min(98,oP*100))}%`,transform:"translateX(-50%)",transition:"left 0.3s"}}>
-              <div style={{width:2,height:34,background:"#F1F5F9",borderRadius:1,margin:"0 auto"}}/>
-              <div style={{background:"#F1F5F9",color:"#080A0F",fontSize:10,fontWeight:700,padding:"2px 6px",borderRadius:3,marginTop:3,whiteSpace:"nowrap",fontFamily:"'JetBrains Mono',monospace",textAlign:"center"}}>R$ {fmt(offer)}</div>
+              <div style={{width:2,height:34,background:"#4A2C16",borderRadius:1,margin:"0 auto"}}/>
+              <div style={{background:"#4A2C16",color:"#F7F7F5",fontSize:10,fontWeight:700,padding:"2px 6px",borderRadius:3,marginTop:3,whiteSpace:"nowrap",fontFamily:"'JetBrains Mono',monospace",textAlign:"center"}}>R$ {fmt(offer)}</div>
             </div>
           </div>
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:9,color:"#4B5563",marginTop:22}}>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:9,color:"#A89C8A",marginTop:22}}>
             <span>Mín: R$ {fmt(pMin)}</span><span>Justo: R$ {fmt(pJusto)}</span><span>Agr: R$ {fmt(pMax)}</span>
           </div>
         </>}
       </div>
 
       {/* Sazonalidade — curva de preço futuro */}
-      <div style={{background:"#0D1117",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:"18px"}}>
+      <div style={{background:"#FFFFFF",border:"1px solid #ECE7DD",borderRadius:10,padding:"18px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}}>
           <div>
-            <div style={{color:"#F1F5F9",fontSize:13,fontWeight:600}}>Curva de preço projetado — {isSoja?"Soja":"Milho"}</div>
-            <div style={{color:"#6B7280",fontSize:10,marginTop:2}}>Preço justo R$/saca por mês de embarque • Chicago + basis × câmbio</div>
+            <div style={{color:"#4A2C16",fontSize:13,fontWeight:600}}>Curva de preço projetado — {isSoja?"Soja":"Milho"}</div>
+            <div style={{color:"#8A7E6F",fontSize:10,marginTop:2}}>Preço justo R$/saca por mês de embarque • Chicago + basis × câmbio</div>
           </div>
           <div style={{display:"flex",gap:14,flexWrap:"wrap",justifyContent:"flex-end"}}>
-            <Legend color="#457B9D22" border="#457B9D44" text="Faixa min–max"/>
-            <Legend color="#457B9D" text="Preço justo" dot/>
+            <Legend color="#B67A3322" border="#B67A3344" text="Faixa min–max"/>
+            <Legend color="#B67A33" text="Preço justo" dot/>
           </div>
         </div>
 
@@ -457,8 +457,8 @@ function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
               {/* Grid lines */}
               {yTicks.map((t, i) => (
                 <g key={i}>
-                  <line x1={padL} y1={t.y} x2={W - padR} y2={t.y} stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
-                  <text x={padL - 8} y={t.y + 3} fill="#4B5563" fontSize="8" textAnchor="end" fontFamily="'JetBrains Mono',monospace">{fmt(t.v, 0)}</text>
+                  <line x1={padL} y1={t.y} x2={W - padR} y2={t.y} stroke="#F2EEE6" strokeWidth="1" />
+                  <text x={padL - 8} y={t.y + 3} fill="#A89C8A" fontSize="8" textAnchor="end" fontFamily="'JetBrains Mono',monospace">{fmt(t.v, 0)}</text>
                 </g>
               ))}
 
@@ -472,14 +472,14 @@ function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
               <polyline points={minPts.join(" ")} fill="none" stroke="rgba(69,123,157,0.25)" strokeWidth="1" strokeDasharray="4,3" />
 
               {/* Justo line */}
-              <polyline points={justoPts.join(" ")} fill="none" stroke="#457B9D" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+              <polyline points={justoPts.join(" ")} fill="none" stroke="#B67A33" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
 
               {/* Dots + labels */}
               {sWD.map((s, i) => (
                 <g key={i}>
-                  <circle cx={toX(i)} cy={toY(s.pJusto)} r="4" fill="#457B9D" stroke="#0D1117" strokeWidth="2" />
-                  <text x={toX(i)} y={toY(s.pJusto) - 10} fill="#9CA3AF" fontSize="7.5" textAnchor="middle" fontFamily="'JetBrains Mono',monospace" fontWeight="600">{fmt(s.pJusto, 0)}</text>
-                  <text x={toX(i)} y={H - 8} fill="#9CA3AF" fontSize="7.5" textAnchor="middle" fontWeight="500">{s.label}</text>
+                  <circle cx={toX(i)} cy={toY(s.pJusto)} r="4" fill="#B67A33" stroke="#FFFFFF" strokeWidth="2" />
+                  <text x={toX(i)} y={toY(s.pJusto) - 10} fill="#6B6052" fontSize="7.5" textAnchor="middle" fontFamily="'JetBrains Mono',monospace" fontWeight="600">{fmt(s.pJusto, 0)}</text>
+                  <text x={toX(i)} y={H - 8} fill="#6B6052" fontSize="7.5" textAnchor="middle" fontWeight="500">{s.label}</text>
                 </g>
               ))}
             </svg>
@@ -487,17 +487,17 @@ function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
         })()}
 
         {/* Tabela detalhada */}
-        <div style={{borderTop:"1px solid rgba(255,255,255,0.06)",paddingTop:12,marginTop:4}}>
-          <div style={{display:"grid",gridTemplateColumns:"90px repeat(4,1fr)",gap:0,fontSize:9,color:"#4B5563",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6,paddingLeft:4}}>
-            <div>Embarque</div><div style={{textAlign:"right"}}>Chicago</div><div style={{textAlign:"right"}}>Câmbio</div><div style={{textAlign:"right"}}>R$/sc Min</div><div style={{textAlign:"right",color:"#457B9D"}}>R$/sc Justo</div>
+        <div style={{borderTop:"1px solid #ECE7DD",paddingTop:12,marginTop:4}}>
+          <div style={{display:"grid",gridTemplateColumns:"90px repeat(4,1fr)",gap:0,fontSize:9,color:"#A89C8A",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6,paddingLeft:4}}>
+            <div>Embarque</div><div style={{textAlign:"right"}}>Chicago</div><div style={{textAlign:"right"}}>Câmbio</div><div style={{textAlign:"right"}}>R$/sc Min</div><div style={{textAlign:"right",color:"#B67A33"}}>R$/sc Justo</div>
           </div>
           {season.filter(s=>s.has).map(s=>(
-            <div key={s.idx} style={{display:"grid",gridTemplateColumns:"90px repeat(4,1fr)",gap:0,fontSize:11,padding:"5px 4px",borderBottom:"1px solid rgba(255,255,255,0.03)"}}>
-              <div style={{color:"#9CA3AF",fontWeight:500}}>{s.label}</div>
-              <div style={{textAlign:"right",fontFamily:"'JetBrains Mono',monospace",color:"#6B7280"}}>{s.chi?fmt(s.chi,1):"-"}</div>
-              <div style={{textAlign:"right",fontFamily:"'JetBrains Mono',monospace",color:"#6B7280"}}>{s.dol?fmt(s.dol,4):"-"}</div>
-              <div style={{textAlign:"right",fontFamily:"'JetBrains Mono',monospace",color:"#F59E0B"}}>{s.pMin?fmt(s.pMin,0):"-"}</div>
-              <div style={{textAlign:"right",fontFamily:"'JetBrains Mono',monospace",color:"#457B9D",fontWeight:600}}>{s.pJusto?fmt(s.pJusto,0):"-"}</div>
+            <div key={s.idx} style={{display:"grid",gridTemplateColumns:"90px repeat(4,1fr)",gap:0,fontSize:11,padding:"5px 4px",borderBottom:"1px solid #F5F1EA"}}>
+              <div style={{color:"#6B6052",fontWeight:500}}>{s.label}</div>
+              <div style={{textAlign:"right",fontFamily:"'JetBrains Mono',monospace",color:"#8A7E6F"}}>{s.chi?fmt(s.chi,1):"-"}</div>
+              <div style={{textAlign:"right",fontFamily:"'JetBrains Mono',monospace",color:"#8A7E6F"}}>{s.dol?fmt(s.dol,4):"-"}</div>
+              <div style={{textAlign:"right",fontFamily:"'JetBrains Mono',monospace",color:"#D5A246"}}>{s.pMin?fmt(s.pMin,0):"-"}</div>
+              <div style={{textAlign:"right",fontFamily:"'JetBrains Mono',monospace",color:"#B67A33",fontWeight:600}}>{s.pJusto?fmt(s.pJusto,0):"-"}</div>
             </div>
           ))}
         </div>
@@ -507,29 +507,29 @@ function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
 }
 
 function MktCard({label,value,unit,sym,ch,chp,color,fb,fd=2}) {
-  return <div style={{background:"#0D1117",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:"14px 18px",flex:1,position:"relative",overflow:"hidden"}}>
+  return <div style={{background:"#FFFFFF",border:"1px solid #ECE7DD",borderRadius:10,padding:"14px 18px",flex:1,position:"relative",overflow:"hidden"}}>
     <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:`linear-gradient(90deg,transparent,${color},transparent)`,opacity:0.5}}/>
-    <div style={{color:"#6B7280",fontSize:9,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:5}}>{label}</div>
+    <div style={{color:"#8A7E6F",fontSize:9,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:5}}>{label}</div>
     <div style={{display:"flex",alignItems:"baseline",gap:5,marginBottom:3}}>
-      <span style={{fontSize:22,fontWeight:700,color:"#F1F5F9",fontFamily:"'JetBrains Mono',monospace"}}>{value}</span>
-      {unit&&<span style={{color:"#4B5563",fontSize:10}}>{unit}</span>}
+      <span style={{fontSize:22,fontWeight:700,color:"#4A2C16",fontFamily:"'JetBrains Mono',monospace"}}>{value}</span>
+      {unit&&<span style={{color:"#A89C8A",fontSize:10}}>{unit}</span>}
     </div>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-      <span style={{color:ch>=0?"#22C55E":"#EF4444",fontSize:10,fontWeight:500}}>{ch>=0?"▲":"▼"} {ch>=0?"+":""}{fmt(ch,fd)} ({chp>=0?"+":""}{fmt(chp)}%)</span>
-      <span style={{color:"#374151",fontSize:9,fontFamily:"'JetBrains Mono',monospace"}}>{sym}</span>
+      <span style={{color:ch>=0?"#4E7C5A":"#B0503F",fontSize:10,fontWeight:500}}>{ch>=0?"▲":"▼"} {ch>=0?"+":""}{fmt(ch,fd)} ({chp>=0?"+":""}{fmt(chp)}%)</span>
+      <span style={{color:"#C2B7A6",fontSize:9,fontFamily:"'JetBrains Mono',monospace"}}>{sym}</span>
     </div>
-    {fb&&<div style={{color:"#F59E0B",fontSize:8,marginTop:4,fontStyle:"italic"}}>Usando contrato mais próximo</div>}
+    {fb&&<div style={{color:"#D5A246",fontSize:8,marginTop:4,fontStyle:"italic"}}>Usando contrato mais próximo</div>}
   </div>;
 }
 
 function RegCard({label,brl,usd,basis,color,hl,sub}) {
-  return <div style={{background:hl?`${color}0D`:"#0D1117",border:`1px solid ${hl?`${color}33`:"rgba(255,255,255,0.06)"}`,borderRadius:10,padding:hl?"22px 18px":"18px",flex:1,position:"relative",overflow:"hidden"}}>
+  return <div style={{background:hl?`${color}0D`:"#FFFFFF",border:`1px solid ${hl?`${color}33`:"#ECE7DD"}`,borderRadius:10,padding:hl?"22px 18px":"18px",flex:1,position:"relative",overflow:"hidden"}}>
     <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:color}}/>
     {hl&&<div style={{position:"absolute",top:10,right:10,background:`${color}22`,color,fontSize:8,fontWeight:700,padding:"2px 7px",borderRadius:3,textTransform:"uppercase",letterSpacing:"0.1em"}}>Região ideal</div>}
-    <div style={{color:"#9CA3AF",fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:10}}>{label}</div>
-    <div style={{fontSize:hl?28:22,fontWeight:800,color:"#F1F5F9",fontFamily:"'JetBrains Mono',monospace",lineHeight:1,marginBottom:5}}>R$ {fmt(brl)}</div>
-    <div style={{fontSize:12,color:"#9CA3AF",marginBottom:6,fontFamily:"'JetBrains Mono',monospace"}}>US$ {fmt(usd)}/sc</div>
-    <div style={{fontSize:10,color:"#4B5563"}}>Basis: {fmt(basis,0)} c/bu</div>
+    <div style={{color:"#6B6052",fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:10}}>{label}</div>
+    <div style={{fontSize:hl?28:22,fontWeight:800,color:"#4A2C16",fontFamily:"'JetBrains Mono',monospace",lineHeight:1,marginBottom:5}}>R$ {fmt(brl)}</div>
+    <div style={{fontSize:12,color:"#6B6052",marginBottom:6,fontFamily:"'JetBrains Mono',monospace"}}>US$ {fmt(usd)}/sc</div>
+    <div style={{fontSize:10,color:"#A89C8A"}}>Basis: {fmt(basis,0)} c/bu</div>
     {sub&&<div style={{fontSize:9,color,marginTop:7,fontWeight:500}}>{sub}</div>}
   </div>;
 }
@@ -602,18 +602,18 @@ function PremiosPortoPage({premiosData}) {
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 3, height: 18, background: "#E63946", borderRadius: 2 }} />
+          <div style={{ width: 3, height: 18, background: "#D5A246", borderRadius: 2 }} />
           <span style={{ fontSize: 15, fontWeight: 700 }}>Prêmios de Soja — Paranaguá</span>
-          <span style={{ color: "#4B5563", fontSize: 11 }}>Compra • cents/bushel</span>
+          <span style={{ color: "#A89C8A", fontSize: 11 }}>Compra • cents/bushel</span>
         </div>
-        <div style={{ color: "#374151", fontSize: 10 }}>{hasLive ? "✓ Dados ao vivo" : "Dados de exemplo"}</div>
+        <div style={{ color: "#C2B7A6", fontSize: 10 }}>{hasLive ? "✓ Dados ao vivo" : "Dados de exemplo"}</div>
       </div>
 
       {/* ─── PRODUTOR VIEW — TABLE ─── */}
-      <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, overflow: "hidden", marginBottom: 20 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "140px 80px 100px 100px 1fr 100px", padding: "10px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+      <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, overflow: "hidden", marginBottom: 20 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "140px 80px 100px 100px 1fr 100px", padding: "10px 16px", borderBottom: "1px solid #ECE7DD" }}>
           {["Embarque", "Contrato", "Prêmio atual", "Média hist.", "Termômetro", "Var. dia"].map(h => (
-            <div key={h} style={{ color: "#4B5563", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>{h}</div>
+            <div key={h} style={{ color: "#A89C8A", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>{h}</div>
           ))}
         </div>
         {sorted.map(p => {
@@ -622,7 +622,7 @@ function PremiosPortoPage({premiosData}) {
           const hist = hs ? hs.avg : p.venda;
           const diff = p.venda - hist;
           const isAbove = diff >= 0;
-          const color = isAbove ? "#22C55E" : "#EF4444";
+          const color = isAbove ? "#4E7C5A" : "#B0503F";
           const barMax = 60;
           const absDiff = Math.abs(diff);
           const barW = Math.min(absDiff / Math.max(Math.abs(hist), 1) * barMax, barMax);
@@ -630,27 +630,27 @@ function PremiosPortoPage({premiosData}) {
           return (
             <div key={p.id} style={{
               display: "grid", gridTemplateColumns: "140px 80px 100px 100px 1fr 100px",
-              padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)",
+              padding: "12px 16px", borderBottom: "1px solid #F2EEE6",
               alignItems: "center",
             }}
-              onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.02)"}
+              onMouseEnter={e => e.currentTarget.style.background = "#FAF7F1"}
               onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
 
               {/* Embarque */}
               <div>
-                <span style={{ color: "#F1F5F9", fontSize: 13, fontWeight: 600 }}>{MESES[p.mesIdx]} {p.yr}</span>
+                <span style={{ color: "#4A2C16", fontSize: 13, fontWeight: 600 }}>{MESES[p.mesIdx]} {p.yr}</span>
               </div>
 
               {/* Contrato */}
-              <span style={{ color: "#6B7280", fontSize: 11, fontFamily: "'JetBrains Mono',monospace" }}>{p.contrato}</span>
+              <span style={{ color: "#8A7E6F", fontSize: 11, fontFamily: "'JetBrains Mono',monospace" }}>{p.contrato}</span>
 
               {/* Prêmio atual */}
-              <span style={{ color: "#F1F5F9", fontSize: 14, fontWeight: 700, fontFamily: "'JetBrains Mono',monospace" }}>
+              <span style={{ color: "#4A2C16", fontSize: 14, fontWeight: 700, fontFamily: "'JetBrains Mono',monospace" }}>
                 {p.venda >= 0 ? "+" : ""}{fmt(p.venda, 1)}
               </span>
 
               {/* Histórico */}
-              <span style={{ color: "#6B7280", fontSize: 12, fontFamily: "'JetBrains Mono',monospace" }}>
+              <span style={{ color: "#8A7E6F", fontSize: 12, fontFamily: "'JetBrains Mono',monospace" }}>
                 +{fmt(hist, 1)}
               </span>
 
@@ -658,9 +658,9 @@ function PremiosPortoPage({premiosData}) {
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <div style={{ position: "relative", width: barMax * 2 + 2, height: 14, display: "flex", alignItems: "center" }}>
                   {/* Center line */}
-                  <div style={{ position: "absolute", left: "50%", top: 0, bottom: 0, width: 1, background: "rgba(255,255,255,0.1)" }} />
+                  <div style={{ position: "absolute", left: "50%", top: 0, bottom: 0, width: 1, background: "#DED8CC" }} />
                   {/* Background */}
-                  <div style={{ position: "absolute", left: 0, right: 0, top: 3, bottom: 3, background: "rgba(255,255,255,0.03)", borderRadius: 3 }} />
+                  <div style={{ position: "absolute", left: 0, right: 0, top: 3, bottom: 3, background: "#F5F1EA", borderRadius: 3 }} />
                   {/* Bar */}
                   {isAbove ? (
                     <div style={{ position: "absolute", left: "50%", top: 2, bottom: 2, width: barW, background: `${color}33`, borderRadius: "0 3px 3px 0", borderRight: `2px solid ${color}` }} />
@@ -674,7 +674,7 @@ function PremiosPortoPage({premiosData}) {
               </div>
 
               {/* Var dia */}
-              <span style={{ color: p.varDia >= 0 ? "#22C55E" : "#EF4444", fontSize: 11, fontFamily: "'JetBrains Mono',monospace" }}>
+              <span style={{ color: p.varDia >= 0 ? "#4E7C5A" : "#B0503F", fontSize: 11, fontFamily: "'JetBrains Mono',monospace" }}>
                 {p.varDia >= 0 ? "+" : ""}{fmt(p.varDia, 1)}
               </span>
             </div>
@@ -689,17 +689,17 @@ function PremiosPortoPage({premiosData}) {
           const below = sorted.filter(p => { const hs = histStats[`${p.mesIdx}-${p.yr}`]; return hs && p.venda < hs.avg; });
           const avgDiff = sorted.length ? sorted.reduce((s, p) => { const hs = histStats[`${p.mesIdx}-${p.yr}`]; return s + (hs ? p.venda - hs.avg : 0); }, 0) / sorted.length : 0;
           return [
-            { label: "Acima do histórico", value: above.length, total: sorted.length, color: "#22C55E" },
-            { label: "Abaixo do histórico", value: below.length, total: sorted.length, color: "#EF4444" },
-            { label: "Diferença média", value: `${avgDiff >= 0 ? "+" : ""}${fmt(avgDiff, 1)} c/bu`, color: avgDiff >= 0 ? "#22C55E" : "#EF4444" },
+            { label: "Acima do histórico", value: above.length, total: sorted.length, color: "#4E7C5A" },
+            { label: "Abaixo do histórico", value: below.length, total: sorted.length, color: "#B0503F" },
+            { label: "Diferença média", value: `${avgDiff >= 0 ? "+" : ""}${fmt(avgDiff, 1)} c/bu`, color: avgDiff >= 0 ? "#4E7C5A" : "#B0503F" },
           ].map((c, i) => (
-            <div key={i} style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "16px 18px" }}>
-              <div style={{ color: "#6B7280", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>{c.label}</div>
+            <div key={i} style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "16px 18px" }}>
+              <div style={{ color: "#8A7E6F", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>{c.label}</div>
               <div style={{ fontSize: 22, fontWeight: 700, color: c.color, fontFamily: "'JetBrains Mono',monospace" }}>
                 {typeof c.value === "number" ? `${c.value}/${c.total}` : c.value}
               </div>
               {typeof c.value === "number" && (
-                <div style={{ marginTop: 6, height: 4, background: "rgba(255,255,255,0.04)", borderRadius: 2, overflow: "hidden" }}>
+                <div style={{ marginTop: 6, height: 4, background: "#F2EEE6", borderRadius: 2, overflow: "hidden" }}>
                   <div style={{ height: "100%", width: `${(c.value / c.total) * 100}%`, background: c.color, borderRadius: 2 }} />
                 </div>
               )}
@@ -737,10 +737,10 @@ const ANALISE_DATA = {
     updatedAt: "11/04/2026",
     leitura: "Mercado testou resistência em 1176 e recuou. Seguimos em tendência de alta dentro do canal ascendente. Suporte imediato em 1146. Se romper 1207 com volume, abre caminho para testar 1239. RSI em 43 — espaço para subir antes de sobrecompra.",
     faixas: [
-      { valor: 1239, tipo: "intensificar", label: "Intensificar negócios", color: "#15803D", desc: "Topo do canal — oportunidade rara" },
-      { valor: 1207, tipo: "forte", label: "Zona forte", color: "#22C55E", desc: "Resistência importante — bom momento para negociar" },
-      { valor: 1176, tipo: "buscar", label: "Buscar negócios", color: "#86EFAC", desc: "Início da região de interesse — começar a olhar" },
-      { valor: 1146, tipo: "segurar", label: "Segurar", color: "#F59E0B", desc: "Suporte — abaixo disso, preço está ruim" },
+      { valor: 1239, tipo: "intensificar", label: "Intensificar negócios", color: "#2F6A45", desc: "Topo do canal — oportunidade rara" },
+      { valor: 1207, tipo: "forte", label: "Zona forte", color: "#4E7C5A", desc: "Resistência importante — bom momento para negociar" },
+      { valor: 1176, tipo: "buscar", label: "Buscar negócios", color: "#CFE3D2", desc: "Início da região de interesse — começar a olhar" },
+      { valor: 1146, tipo: "segurar", label: "Segurar", color: "#D5A246", desc: "Suporte — abaixo disso, preço está ruim" },
     ],
     imageUrl: null, // fundador faz upload via admin
   },
@@ -748,10 +748,10 @@ const ANALISE_DATA = {
     updatedAt: "11/04/2026",
     leitura: "Contrato de julho segue correlacionado ao K. Spread K/N estável. Mesmas referências de canal se aplicam com ajuste de +16 c/bu em média.",
     faixas: [
-      { valor: 1255, tipo: "intensificar", label: "Intensificar negócios", color: "#15803D", desc: "Topo do canal" },
-      { valor: 1223, tipo: "forte", label: "Zona forte", color: "#22C55E", desc: "Resistência forte" },
-      { valor: 1192, tipo: "buscar", label: "Buscar negócios", color: "#86EFAC", desc: "Início região de interesse" },
-      { valor: 1162, tipo: "segurar", label: "Segurar", color: "#F59E0B", desc: "Suporte principal" },
+      { valor: 1255, tipo: "intensificar", label: "Intensificar negócios", color: "#2F6A45", desc: "Topo do canal" },
+      { valor: 1223, tipo: "forte", label: "Zona forte", color: "#4E7C5A", desc: "Resistência forte" },
+      { valor: 1192, tipo: "buscar", label: "Buscar negócios", color: "#CFE3D2", desc: "Início região de interesse" },
+      { valor: 1162, tipo: "segurar", label: "Segurar", color: "#D5A246", desc: "Suporte principal" },
     ],
     imageUrl: null,
   },
@@ -785,21 +785,21 @@ function AnaliseTecnicaPage({COTACOES, analiseData}) {
     updatedAt: new Date(liveRow.updated_at).toLocaleDateString("pt-BR"),
     leitura: liveRow.leitura || "",
     faixas: [
-      { valor: liveRow.zona1_valor, tipo: "intensificar", label: liveRow.zona1_label, color: "#15803D", desc: "Topo do canal" },
-      { valor: liveRow.zona2_valor, tipo: "buscar", label: liveRow.zona2_label, color: "#22C55E", desc: "Início região de interesse" },
-      { valor: liveRow.zona3_valor, tipo: "segurar", label: liveRow.zona3_label, color: "#F59E0B", desc: "Suporte principal" },
+      { valor: liveRow.zona1_valor, tipo: "intensificar", label: liveRow.zona1_label, color: "#2F6A45", desc: "Topo do canal" },
+      { valor: liveRow.zona2_valor, tipo: "buscar", label: liveRow.zona2_label, color: "#4E7C5A", desc: "Início região de interesse" },
+      { valor: liveRow.zona3_valor, tipo: "segurar", label: liveRow.zona3_label, color: "#D5A246", desc: "Suporte principal" },
     ],
   } : ANALISE_DATA[selSym];
 
   // Determine which zone the current price is in
   let zonaAtual = null;
-  let zonaColor = "#6B7280";
+  let zonaColor = "#8A7E6F";
   let zonaLabel = "Fora das regiões mapeadas";
   if (analise) {
     const sorted = [...analise.faixas].sort((a, b) => a.valor - b.valor);
     if (preco < sorted[0].valor) {
       zonaAtual = "abaixo";
-      zonaColor = "#EF4444";
+      zonaColor = "#B0503F";
       zonaLabel = "Abaixo do suporte — preço desfavorável";
     } else {
       for (let i = sorted.length - 1; i >= 0; i--) {
@@ -832,36 +832,36 @@ function AnaliseTecnicaPage({COTACOES, analiseData}) {
             {contratos.filter(c => c.produto === "Milho").map(c => <option key={c.sym} value={c.sym}>{c.label}</option>)}
           </optgroup>
         </Sel>
-        {analise && <span style={{ color: "#374151", fontSize: 10, paddingBottom: 10 }}>Atualizado em {analise.updatedAt}</span>}
+        {analise && <span style={{ color: "#C2B7A6", fontSize: 10, paddingBottom: 10 }}>Atualizado em {analise.updatedAt}</span>}
       </div>
 
       {!analise ? (
-        <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "40px", textAlign: "center" }}>
-          <div style={{ color: "#4B5563", fontSize: 14 }}>Análise técnica ainda não publicada para este contrato</div>
-          <div style={{ color: "#374151", fontSize: 11, marginTop: 4 }}>O fundador publica semanalmente via painel admin</div>
+        <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "40px", textAlign: "center" }}>
+          <div style={{ color: "#A89C8A", fontSize: 14 }}>Análise técnica ainda não publicada para este contrato</div>
+          <div style={{ color: "#C2B7A6", fontSize: 11, marginTop: 4 }}>O fundador publica semanalmente via painel admin</div>
         </div>
       ) : (
         <>
           {/* Cotação atual + zona */}
           <div style={{ display: "flex", gap: 14, marginBottom: 20 }}>
             {/* Preço atual */}
-            <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "18px 22px", flex: 1, position: "relative", overflow: "hidden" }}>
+            <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "18px 22px", flex: 1, position: "relative", overflow: "hidden" }}>
               <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: zonaColor }} />
-              <div style={{ color: "#6B7280", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>
+              <div style={{ color: "#8A7E6F", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>
                 {contrato?.label}
               </div>
               <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 6 }}>
-                <span style={{ fontSize: 32, fontWeight: 800, color: "#F1F5F9", fontFamily: "'JetBrains Mono',monospace" }}>{fmt(preco, 2)}</span>
-                <span style={{ color: "#4B5563", fontSize: 12 }}>c/bu</span>
+                <span style={{ fontSize: 32, fontWeight: 800, color: "#4A2C16", fontFamily: "'JetBrains Mono',monospace" }}>{fmt(preco, 2)}</span>
+                <span style={{ color: "#A89C8A", fontSize: 12 }}>c/bu</span>
               </div>
               <Chg ch={ch} chp={chp} />
             </div>
 
             {/* Zona atual */}
             <div style={{ background: `${zonaColor}0D`, border: `1px solid ${zonaColor}33`, borderRadius: 10, padding: "18px 22px", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-              <div style={{ color: "#6B7280", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Zona atual do preço</div>
+              <div style={{ color: "#8A7E6F", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Zona atual do preço</div>
               <div style={{ color: zonaColor, fontSize: 18, fontWeight: 700, marginBottom: 4 }}>{zonaLabel}</div>
-              <div style={{ color: "#6B7280", fontSize: 11 }}>
+              <div style={{ color: "#8A7E6F", fontSize: 11 }}>
                 {zonaAtual === "segurar" && "Não é momento — aguardar melhora"}
                 {zonaAtual === "buscar" && "Começar a olhar oportunidades"}
                 {zonaAtual === "forte" && "Bom momento para negociar"}
@@ -872,12 +872,12 @@ function AnaliseTecnicaPage({COTACOES, analiseData}) {
           </div>
 
           {/* Gauge visual — preço na régua das faixas */}
-          <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "18px 22px", marginBottom: 20 }}>
-            <div style={{ color: "#6B7280", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 14 }}>Mapa de regiões de preço</div>
+          <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "18px 22px", marginBottom: 20 }}>
+            <div style={{ color: "#8A7E6F", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 14 }}>Mapa de regiões de preço</div>
 
             <div style={{ position: "relative", height: 60, marginBottom: 8 }}>
               {/* Background bar */}
-              <div style={{ position: "absolute", left: 0, right: 0, top: 24, height: 12, background: "rgba(255,255,255,0.03)", borderRadius: 6 }} />
+              <div style={{ position: "absolute", left: 0, right: 0, top: 24, height: 12, background: "#F5F1EA", borderRadius: 6 }} />
 
               {/* Zone segments */}
               {(() => {
@@ -885,7 +885,7 @@ function AnaliseTecnicaPage({COTACOES, analiseData}) {
                 const segments = [];
                 // Below first faixa
                 const firstPct = ((sorted[0].valor - faixaMin) / faixaRange) * 100;
-                segments.push(<div key="below" style={{ position: "absolute", left: 0, top: 24, height: 12, width: `${firstPct}%`, background: "#EF444422", borderRadius: "6px 0 0 6px" }} />);
+                segments.push(<div key="below" style={{ position: "absolute", left: 0, top: 24, height: 12, width: `${firstPct}%`, background: "#B0503F22", borderRadius: "6px 0 0 6px" }} />);
                 // Between faixas
                 for (let i = 0; i < sorted.length; i++) {
                   const left = ((sorted[i].valor - faixaMin) / faixaRange) * 100;
@@ -910,11 +910,11 @@ function AnaliseTecnicaPage({COTACOES, analiseData}) {
 
               {/* Current price marker */}
               <div style={{ position: "absolute", left: `${precoPct}%`, top: 4, transform: "translateX(-50%)", zIndex: 2 }}>
-                <div style={{ background: "#F1F5F9", color: "#080A0F", fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 3, whiteSpace: "nowrap", fontFamily: "'JetBrains Mono',monospace", textAlign: "center" }}>
+                <div style={{ background: "#4A2C16", color: "#F7F7F5", fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 3, whiteSpace: "nowrap", fontFamily: "'JetBrains Mono',monospace", textAlign: "center" }}>
                   {fmt(preco, 0)}
                 </div>
-                <div style={{ width: 2, height: 16, background: "#F1F5F9", margin: "2px auto 0", borderRadius: 1 }} />
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#F1F5F9", margin: "-1px auto 0", boxShadow: "0 0 8px rgba(255,255,255,0.4)" }} />
+                <div style={{ width: 2, height: 16, background: "#4A2C16", margin: "2px auto 0", borderRadius: 1 }} />
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#4A2C16", margin: "-1px auto 0", boxShadow: "0 0 8px #A89C8A" }} />
               </div>
             </div>
 
@@ -924,56 +924,56 @@ function AnaliseTecnicaPage({COTACOES, analiseData}) {
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, background: `${f.color}0D`, border: `1px solid ${f.color}22`, borderRadius: 6, padding: "6px 12px" }}>
                   <div style={{ width: 8, height: 8, borderRadius: 2, background: f.color }} />
                   <span style={{ color: f.color, fontSize: 10, fontWeight: 600 }}>{fmt(f.valor, 0)}</span>
-                  <span style={{ color: "#9CA3AF", fontSize: 10 }}>{f.label}</span>
+                  <span style={{ color: "#6B6052", fontSize: 10 }}>{f.label}</span>
                 </div>
               ))}
               <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.15)", borderRadius: 6, padding: "6px 12px" }}>
-                <div style={{ width: 8, height: 8, borderRadius: 2, background: "#EF4444" }} />
-                <span style={{ color: "#EF4444", fontSize: 10, fontWeight: 600 }}>{"<"}{fmt(analise.faixas.find(f => f.tipo === "segurar")?.valor || 0, 0)}</span>
-                <span style={{ color: "#9CA3AF", fontSize: 10 }}>Preço desfavorável</span>
+                <div style={{ width: 8, height: 8, borderRadius: 2, background: "#B0503F" }} />
+                <span style={{ color: "#B0503F", fontSize: 10, fontWeight: 600 }}>{"<"}{fmt(analise.faixas.find(f => f.tipo === "segurar")?.valor || 0, 0)}</span>
+                <span style={{ color: "#6B6052", fontSize: 10 }}>Preço desfavorável</span>
               </div>
             </div>
           </div>
 
           {/* Leitura do fundador */}
-          <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "18px 22px", marginBottom: 20 }}>
+          <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "18px 22px", marginBottom: 20 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-              <div style={{ color: "#F1F5F9", fontSize: 13, fontWeight: 600 }}>Leitura do mercado</div>
-              <span style={{ color: "#374151", fontSize: 9 }}>Atualizado {analise.updatedAt}</span>
+              <div style={{ color: "#4A2C16", fontSize: 13, fontWeight: 600 }}>Leitura do mercado</div>
+              <span style={{ color: "#C2B7A6", fontSize: 9 }}>Atualizado {analise.updatedAt}</span>
             </div>
-            <div style={{ color: "#9CA3AF", fontSize: 12, lineHeight: 1.7 }}>{analise.leitura}</div>
+            <div style={{ color: "#6B6052", fontSize: 12, lineHeight: 1.7 }}>{analise.leitura}</div>
           </div>
 
           {/* Tabela de pontos */}
-          <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, overflow: "hidden", marginTop: 20 }}>
-            <div style={{ padding: "14px 18px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-              <span style={{ color: "#F1F5F9", fontSize: 13, fontWeight: 600 }}>Pontos de referência — {contrato?.label}</span>
+          <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, overflow: "hidden", marginTop: 20 }}>
+            <div style={{ padding: "14px 18px", borderBottom: "1px solid #ECE7DD" }}>
+              <span style={{ color: "#4A2C16", fontSize: 13, fontWeight: 600 }}>Pontos de referência — {contrato?.label}</span>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "100px 1fr 160px 80px", padding: "8px 18px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "100px 1fr 160px 80px", padding: "8px 18px", borderBottom: "1px solid #ECE7DD" }}>
               {["Preço (c/bu)", "Região", "Ação", "Distância"].map(h => (
-                <span key={h} style={{ color: "#4B5563", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>{h}</span>
+                <span key={h} style={{ color: "#A89C8A", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>{h}</span>
               ))}
             </div>
             {[...analise.faixas].sort((a, b) => b.valor - a.valor).map((f, i) => {
               const dist = preco - f.valor;
               const isAtOrAbove = preco >= f.valor;
               return (
-                <div key={i} style={{ display: "grid", gridTemplateColumns: "100px 1fr 160px 80px", padding: "12px 18px", borderBottom: "1px solid rgba(255,255,255,0.04)", alignItems: "center" }}>
+                <div key={i} style={{ display: "grid", gridTemplateColumns: "100px 1fr 160px 80px", padding: "12px 18px", borderBottom: "1px solid #F2EEE6", alignItems: "center" }}>
                   <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 14, fontWeight: 700, color: f.color }}>{fmt(f.valor, 0)}</span>
                   <div>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <div style={{ width: 8, height: 8, borderRadius: 2, background: f.color }} />
-                      <span style={{ color: "#F1F5F9", fontSize: 12, fontWeight: 500 }}>{f.label}</span>
+                      <span style={{ color: "#4A2C16", fontSize: 12, fontWeight: 500 }}>{f.label}</span>
                     </div>
-                    <span style={{ color: "#4B5563", fontSize: 10, marginLeft: 14 }}>{f.desc}</span>
+                    <span style={{ color: "#A89C8A", fontSize: 10, marginLeft: 14 }}>{f.desc}</span>
                   </div>
-                  <span style={{ color: "#6B7280", fontSize: 11 }}>
+                  <span style={{ color: "#8A7E6F", fontSize: 11 }}>
                     {f.tipo === "segurar" && "Segurar posição"}
                     {f.tipo === "buscar" && "Começar a buscar"}
                     {f.tipo === "forte" && "Negociar ativamente"}
                     {f.tipo === "intensificar" && "Intensificar — raro"}
                   </span>
-                  <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: isAtOrAbove ? "#22C55E" : "#EF4444" }}>
+                  <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: isAtOrAbove ? "#4E7C5A" : "#B0503F" }}>
                     {dist >= 0 ? "+" : ""}{fmt(dist, 0)}
                   </span>
                 </div>
@@ -1062,32 +1062,32 @@ function FundamentosPage({fundamentosData}) {
   } : USDA_DATA[produto];
 
   const estoqueNivel = d.relEstoqueUso < 20 ? "apertado" : d.relEstoqueUso < 30 ? "equilibrado" : "folgado";
-  const estoqueColor = estoqueNivel === "apertado" ? "#EF4444" : estoqueNivel === "equilibrado" ? "#F59E0B" : "#22C55E";
+  const estoqueColor = estoqueNivel === "apertado" ? "#B0503F" : estoqueNivel === "equilibrado" ? "#D5A246" : "#4E7C5A";
   const estoqueIcon = estoqueNivel === "apertado" ? "▲ Altista" : estoqueNivel === "equilibrado" ? "◉ Neutro" : "▼ Baixista";
 
   const varPct = (at, ant) => ant ? (((at - ant) / ant) * 100) : 0;
   const varArrow = (at, ant) => at >= ant ? "▲" : "▼";
   const varColor = (at, ant, invert) => {
     const up = at >= ant;
-    if (invert) return up ? "#EF4444" : "#22C55E"; // more stock = bearish for price
-    return up ? "#22C55E" : "#EF4444";
+    if (invert) return up ? "#B0503F" : "#4E7C5A"; // more stock = bearish for price
+    return up ? "#4E7C5A" : "#B0503F";
   };
 
   function StatCard({ label, valor, anterior, unit, invert }) {
     const v = varPct(valor, anterior);
     const c = varColor(valor, anterior, invert);
     return (
-      <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "16px 18px" }}>
-        <div style={{ color: "#6B7280", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>{label}</div>
+      <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "16px 18px" }}>
+        <div style={{ color: "#8A7E6F", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>{label}</div>
         <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 4 }}>
-          <span style={{ fontSize: 20, fontWeight: 700, color: "#F1F5F9", fontFamily: "'JetBrains Mono',monospace" }}>{fmt(valor, 1)}</span>
-          <span style={{ color: "#4B5563", fontSize: 9 }}>{unit}</span>
+          <span style={{ fontSize: 20, fontWeight: 700, color: "#4A2C16", fontFamily: "'JetBrains Mono',monospace" }}>{fmt(valor, 1)}</span>
+          <span style={{ color: "#A89C8A", fontSize: 9 }}>{unit}</span>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <span style={{ color: c, fontSize: 10, fontWeight: 500 }}>
             {varArrow(valor, anterior)} {v >= 0 ? "+" : ""}{fmt(v, 1)}%
           </span>
-          <span style={{ color: "#374151", fontSize: 9 }}>ant: {fmt(anterior, 1)}</span>
+          <span style={{ color: "#C2B7A6", fontSize: 9 }}>ant: {fmt(anterior, 1)}</span>
         </div>
       </div>
     );
@@ -1099,17 +1099,17 @@ function FundamentosPage({fundamentosData}) {
       {/* Seletor + título */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 20 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 3, height: 18, background: "#E63946", borderRadius: 2 }} />
+          <div style={{ width: 3, height: 18, background: "#D5A246", borderRadius: 2 }} />
           <span style={{ fontSize: 15, fontWeight: 700 }}>Fundamentos — USDA/WASDE</span>
-          <span style={{ color: "#4B5563", fontSize: 11 }}>Safra {d.safraAtual}</span>
+          <span style={{ color: "#A89C8A", fontSize: 11 }}>Safra {d.safraAtual}</span>
         </div>
         <div style={{ display: "flex", gap: 6 }}>
           {["soja", "milho"].map(p => (
             <div key={p} onClick={() => setProduto(p)} style={{
               padding: "7px 18px", borderRadius: 7, cursor: "pointer", fontSize: 12, fontWeight: 600,
-              background: produto === p ? "rgba(230,57,70,0.1)" : "rgba(255,255,255,0.03)",
-              color: produto === p ? "#E63946" : "#6B7280",
-              border: `1px solid ${produto === p ? "rgba(230,57,70,0.3)" : "rgba(255,255,255,0.06)"}`,
+              background: produto === p ? "rgba(230,57,70,0.1)" : "#F5F1EA",
+              color: produto === p ? "#D5A246" : "#8A7E6F",
+              border: `1px solid ${produto === p ? "rgba(230,57,70,0.3)" : "#ECE7DD"}`,
             }}>{p === "soja" ? "Soja" : "Milho"}</div>
           ))}
         </div>
@@ -1118,38 +1118,38 @@ function FundamentosPage({fundamentosData}) {
       {/* Termômetro principal */}
       <div style={{ display: "flex", gap: 14, marginBottom: 20 }}>
         <div style={{ background: `${estoqueColor}0D`, border: `1px solid ${estoqueColor}33`, borderRadius: 10, padding: "20px 24px", flex: 1 }}>
-          <div style={{ color: "#6B7280", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Estoque mundial — sentimento</div>
+          <div style={{ color: "#8A7E6F", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Estoque mundial — sentimento</div>
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
             <div style={{ fontSize: 28, fontWeight: 800, color: estoqueColor, fontFamily: "'JetBrains Mono',monospace" }}>{estoqueIcon}</div>
             <div>
-              <div style={{ color: "#F1F5F9", fontSize: 14, fontWeight: 600 }}>Estoque {estoqueNivel}</div>
-              <div style={{ color: "#9CA3AF", fontSize: 11, marginTop: 2 }}>
+              <div style={{ color: "#4A2C16", fontSize: 14, fontWeight: 600 }}>Estoque {estoqueNivel}</div>
+              <div style={{ color: "#6B6052", fontSize: 11, marginTop: 2 }}>
                 Relação estoque/uso: {fmt(d.relEstoqueUso, 1)}% (anterior: {fmt(d.relEstoqueUsoAnt, 1)}%)
               </div>
             </div>
           </div>
           {/* Gauge bar */}
           <div style={{ marginTop: 14, position: "relative", height: 10, borderRadius: 5, overflow: "hidden", display: "flex" }}>
-            <div style={{ flex: 20, background: "#EF444444" }} />
-            <div style={{ flex: 10, background: "#F59E0B44" }} />
-            <div style={{ flex: 20, background: "#22C55E44" }} />
+            <div style={{ flex: 20, background: "#B0503F44" }} />
+            <div style={{ flex: 10, background: "#D5A24644" }} />
+            <div style={{ flex: 20, background: "#4E7C5A44" }} />
           </div>
           <div style={{ position: "relative", marginTop: -14, height: 14 }}>
             <div style={{ position: "absolute", left: `${Math.min(95, Math.max(5, (d.relEstoqueUso / 50) * 100))}%`, transform: "translateX(-50%)", top: 0 }}>
-              <div style={{ width: 3, height: 14, background: "#F1F5F9", borderRadius: 1, margin: "0 auto" }} />
+              <div style={{ width: 3, height: 14, background: "#4A2C16", borderRadius: 1, margin: "0 auto" }} />
             </div>
           </div>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 8, color: "#4B5563", marginTop: 4 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 8, color: "#A89C8A", marginTop: 4 }}>
             <span>Apertado {"(<20%)"}</span><span>Equilibrado</span><span>Folgado {"(>30%)"}</span>
           </div>
         </div>
 
         {/* Estoque final card */}
-        <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "20px 24px", minWidth: 200 }}>
-          <div style={{ color: "#6B7280", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Estoque final mundial</div>
+        <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "20px 24px", minWidth: 200 }}>
+          <div style={{ color: "#8A7E6F", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Estoque final mundial</div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 4 }}>
-            <span style={{ fontSize: 26, fontWeight: 700, color: "#F1F5F9", fontFamily: "'JetBrains Mono',monospace" }}>{fmt(d.mundo.estoqueFinal.atual, 1)}</span>
-            <span style={{ color: "#4B5563", fontSize: 10 }}>mi ton</span>
+            <span style={{ fontSize: 26, fontWeight: 700, color: "#4A2C16", fontFamily: "'JetBrains Mono',monospace" }}>{fmt(d.mundo.estoqueFinal.atual, 1)}</span>
+            <span style={{ color: "#A89C8A", fontSize: 10 }}>mi ton</span>
           </div>
           <span style={{ color: varColor(d.mundo.estoqueFinal.atual, d.mundo.estoqueFinal.anterior, true), fontSize: 11, fontWeight: 500 }}>
             {varArrow(d.mundo.estoqueFinal.atual, d.mundo.estoqueFinal.anterior)} {fmt(varPct(d.mundo.estoqueFinal.atual, d.mundo.estoqueFinal.anterior), 1)}% vs safra anterior
@@ -1158,7 +1158,7 @@ function FundamentosPage({fundamentosData}) {
       </div>
 
       {/* Números mundiais */}
-      <div style={{ color: "#6B7280", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Balanço mundial — {produto === "soja" ? "Soja" : "Milho"} ({d.safraAtual})</div>
+      <div style={{ color: "#8A7E6F", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Balanço mundial — {produto === "soja" ? "Soja" : "Milho"} ({d.safraAtual})</div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, marginBottom: 24 }}>
         <StatCard label="Produção mundial" valor={d.mundo.producao.atual} anterior={d.mundo.producao.anterior} unit="mi ton" />
         <StatCard label="Consumo mundial" valor={d.mundo.consumo.atual} anterior={d.mundo.consumo.anterior} unit="mi ton" />
@@ -1167,37 +1167,37 @@ function FundamentosPage({fundamentosData}) {
       </div>
 
       {/* Por país */}
-      <div style={{ color: "#6B7280", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Principais países</div>
-      <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, overflow: "hidden", marginBottom: 24 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "120px repeat(4,1fr)", padding: "10px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+      <div style={{ color: "#8A7E6F", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Principais países</div>
+      <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, overflow: "hidden", marginBottom: 24 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "120px repeat(4,1fr)", padding: "10px 16px", borderBottom: "1px solid #ECE7DD" }}>
           {["País", "Produção", "Var.", "Exportação", "Var."].map(h => (
-            <span key={h} style={{ color: "#4B5563", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>{h}</span>
+            <span key={h} style={{ color: "#A89C8A", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>{h}</span>
           ))}
         </div>
         {d.paises.map((p, i) => (
-          <div key={i} style={{ display: "grid", gridTemplateColumns: "120px repeat(4,1fr)", padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)", alignItems: "center" }}
-            onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.02)"}
+          <div key={i} style={{ display: "grid", gridTemplateColumns: "120px repeat(4,1fr)", padding: "12px 16px", borderBottom: "1px solid #F2EEE6", alignItems: "center" }}
+            onMouseEnter={e => e.currentTarget.style.background = "#FAF7F1"}
             onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-            <span style={{ color: "#F1F5F9", fontSize: 13, fontWeight: 600 }}>{p.nome}</span>
-            <span style={{ color: "#F1F5F9", fontSize: 13, fontFamily: "'JetBrains Mono',monospace", fontWeight: 600 }}>{fmt(p.prod, 1)}</span>
+            <span style={{ color: "#4A2C16", fontSize: 13, fontWeight: 600 }}>{p.nome}</span>
+            <span style={{ color: "#4A2C16", fontSize: 13, fontFamily: "'JetBrains Mono',monospace", fontWeight: 600 }}>{fmt(p.prod, 1)}</span>
             <span style={{ color: varColor(p.prod, p.prodAnt, false), fontSize: 10, fontWeight: 500 }}>
               {varArrow(p.prod, p.prodAnt)} {fmt(varPct(p.prod, p.prodAnt), 1)}%
             </span>
-            <span style={{ color: "#F1F5F9", fontSize: 13, fontFamily: "'JetBrains Mono',monospace", fontWeight: 600 }}>{fmt(p.exp, 1)}</span>
+            <span style={{ color: "#4A2C16", fontSize: 13, fontFamily: "'JetBrains Mono',monospace", fontWeight: 600 }}>{fmt(p.exp, 1)}</span>
             <span style={{ color: varColor(p.exp, p.expAnt, false), fontSize: 10, fontWeight: 500 }}>
               {varArrow(p.exp, p.expAnt)} {fmt(varPct(p.exp, p.expAnt), 1)}%
             </span>
           </div>
         ))}
-        <div style={{ padding: "8px 16px", color: "#374151", fontSize: 9 }}>Valores em milhões de toneladas</div>
+        <div style={{ padding: "8px 16px", color: "#C2B7A6", fontSize: 9 }}>Valores em milhões de toneladas</div>
       </div>
 
       {/* China destaque */}
       {d.paises.find(p => p.nome === "China") && (() => {
         const cn = d.paises.find(p => p.nome === "China");
         return (
-          <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "16px 18px", marginBottom: 24 }}>
-            <div style={{ color: "#F1F5F9", fontSize: 13, fontWeight: 600, marginBottom: 10 }}>China — maior importador mundial</div>
+          <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "16px 18px", marginBottom: 24 }}>
+            <div style={{ color: "#4A2C16", fontSize: 13, fontWeight: 600, marginBottom: 10 }}>China — maior importador mundial</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12 }}>
               {cn.importacao != null && <StatCard label="Importação" valor={cn.importacao} anterior={cn.impAnt} unit="mi ton" />}
               {cn.consumo != null && <StatCard label="Consumo interno" valor={cn.consumo} anterior={cn.consumoAnt} unit="mi ton" />}
@@ -1208,12 +1208,12 @@ function FundamentosPage({fundamentosData}) {
       })()}
 
       {/* Leitura do fundador */}
-      <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "18px 22px" }}>
+      <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "18px 22px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-          <div style={{ color: "#F1F5F9", fontSize: 13, fontWeight: 600 }}>Análise dos números</div>
-          <span style={{ color: "#374151", fontSize: 9 }}>Atualizado {hasLive ? liveRow.leitura_date : USDA_DATA.leituraDate}</span>
+          <div style={{ color: "#4A2C16", fontSize: 13, fontWeight: 600 }}>Análise dos números</div>
+          <span style={{ color: "#C2B7A6", fontSize: 9 }}>Atualizado {hasLive ? liveRow.leitura_date : USDA_DATA.leituraDate}</span>
         </div>
-        <div style={{ color: "#9CA3AF", fontSize: 12, lineHeight: 1.7 }}>{hasLive ? (liveRow.leitura || "Sem leitura cadastrada") : USDA_DATA.leitura}</div>
+        <div style={{ color: "#6B6052", fontSize: 12, lineHeight: 1.7 }}>{hasLive ? (liveRow.leitura || "Sem leitura cadastrada") : USDA_DATA.leitura}</div>
       </div>
     </div>
   );
@@ -1269,7 +1269,7 @@ function PosicaoFundosPage({fundosData}) {
 
   const isLong = d.posAtual >= 0;
   const sentimento = isLong ? (d.posAtual > 100000 ? "Fortemente comprado" : "Comprado") : (d.posAtual < -100000 ? "Fortemente vendido" : "Vendido");
-  const sentColor = isLong ? "#22C55E" : "#EF4444";
+  const sentColor = isLong ? "#4E7C5A" : "#B0503F";
   const sentIcon = isLong ? "▲" : "▼";
   const sentDesc = isLong ? "Fundos apostam na alta — suporte aos preços" : "Fundos apostam na baixa — pressão nos preços";
 
@@ -1311,17 +1311,17 @@ function PosicaoFundosPage({fundosData}) {
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 20 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 3, height: 18, background: "#E63946", borderRadius: 2 }} />
+          <div style={{ width: 3, height: 18, background: "#D5A246", borderRadius: 2 }} />
           <span style={{ fontSize: 15, fontWeight: 700 }}>Posição dos fundos — CBOT</span>
-          <span style={{ color: "#4B5563", fontSize: 11 }}>Managed Money (CFTC COT)</span>
+          <span style={{ color: "#A89C8A", fontSize: 11 }}>Managed Money (CFTC COT)</span>
         </div>
         <div style={{ display: "flex", gap: 6 }}>
           {["soja", "milho"].map(p => (
             <div key={p} onClick={() => setProduto(p)} style={{
               padding: "7px 18px", borderRadius: 7, cursor: "pointer", fontSize: 12, fontWeight: 600,
-              background: produto === p ? "rgba(230,57,70,0.1)" : "rgba(255,255,255,0.03)",
-              color: produto === p ? "#E63946" : "#6B7280",
-              border: `1px solid ${produto === p ? "rgba(230,57,70,0.3)" : "rgba(255,255,255,0.06)"}`,
+              background: produto === p ? "rgba(230,57,70,0.1)" : "#F5F1EA",
+              color: produto === p ? "#D5A246" : "#8A7E6F",
+              border: `1px solid ${produto === p ? "rgba(230,57,70,0.3)" : "#ECE7DD"}`,
             }}>{p === "soja" ? "Soja" : "Milho"}</div>
           ))}
         </div>
@@ -1330,53 +1330,53 @@ function PosicaoFundosPage({fundosData}) {
       {/* Posição atual + sentimento */}
       <div style={{ display: "flex", gap: 14, marginBottom: 20 }}>
         {/* Posição atual */}
-        <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "20px 24px", flex: 1, position: "relative", overflow: "hidden" }}>
+        <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "20px 24px", flex: 1, position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: sentColor }} />
-          <div style={{ color: "#6B7280", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Posição líquida atual</div>
+          <div style={{ color: "#8A7E6F", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Posição líquida atual</div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 6 }}>
             <span style={{ fontSize: 30, fontWeight: 800, color: sentColor, fontFamily: "'JetBrains Mono',monospace" }}>
               {d.posAtual >= 0 ? "+" : ""}{(d.posAtual / 1000).toFixed(1)}k
             </span>
-            <span style={{ color: "#4B5563", fontSize: 11 }}>contratos</span>
+            <span style={{ color: "#A89C8A", fontSize: 11 }}>contratos</span>
           </div>
-          <div style={{ color: "#6B7280", fontSize: 11 }}>{d.posAtual >= 0 ? "Comprado (long)" : "Vendido (short)"} — {fmt(Math.abs(d.posAtual), 0)} contratos</div>
+          <div style={{ color: "#8A7E6F", fontSize: 11 }}>{d.posAtual >= 0 ? "Comprado (long)" : "Vendido (short)"} — {fmt(Math.abs(d.posAtual), 0)} contratos</div>
         </div>
 
         {/* Sentimento */}
         <div style={{ background: `${sentColor}0D`, border: `1px solid ${sentColor}33`, borderRadius: 10, padding: "20px 24px", flex: 1 }}>
-          <div style={{ color: "#6B7280", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Sentimento</div>
+          <div style={{ color: "#8A7E6F", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Sentimento</div>
           <div style={{ color: sentColor, fontSize: 20, fontWeight: 700, marginBottom: 4 }}>{sentIcon} {sentimento}</div>
-          <div style={{ color: "#9CA3AF", fontSize: 11 }}>{sentDesc}</div>
+          <div style={{ color: "#6B6052", fontSize: 11 }}>{sentDesc}</div>
         </div>
 
         {/* Variação semanal */}
-        <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "20px 24px", minWidth: 180 }}>
-          <div style={{ color: "#6B7280", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Variação semanal</div>
+        <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "20px 24px", minWidth: 180 }}>
+          <div style={{ color: "#8A7E6F", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Variação semanal</div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 4 }}>
-            <span style={{ fontSize: 22, fontWeight: 700, color: varSemanal >= 0 ? "#22C55E" : "#EF4444", fontFamily: "'JetBrains Mono',monospace" }}>
+            <span style={{ fontSize: 22, fontWeight: 700, color: varSemanal >= 0 ? "#4E7C5A" : "#B0503F", fontFamily: "'JetBrains Mono',monospace" }}>
               {varSemanal >= 0 ? "+" : ""}{(varSemanal / 1000).toFixed(1)}k
             </span>
           </div>
-          <span style={{ color: varPct >= 0 ? "#22C55E" : "#EF4444", fontSize: 10, fontWeight: 500 }}>
+          <span style={{ color: varPct >= 0 ? "#4E7C5A" : "#B0503F", fontSize: 10, fontWeight: 500 }}>
             {varPct >= 0 ? "▲" : "▼"} {varPct >= 0 ? "+" : ""}{fmt(varPct, 1)}%
           </span>
         </div>
       </div>
 
       {/* Gauge: onde estamos no range de 12 meses */}
-      <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "18px 22px", marginBottom: 20 }}>
-        <div style={{ color: "#6B7280", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>Posição no range de 12 meses</div>
+      <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "18px 22px", marginBottom: 20 }}>
+        <div style={{ color: "#8A7E6F", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>Posição no range de 12 meses</div>
         <div style={{ position: "relative", height: 24, marginBottom: 6 }}>
           <div style={{ position: "absolute", left: 0, right: 0, top: 8, height: 8, borderRadius: 4, overflow: "hidden", display: "flex" }}>
-            <div style={{ flex: 1, background: "#EF444433" }} />
-            <div style={{ flex: 1, background: "#F59E0B33" }} />
-            <div style={{ flex: 1, background: "#22C55E33" }} />
+            <div style={{ flex: 1, background: "#B0503F33" }} />
+            <div style={{ flex: 1, background: "#D5A24633" }} />
+            <div style={{ flex: 1, background: "#4E7C5A33" }} />
           </div>
           <div style={{ position: "absolute", left: `${gaugePct}%`, top: 0, transform: "translateX(-50%)" }}>
-            <div style={{ width: 3, height: 24, background: "#F1F5F9", borderRadius: 1, margin: "0 auto" }} />
+            <div style={{ width: 3, height: 24, background: "#4A2C16", borderRadius: 1, margin: "0 auto" }} />
           </div>
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: "#4B5563" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: "#A89C8A" }}>
           <span>Máx. vendido: {(d.min12m / 1000).toFixed(0)}k</span>
           <span>Neutro: 0</span>
           <span>Máx. comprado: {(d.max12m / 1000).toFixed(0)}k</span>
@@ -1384,9 +1384,9 @@ function PosicaoFundosPage({fundosData}) {
       </div>
 
       {/* Gráfico de evolução */}
-      <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "18px 22px", marginBottom: 20 }}>
-        <div style={{ color: "#F1F5F9", fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Evolução — últimas {hist.length} semanas</div>
-        <div style={{ color: "#6B7280", fontSize: 10, marginBottom: 14 }}>Posição líquida Managed Money — contratos</div>
+      <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "18px 22px", marginBottom: 20 }}>
+        <div style={{ color: "#4A2C16", fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Evolução — últimas {hist.length} semanas</div>
+        <div style={{ color: "#8A7E6F", fontSize: 10, marginBottom: 14 }}>Posição líquida Managed Money — contratos</div>
 
         <svg width="100%" viewBox={`0 0 ${chartW} ${chartH}`} style={{ overflow: "visible" }}>
           {/* Grid lines */}
@@ -1394,12 +1394,12 @@ function PosicaoFundosPage({fundosData}) {
             const y = padT + f * plotH;
             const val = maxP - f * range;
             return <g key={f}>
-              <line x1={padL} y1={y} x2={chartW - padR} y2={y} stroke="rgba(255,255,255,0.04)" strokeWidth="0.5" />
-              <text x={padL - 8} y={y + 3} fill="#4B5563" fontSize="9" textAnchor="end" fontFamily="'JetBrains Mono',monospace">{(val / 1000).toFixed(0)}k</text>
+              <line x1={padL} y1={y} x2={chartW - padR} y2={y} stroke="#F2EEE6" strokeWidth="0.5" />
+              <text x={padL - 8} y={y + 3} fill="#A89C8A" fontSize="9" textAnchor="end" fontFamily="'JetBrains Mono',monospace">{(val / 1000).toFixed(0)}k</text>
             </g>;
           })}
           {/* Zero line */}
-          {minP < 0 && <line x1={padL} y1={zeroY} x2={chartW - padR} y2={zeroY} stroke="rgba(255,255,255,0.1)" strokeWidth="1" strokeDasharray="4 3" />}
+          {minP < 0 && <line x1={padL} y1={zeroY} x2={chartW - padR} y2={zeroY} stroke="#DED8CC" strokeWidth="1" strokeDasharray="4 3" />}
           {/* Area fill */}
           <path d={areaD} fill={isLong ? "rgba(34,197,94,0.08)" : "rgba(239,68,68,0.08)"} />
           {/* Line */}
@@ -1409,10 +1409,10 @@ function PosicaoFundosPage({fundosData}) {
             <g key={i}>
               <circle cx={toX(i)} cy={toY(h.pos)} r={i === hist.length - 1 ? 5 : 3} fill={sentColor} opacity={i === hist.length - 1 ? 1 : 0.6} />
               {/* Date labels */}
-              <text x={toX(i)} y={chartH - 5} fill="#4B5563" fontSize="9" textAnchor="middle" fontFamily="'JetBrains Mono',monospace">{h.data}</text>
+              <text x={toX(i)} y={chartH - 5} fill="#A89C8A" fontSize="9" textAnchor="middle" fontFamily="'JetBrains Mono',monospace">{h.data}</text>
               {/* Value on last point */}
               {i === hist.length - 1 && (
-                <text x={toX(i)} y={toY(h.pos) - 10} fill="#F1F5F9" fontSize="10" textAnchor="middle" fontWeight="600" fontFamily="'JetBrains Mono',monospace">
+                <text x={toX(i)} y={toY(h.pos) - 10} fill="#4A2C16" fontSize="10" textAnchor="middle" fontWeight="600" fontFamily="'JetBrains Mono',monospace">
                   {(h.pos / 1000).toFixed(1)}k
                 </text>
               )}
@@ -1422,13 +1422,13 @@ function PosicaoFundosPage({fundosData}) {
       </div>
 
       {/* Leitura do fundador */}
-      <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "18px 22px" }}>
+      <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "18px 22px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-          <div style={{ color: "#F1F5F9", fontSize: 13, fontWeight: 600 }}>Leitura do posicionamento</div>
-          <span style={{ color: "#374151", fontSize: 9 }}>Atualizado {FUNDOS_DATA.leituraDate}</span>
+          <div style={{ color: "#4A2C16", fontSize: 13, fontWeight: 600 }}>Leitura do posicionamento</div>
+          <span style={{ color: "#C2B7A6", fontSize: 9 }}>Atualizado {FUNDOS_DATA.leituraDate}</span>
         </div>
-        <div style={{ color: "#9CA3AF", fontSize: 12, lineHeight: 1.7 }}>{FUNDOS_DATA.leitura}</div>
-        <div style={{ color: "#374151", fontSize: 9, marginTop: 10 }}>Fonte: {FUNDOS_DATA.fonte}</div>
+        <div style={{ color: "#6B6052", fontSize: 12, lineHeight: 1.7 }}>{FUNDOS_DATA.leitura}</div>
+        <div style={{ color: "#C2B7A6", fontSize: 9, marginTop: 10 }}>Fonte: {FUNDOS_DATA.fonte}</div>
       </div>
     </div>
   );
@@ -1489,87 +1489,87 @@ function CambioPage({COTACOES, ptax}) {
   const areaD = pathD + ` L${toX(contracts.length - 1).toFixed(1)},${(padT + plotH).toFixed(1)} L${toX(0).toFixed(1)},${(padT + plotH).toFixed(1)} Z`;
 
   const isUp = contracts[contracts.length - 1].rate > contracts[0].rate;
-  const curveColor = isUp ? "#EF4444" : "#22C55E";
+  const curveColor = isUp ? "#B0503F" : "#4E7C5A";
 
   return (
     <div style={{ maxWidth: 1060, margin: "0 auto", padding: "20px 28px 48px" }}>
 
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
-        <div style={{ width: 3, height: 18, background: "#E63946", borderRadius: 2 }} />
+        <div style={{ width: 3, height: 18, background: "#D5A246", borderRadius: 2 }} />
         <span style={{ fontSize: 15, fontWeight: 700 }}>Câmbio projetado</span>
-        <span style={{ color: "#4B5563", fontSize: 11 }}>Dólar futuro B3 — {contracts.length} vencimentos</span>
+        <span style={{ color: "#A89C8A", fontSize: 11 }}>Dólar futuro B3 — {contracts.length} vencimentos</span>
       </div>
 
       {/* Ptax + Dólar comercial */}
       <div style={{ display: "flex", gap: 14, marginBottom: 14 }}>
-        <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "16px 20px", flex: 1, position: "relative", overflow: "hidden" }}>
-          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: "#F59E0B" }} />
-          <div style={{ color: "#6B7280", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Ptax — dia anterior (BCB)</div>
+        <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "16px 20px", flex: 1, position: "relative", overflow: "hidden" }}>
+          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: "#D5A246" }} />
+          <div style={{ color: "#8A7E6F", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Ptax — dia anterior (BCB)</div>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             <div>
-              <div style={{ color: "#9CA3AF", fontSize: 9, marginBottom: 2 }}>Compra</div>
-              <span style={{ fontSize: 20, fontWeight: 700, color: "#F1F5F9", fontFamily: "'JetBrains Mono',monospace" }}>R$ {ptax ? fmt(ptax.compra, 4) : "—"}</span>
+              <div style={{ color: "#6B6052", fontSize: 9, marginBottom: 2 }}>Compra</div>
+              <span style={{ fontSize: 20, fontWeight: 700, color: "#4A2C16", fontFamily: "'JetBrains Mono',monospace" }}>R$ {ptax ? fmt(ptax.compra, 4) : "—"}</span>
             </div>
-            <div style={{ width: 1, height: 30, background: "rgba(255,255,255,0.06)" }} />
+            <div style={{ width: 1, height: 30, background: "#ECE7DD" }} />
             <div>
-              <div style={{ color: "#9CA3AF", fontSize: 9, marginBottom: 2 }}>Venda</div>
-              <span style={{ fontSize: 20, fontWeight: 700, color: "#F1F5F9", fontFamily: "'JetBrains Mono',monospace" }}>R$ {ptax ? fmt(ptax.venda, 4) : "—"}</span>
+              <div style={{ color: "#6B6052", fontSize: 9, marginBottom: 2 }}>Venda</div>
+              <span style={{ fontSize: 20, fontWeight: 700, color: "#4A2C16", fontFamily: "'JetBrains Mono',monospace" }}>R$ {ptax ? fmt(ptax.venda, 4) : "—"}</span>
             </div>
           </div>
-          <div style={{ color: "#374151", fontSize: 9, marginTop: 6 }}>{ptax ? `Ref: ${ptax.data_ref.split("-").reverse().join("/")}` : "Sem dados"} — Fonte: Banco Central do Brasil</div>
+          <div style={{ color: "#C2B7A6", fontSize: 9, marginTop: 6 }}>{ptax ? `Ref: ${ptax.data_ref.split("-").reverse().join("/")}` : "Sem dados"} — Fonte: Banco Central do Brasil</div>
         </div>
 
-        <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "16px 20px", flex: 1, position: "relative", overflow: "hidden" }}>
-          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: "#457B9D" }} />
-          <div style={{ color: "#6B7280", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Dólar comercial — hoje</div>
+        <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "16px 20px", flex: 1, position: "relative", overflow: "hidden" }}>
+          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: "#B67A33" }} />
+          <div style={{ color: "#8A7E6F", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Dólar comercial — hoje</div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-            <span style={{ fontSize: 24, fontWeight: 800, color: "#F1F5F9", fontFamily: "'JetBrains Mono',monospace" }}>R$ {fmt(spot, 4)}</span>
+            <span style={{ fontSize: 24, fontWeight: 800, color: "#4A2C16", fontFamily: "'JetBrains Mono',monospace" }}>R$ {fmt(spot, 4)}</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
             <Chg ch={contracts[0]?.ch || 0} chp={contracts[0]?.chp || 0} />
-            <span style={{ color: "#374151", fontSize: 9 }}>Ref: DOL B3 1º venc. ({contracts[0]?.mo})</span>
+            <span style={{ color: "#C2B7A6", fontSize: 9 }}>Ref: DOL B3 1º venc. ({contracts[0]?.mo})</span>
           </div>
         </div>
       </div>
 
       {/* Spot + resumo */}
       <div style={{ display: "flex", gap: 14, marginBottom: 20 }}>
-        <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "18px 22px", flex: 1, position: "relative", overflow: "hidden" }}>
-          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: "#457B9D" }} />
-          <div style={{ color: "#6B7280", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Dólar 1º vencimento (spot ref.)</div>
+        <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "18px 22px", flex: 1, position: "relative", overflow: "hidden" }}>
+          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: "#B67A33" }} />
+          <div style={{ color: "#8A7E6F", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Dólar 1º vencimento (spot ref.)</div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-            <span style={{ fontSize: 30, fontWeight: 800, color: "#F1F5F9", fontFamily: "'JetBrains Mono',monospace" }}>R$ {fmt(spot, 4)}</span>
+            <span style={{ fontSize: 30, fontWeight: 800, color: "#4A2C16", fontFamily: "'JetBrains Mono',monospace" }}>R$ {fmt(spot, 4)}</span>
           </div>
           <div style={{ marginTop: 4 }}><Chg ch={contracts[0]?.ch || 0} chp={contracts[0]?.chp || 0} /></div>
-          <div style={{ color: "#374151", fontSize: 9, marginTop: 4 }}>{contracts[0]?.sym.replace("BMFBOVESPA:", "")}</div>
+          <div style={{ color: "#C2B7A6", fontSize: 9, marginTop: 4 }}>{contracts[0]?.sym.replace("BMFBOVESPA:", "")}</div>
         </div>
 
-        <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "18px 22px", minWidth: 180 }}>
-          <div style={{ color: "#6B7280", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Último vencimento</div>
+        <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "18px 22px", minWidth: 180 }}>
+          <div style={{ color: "#8A7E6F", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Último vencimento</div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-            <span style={{ fontSize: 22, fontWeight: 700, color: "#F1F5F9", fontFamily: "'JetBrains Mono',monospace" }}>R$ {fmt(contracts[contracts.length - 1].rate, 4)}</span>
+            <span style={{ fontSize: 22, fontWeight: 700, color: "#4A2C16", fontFamily: "'JetBrains Mono',monospace" }}>R$ {fmt(contracts[contracts.length - 1].rate, 4)}</span>
           </div>
-          <div style={{ color: "#374151", fontSize: 10, marginTop: 4 }}>{contracts[contracts.length - 1].mo}</div>
+          <div style={{ color: "#C2B7A6", fontSize: 10, marginTop: 4 }}>{contracts[contracts.length - 1].mo}</div>
         </div>
 
-        <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "18px 22px", minWidth: 180 }}>
-          <div style={{ color: "#6B7280", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Variação na curva</div>
+        <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "18px 22px", minWidth: 180 }}>
+          <div style={{ color: "#8A7E6F", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Variação na curva</div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-            <span style={{ fontSize: 22, fontWeight: 700, color: isUp ? "#EF4444" : "#22C55E", fontFamily: "'JetBrains Mono',monospace" }}>
+            <span style={{ fontSize: 22, fontWeight: 700, color: isUp ? "#B0503F" : "#4E7C5A", fontFamily: "'JetBrains Mono',monospace" }}>
               {isUp ? "+" : ""}{fmt(contracts[contracts.length - 1].rate - spot, 4)}
             </span>
           </div>
-          <div style={{ color: isUp ? "#EF4444" : "#22C55E", fontSize: 10, marginTop: 4 }}>
+          <div style={{ color: isUp ? "#B0503F" : "#4E7C5A", fontSize: 10, marginTop: 4 }}>
             {isUp ? "▲ Curva ascendente — mercado projeta dólar subindo" : "▼ Curva descendente — mercado projeta dólar caindo"}
           </div>
         </div>
       </div>
 
       {/* Curva gráfica */}
-      <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "18px 22px", marginBottom: 20 }}>
-        <div style={{ color: "#F1F5F9", fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Curva de dólar futuro</div>
-        <div style={{ color: "#6B7280", fontSize: 10, marginBottom: 14 }}>Projeção do mercado para o câmbio nos próximos meses</div>
+      <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "18px 22px", marginBottom: 20 }}>
+        <div style={{ color: "#4A2C16", fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Curva de dólar futuro</div>
+        <div style={{ color: "#8A7E6F", fontSize: 10, marginBottom: 14 }}>Projeção do mercado para o câmbio nos próximos meses</div>
 
         <svg width="100%" viewBox={`0 0 ${chartW} ${chartH}`} style={{ overflow: "visible" }}>
           {/* Grid */}
@@ -1577,8 +1577,8 @@ function CambioPage({COTACOES, ptax}) {
             const y = padT + f * plotH;
             const val = (maxR + 0.02) - f * (rangeR + 0.04);
             return <g key={f}>
-              <line x1={padL} y1={y} x2={chartW - padR} y2={y} stroke="rgba(255,255,255,0.04)" strokeWidth="0.5" />
-              <text x={padL - 8} y={y + 3} fill="#4B5563" fontSize="9" textAnchor="end" fontFamily="'JetBrains Mono',monospace">{val.toFixed(2)}</text>
+              <line x1={padL} y1={y} x2={chartW - padR} y2={y} stroke="#F2EEE6" strokeWidth="0.5" />
+              <text x={padL - 8} y={y + 3} fill="#A89C8A" fontSize="9" textAnchor="end" fontFamily="'JetBrains Mono',monospace">{val.toFixed(2)}</text>
             </g>;
           })}
           {/* Area */}
@@ -1589,9 +1589,9 @@ function CambioPage({COTACOES, ptax}) {
           {contracts.map((c, i) => (
             <g key={i}>
               <circle cx={toX(i)} cy={toY(c.rate)} r={3} fill={curveColor} opacity={0.7} />
-              <text x={toX(i)} y={chartH - 5} fill="#4B5563" fontSize="8" textAnchor="middle" fontFamily="'JetBrains Mono',monospace">{c.mo}</text>
+              <text x={toX(i)} y={chartH - 5} fill="#A89C8A" fontSize="8" textAnchor="middle" fontFamily="'JetBrains Mono',monospace">{c.mo}</text>
               {(i === 0 || i === contracts.length - 1 || i % 3 === 0) && (
-                <text x={toX(i)} y={toY(c.rate) - 8} fill="#9CA3AF" fontSize="8" textAnchor="middle" fontWeight="500" fontFamily="'JetBrains Mono',monospace">{c.rate.toFixed(3)}</text>
+                <text x={toX(i)} y={toY(c.rate) - 8} fill="#6B6052" fontSize="8" textAnchor="middle" fontWeight="500" fontFamily="'JetBrains Mono',monospace">{c.rate.toFixed(3)}</text>
               )}
             </g>
           ))}
@@ -1599,28 +1599,28 @@ function CambioPage({COTACOES, ptax}) {
       </div>
 
       {/* Tabela de vencimentos */}
-      <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, overflow: "hidden" }}>
-        <div style={{ padding: "14px 18px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-          <span style={{ color: "#F1F5F9", fontSize: 13, fontWeight: 600 }}>Todos os vencimentos</span>
+      <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, overflow: "hidden" }}>
+        <div style={{ padding: "14px 18px", borderBottom: "1px solid #ECE7DD" }}>
+          <span style={{ color: "#4A2C16", fontSize: 13, fontWeight: 600 }}>Todos os vencimentos</span>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "140px 1fr 100px 100px", padding: "8px 18px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "140px 1fr 100px 100px", padding: "8px 18px", borderBottom: "1px solid #ECE7DD" }}>
           {["Vencimento", "Cotação (R$)", "Var. dia", "Vs. spot"].map(h => (
-            <span key={h} style={{ color: "#4B5563", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>{h}</span>
+            <span key={h} style={{ color: "#A89C8A", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>{h}</span>
           ))}
         </div>
         {contracts.map((c, i) => {
           const vSpot = c.rate - spot;
           return (
-            <div key={i} style={{ display: "grid", gridTemplateColumns: "140px 1fr 100px 100px", padding: "11px 18px", borderBottom: "1px solid rgba(255,255,255,0.04)", alignItems: "center" }}
-              onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.02)"}
+            <div key={i} style={{ display: "grid", gridTemplateColumns: "140px 1fr 100px 100px", padding: "11px 18px", borderBottom: "1px solid #F2EEE6", alignItems: "center" }}
+              onMouseEnter={e => e.currentTarget.style.background = "#FAF7F1"}
               onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
               <div>
-                <span style={{ color: "#F1F5F9", fontSize: 13, fontWeight: 600 }}>{c.mes}</span>
-                <span style={{ color: "#374151", fontSize: 9, marginLeft: 8 }}>{c.sym.replace("BMFBOVESPA:", "")}</span>
+                <span style={{ color: "#4A2C16", fontSize: 13, fontWeight: 600 }}>{c.mes}</span>
+                <span style={{ color: "#C2B7A6", fontSize: 9, marginLeft: 8 }}>{c.sym.replace("BMFBOVESPA:", "")}</span>
               </div>
-              <span style={{ fontSize: 15, fontWeight: 700, color: "#F1F5F9", fontFamily: "'JetBrains Mono',monospace" }}>R$ {fmt(c.rate, 4)}</span>
+              <span style={{ fontSize: 15, fontWeight: 700, color: "#4A2C16", fontFamily: "'JetBrains Mono',monospace" }}>R$ {fmt(c.rate, 4)}</span>
               <Chg ch={c.ch} chp={c.chp} />
-              <span style={{ fontSize: 11, fontFamily: "'JetBrains Mono',monospace", color: vSpot >= 0 ? "#EF4444" : "#22C55E" }}>
+              <span style={{ fontSize: 11, fontFamily: "'JetBrains Mono',monospace", color: vSpot >= 0 ? "#B0503F" : "#4E7C5A" }}>
                 {i === 0 ? "—" : `${vSpot >= 0 ? "+" : ""}${fmt(vSpot, 4)}`}
               </span>
             </div>
@@ -1698,11 +1698,11 @@ function ParidadePage({COTACOES}) {
 
   function CustoRow({ label, valor, unit, dim, highlight }) {
     return (
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-        <span style={{ color: dim ? "#374151" : highlight ? highlight : "#9CA3AF", fontSize: 12 }}>{label}</span>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #F2EEE6" }}>
+        <span style={{ color: dim ? "#C2B7A6" : highlight ? highlight : "#6B6052", fontSize: 12 }}>{label}</span>
         <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-          <span style={{ color: dim ? "#4B5563" : highlight ? highlight : "#F1F5F9", fontSize: 13, fontWeight: 600, fontFamily: "'JetBrains Mono',monospace" }}>{fmt(valor, 2)}</span>
-          <span style={{ color: "#4B5563", fontSize: 9 }}>{unit}</span>
+          <span style={{ color: dim ? "#A89C8A" : highlight ? highlight : "#4A2C16", fontSize: 13, fontWeight: 600, fontFamily: "'JetBrains Mono',monospace" }}>{fmt(valor, 2)}</span>
+          <span style={{ color: "#A89C8A", fontSize: 9 }}>{unit}</span>
         </div>
       </div>
     );
@@ -1714,21 +1714,21 @@ function ParidadePage({COTACOES}) {
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 16 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 3, height: 18, background: "#E63946", borderRadius: 2 }} />
+          <div style={{ width: 3, height: 18, background: "#D5A246", borderRadius: 2 }} />
           <span style={{ fontSize: 15, fontWeight: 700 }}>Paridade de exportação</span>
-          <span style={{ color: "#4B5563", fontSize: 11 }}>Preço máximo que a trading consegue pagar</span>
+          <span style={{ color: "#A89C8A", fontSize: 11 }}>Preço máximo que a trading consegue pagar</span>
         </div>
       </div>
 
       {/* Seletores */}
-      <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "16px 18px", marginBottom: 16, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" }}>
+      <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "16px 18px", marginBottom: 16, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" }}>
         <Sel label="Mês de entrega" value={entK} onChange={setEntK} w={165}>
           {OPTS.map(o => <option key={`${o.mi}-${o.yr}`} value={`${o.mi}-${o.yr}`}>{o.label}</option>)}
         </Sel>
         <Sel label="Data de pagamento" value={pagK} onChange={setPagK} w={165}>
           {OPTS.map(o => <option key={`${o.mi}-${o.yr}`} value={`${o.mi}-${o.yr}`}>{o.label}</option>)}
         </Sel>
-        <div style={{ display: "flex", gap: 16, marginLeft: "auto", alignItems: "center", fontSize: 10, color: "#4B5563" }}>
+        <div style={{ display: "flex", gap: 16, marginLeft: "auto", alignItems: "center", fontSize: 10, color: "#A89C8A" }}>
           <span>Chicago: {cLabel} ({fmt(chicagoCbu, 0)} c/bu)</span>
           <span>Dólar: {dShort} (R$ {fmt(cambio, 4)})</span>
           <span>Prêmio: {fmt(premioBrasil, 1)} c/bu</span>
@@ -1736,20 +1736,20 @@ function ParidadePage({COTACOES}) {
       </div>
 
       {/* Resultado principal */}
-      <div style={{ background: "#0D1117", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 10, padding: "24px", marginBottom: 16, position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: "#22C55E" }} />
+      <div style={{ background: "#FFFFFF", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 10, padding: "24px", marginBottom: 16, position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: "#4E7C5A" }} />
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
-            <div style={{ color: "#6B7280", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
+            <div style={{ color: "#8A7E6F", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
               Preço no porto — Paranaguá — {MESES[eMi]} {eYr}
             </div>
             <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-              <span style={{ fontSize: 36, fontWeight: 800, color: "#22C55E", fontFamily: "'JetBrains Mono',monospace" }}>R$ {fmt(custoPortoBRL)}</span>
-              <span style={{ color: "#4B5563", fontSize: 13 }}>/saca</span>
+              <span style={{ fontSize: 36, fontWeight: 800, color: "#4E7C5A", fontFamily: "'JetBrains Mono',monospace" }}>R$ {fmt(custoPortoBRL)}</span>
+              <span style={{ color: "#A89C8A", fontSize: 13 }}>/saca</span>
             </div>
-            <div style={{ color: "#9CA3AF", fontSize: 12, marginTop: 4 }}>US$ {fmt(custoLiqSaca)}/saca</div>
+            <div style={{ color: "#6B6052", fontSize: 12, marginTop: 4 }}>US$ {fmt(custoLiqSaca)}/saca</div>
           </div>
-          <div style={{ textAlign: "right", color: "#374151", fontSize: 9, lineHeight: 1.6 }}>
+          <div style={{ textAlign: "right", color: "#C2B7A6", fontSize: 9, lineHeight: 1.6 }}>
             <div>Preço máximo que uma trading</div>
             <div>de exportação consegue pagar</div>
             <div style={{ marginTop: 4 }}>Diferença porto→praça = frete do comprador</div>
@@ -1758,31 +1758,31 @@ function ParidadePage({COTACOES}) {
       </div>
 
       {/* Frete */}
-      <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "18px 22px", marginBottom: 16 }}>
-        <div style={{ color: "#F1F5F9", fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Desconte seu frete</div>
-        <div style={{ color: "#6B7280", fontSize: 10, marginBottom: 14 }}>Informe o frete da sua região até o porto para ver o preço na sua praça</div>
+      <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "18px 22px", marginBottom: 16 }}>
+        <div style={{ color: "#4A2C16", fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Desconte seu frete</div>
+        <div style={{ color: "#8A7E6F", fontSize: 10, marginBottom: 14 }}>Informe o frete da sua região até o porto para ver o preço na sua praça</div>
         <div style={{ display: "flex", gap: 16, alignItems: "flex-end" }}>
           <div>
-            <label style={{ fontSize: 9, color: "#6B7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 3 }}>Frete até o porto</label>
+            <label style={{ fontSize: 9, color: "#8A7E6F", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 3 }}>Frete até o porto</label>
             <div style={{ display: "flex", alignItems: "center" }}>
-              <span style={{ background: "#1F2937", border: "1px solid rgba(255,255,255,0.08)", borderRight: "none", borderRadius: "7px 0 0 7px", padding: "9px 10px", color: "#6B7280", fontSize: 12 }}>R$</span>
+              <span style={{ background: "#EFE8DB", border: "1px solid #E4DECF", borderRight: "none", borderRadius: "7px 0 0 7px", padding: "9px 10px", color: "#8A7E6F", fontSize: 12 }}>R$</span>
               <input type="number" value={freteRton} onChange={e => setFreteRton(parseFloat(e.target.value) || 0)}
-                style={{ background: "#111827", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "0 7px 7px 0", color: "#F1F5F9", padding: "9px 10px", fontSize: 15, fontFamily: "'JetBrains Mono',monospace", fontWeight: 600, outline: "none", width: 100 }} />
-              <span style={{ color: "#4B5563", fontSize: 11, marginLeft: 6 }}>/ton</span>
-              <span style={{ color: "#374151", fontSize: 10, marginLeft: 12 }}>= R$ {fmt(freteSaca)}/saca</span>
+                style={{ background: "#F6F3ED", border: "1px solid #E4DECF", borderRadius: "0 7px 7px 0", color: "#4A2C16", padding: "9px 10px", fontSize: 15, fontFamily: "'JetBrains Mono',monospace", fontWeight: 600, outline: "none", width: 100 }} />
+              <span style={{ color: "#A89C8A", fontSize: 11, marginLeft: 6 }}>/ton</span>
+              <span style={{ color: "#C2B7A6", fontSize: 10, marginLeft: 12 }}>= R$ {fmt(freteSaca)}/saca</span>
             </div>
           </div>
           <div style={{ background: "rgba(69,123,157,0.08)", border: "1px solid rgba(69,123,157,0.2)", borderRadius: 8, padding: "12px 20px" }}>
-            <div style={{ color: "#6B7280", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>Preço na sua praça</div>
-            <span style={{ fontSize: 22, fontWeight: 800, color: "#F1F5F9", fontFamily: "'JetBrains Mono',monospace" }}>R$ {fmt(precoPraca)}</span>
-            <span style={{ color: "#4B5563", fontSize: 11, marginLeft: 6 }}>/saca</span>
+            <div style={{ color: "#8A7E6F", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>Preço na sua praça</div>
+            <span style={{ fontSize: 22, fontWeight: 800, color: "#4A2C16", fontFamily: "'JetBrains Mono',monospace" }}>R$ {fmt(precoPraca)}</span>
+            <span style={{ color: "#A89C8A", fontSize: 11, marginLeft: 6 }}>/saca</span>
           </div>
         </div>
       </div>
 
       {/* Componentes do preço */}
-      <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "18px 22px", marginBottom: 16 }}>
-          <div style={{ color: "#F1F5F9", fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Componentes do preço</div>
+      <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "18px 22px", marginBottom: 16 }}>
+          <div style={{ color: "#4A2C16", fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Componentes do preço</div>
           <CustoRow label={`Chicago CBOT (${cLabel})`} valor={chicagoCbu} unit="c/bu" />
           <CustoRow label={`Prêmio Brasil — ${MESES[eMi]} ${eYr}`} valor={premioBrasil} unit="c/bu" />
           <CustoRow label="FOB Brasil" valor={custoFobBR} unit="USD/ton" />
@@ -1790,16 +1790,16 @@ function ParidadePage({COTACOES}) {
           <CustoRow label="Custo líquido porto" valor={custoLiqTon} unit="USD/ton" />
           <CustoRow label="Custo líquido porto" valor={custoLiqSaca} unit="USD/sc" />
           <CustoRow label={`Câmbio ${MESES[pMi]} ${pYr} (R$ ${fmt(cambio, 4)})`} valor={custoPortoBRL} unit="R$/sc" />
-          <div style={{ marginTop: 10, padding: "10px 0", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between" }}>
-            <span style={{ color: "#22C55E", fontSize: 13, fontWeight: 600 }}>Preço no porto</span>
-            <span style={{ color: "#22C55E", fontSize: 18, fontWeight: 800, fontFamily: "'JetBrains Mono',monospace" }}>R$ {fmt(custoPortoBRL)}/sc</span>
+          <div style={{ marginTop: 10, padding: "10px 0", borderTop: "1px solid #ECE7DD", display: "flex", justifyContent: "space-between" }}>
+            <span style={{ color: "#4E7C5A", fontSize: 13, fontWeight: 600 }}>Preço no porto</span>
+            <span style={{ color: "#4E7C5A", fontSize: 18, fontWeight: 800, fontFamily: "'JetBrains Mono',monospace" }}>R$ {fmt(custoPortoBRL)}/sc</span>
           </div>
         </div>
 
       {/* Custos internos da trading */}
-      <div style={{ background: "#0D1117", border: "1px solid rgba(230,57,70,0.15)", borderRadius: 10, padding: "18px 22px", marginBottom: 16 }}>
+      <div style={{ background: "#FFFFFF", border: "1px solid rgba(230,57,70,0.15)", borderRadius: 10, padding: "18px 22px", marginBottom: 16 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-            <div style={{ color: "#F1F5F9", fontSize: 13, fontWeight: 600 }}>Custos internos da trading</div>
+            <div style={{ color: "#4A2C16", fontSize: 13, fontWeight: 600 }}>Custos internos da trading</div>
           </div>
           <CustoRow label="Despesas portuárias" valor={despPortuarias} unit="USD/ton" />
           <CustoRow label="ICMS" valor={icms} unit="USD/ton" dim />
@@ -1807,17 +1807,17 @@ function ParidadePage({COTACOES}) {
           <CustoRow label="Corretagem cambial (0,19%)" valor={corretagem} unit="USD/ton" />
           <CustoRow label="PIS" valor={pis} unit="USD/ton" dim />
           <CustoRow label="Comissões e taxas" valor={comissoes} unit="USD/ton" />
-          <div style={{ marginTop: 10, padding: "10px 0", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between" }}>
-            <span style={{ color: "#F59E0B", fontSize: 12, fontWeight: 600 }}>Total custos internos</span>
-            <span style={{ color: "#F59E0B", fontSize: 15, fontWeight: 700, fontFamily: "'JetBrains Mono',monospace" }}>{fmt(ttlCustos)} USD/ton</span>
+          <div style={{ marginTop: 10, padding: "10px 0", borderTop: "1px solid #ECE7DD", display: "flex", justifyContent: "space-between" }}>
+            <span style={{ color: "#D5A246", fontSize: 12, fontWeight: 600 }}>Total custos internos</span>
+            <span style={{ color: "#D5A246", fontSize: 15, fontWeight: 700, fontFamily: "'JetBrains Mono',monospace" }}>{fmt(ttlCustos)} USD/ton</span>
           </div>
-          <div style={{ color: "#374151", fontSize: 9, marginTop: 8 }}>Quanto menor os custos internos, mais a trading consegue pagar. Revisados mensalmente.</div>
+          <div style={{ color: "#C2B7A6", fontSize: 9, marginTop: 8 }}>Quanto menor os custos internos, mais a trading consegue pagar. Revisados mensalmente.</div>
         </div>
 
       {/* Premissas */}
-      <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "14px 18px" }}>
-        <div style={{ color: "#4B5563", fontSize: 10, fontWeight: 600, marginBottom: 8 }}>Premissas utilizadas</div>
-        <div style={{ display: "flex", gap: 20, flexWrap: "wrap", fontSize: 10, color: "#374151" }}>
+      <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "14px 18px" }}>
+        <div style={{ color: "#A89C8A", fontSize: 10, fontWeight: 600, marginBottom: 8 }}>Premissas utilizadas</div>
+        <div style={{ display: "flex", gap: 20, flexWrap: "wrap", fontSize: 10, color: "#C2B7A6" }}>
           <span>Chicago: {cLabel} — {fmt(chicagoCbu, 0)} c/bu</span>
           <span>Prêmio: {fmt(premioBrasil, 1)} c/bu ({MESES[eMi]}/{eYr})</span>
           <span>Câmbio: R$ {fmt(cambio, 4)} ({MESES[pMi]}/{pYr})</span>
@@ -1967,11 +1967,11 @@ function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
   function Inp({ label, value, onChange, type = "number", step, unit, w }) {
     return (
       <div style={{ minWidth: w }}>
-        <label style={{ fontSize: 9, color: "#6B7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 3 }}>{label}</label>
+        <label style={{ fontSize: 9, color: "#8A7E6F", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 3 }}>{label}</label>
         <div style={{ display: "flex", alignItems: "center" }}>
           <input type={type} step={step} value={value} onChange={e => onChange(type === "number" ? parseFloat(e.target.value) || 0 : e.target.value)}
-            style={{ background: "#111827", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 7, color: "#F1F5F9", padding: "8px 10px", fontSize: 13, fontFamily: "'JetBrains Mono',monospace", outline: "none", width: "100%" }} />
-          {unit && <span style={{ color: "#4B5563", fontSize: 10, marginLeft: 6, whiteSpace: "nowrap" }}>{unit}</span>}
+            style={{ background: "#F6F3ED", border: "1px solid #E4DECF", borderRadius: 7, color: "#4A2C16", padding: "8px 10px", fontSize: 13, fontFamily: "'JetBrains Mono',monospace", outline: "none", width: "100%" }} />
+          {unit && <span style={{ color: "#A89C8A", fontSize: 10, marginLeft: 6, whiteSpace: "nowrap" }}>{unit}</span>}
         </div>
       </div>
     );
@@ -1979,13 +1979,13 @@ function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
 
   function AutoCard({ label, value, unit, sym, color }) {
     return (
-      <div style={{ background: "#111827", borderRadius: 7, padding: "10px 14px", flex: 1 }}>
-        <div style={{ color: "#4B5563", fontSize: 8, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 3 }}>{label}</div>
+      <div style={{ background: "#F6F3ED", borderRadius: 7, padding: "10px 14px", flex: 1 }}>
+        <div style={{ color: "#A89C8A", fontSize: 8, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 3 }}>{label}</div>
         <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-          <span style={{ fontSize: 16, fontWeight: 700, color: color || "#F1F5F9", fontFamily: "'JetBrains Mono',monospace" }}>{value}</span>
-          <span style={{ color: "#4B5563", fontSize: 9 }}>{unit}</span>
+          <span style={{ fontSize: 16, fontWeight: 700, color: color || "#4A2C16", fontFamily: "'JetBrains Mono',monospace" }}>{value}</span>
+          <span style={{ color: "#A89C8A", fontSize: 9 }}>{unit}</span>
         </div>
-        <div style={{ color: "#374151", fontSize: 8, marginTop: 2 }}>{sym} (auto)</div>
+        <div style={{ color: "#C2B7A6", fontSize: 8, marginTop: 2 }}>{sym} (auto)</div>
       </div>
     );
   }
@@ -1994,8 +1994,8 @@ function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
   const renderCalc = (
     <>
       {/* Praça */}
-      <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "16px 18px", marginBottom: 14, display: "flex", gap: 10, alignItems: "flex-end" }}>
-        <div style={{ background: "rgba(230,57,70,0.08)", border: "1px solid rgba(230,57,70,0.2)", borderRadius: 6, padding: "9px 14px", fontSize: 12, fontWeight: 600, color: "#E63946" }}>Soja</div>
+      <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "16px 18px", marginBottom: 14, display: "flex", gap: 10, alignItems: "flex-end" }}>
+        <div style={{ background: "rgba(230,57,70,0.08)", border: "1px solid rgba(230,57,70,0.2)", borderRadius: 6, padding: "9px 14px", fontSize: 12, fontWeight: 600, color: "#D5A246" }}>Soja</div>
         <Sel label="Praça" value={pracaId} onChange={v => setPracaId(+v)} w={220} grow>
           {Object.entries(byState).sort().map(([st, cs]) => (
             <optgroup key={st} label={st}>
@@ -2007,8 +2007,8 @@ function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
         {/* Datas e volume */}
-        <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "16px 18px" }}>
-          <div style={{ color: "#6B7280", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10, paddingBottom: 6, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>Datas e volume</div>
+        <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "16px 18px" }}>
+          <div style={{ color: "#8A7E6F", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10, paddingBottom: 6, borderBottom: "1px solid #ECE7DD" }}>Datas e volume</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
             <Inp label="Data entrega atual" value={dtEntrega} onChange={setDtEntrega} type="date" />
             <Inp label="Data pagamento atual" value={dtPagto} onChange={setDtPagto} type="date" />
@@ -2016,30 +2016,30 @@ function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
             <Inp label="Data pagamento futuro" value={dtPagtoFut} onChange={setDtPagtoFut} type="date" />
           </div>
           <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
-            <div style={{ background: "#111827", borderRadius: 7, padding: "10px 14px", flex: 1 }}>
-              <div style={{ color: "#4B5563", fontSize: 8, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>Meses de carrego</div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: "#F1F5F9", fontFamily: "'JetBrains Mono',monospace" }}>{fmt(meses, 1)}</div>
+            <div style={{ background: "#F6F3ED", borderRadius: 7, padding: "10px 14px", flex: 1 }}>
+              <div style={{ color: "#A89C8A", fontSize: 8, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>Meses de carrego</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: "#4A2C16", fontFamily: "'JetBrains Mono',monospace" }}>{fmt(meses, 1)}</div>
             </div>
             <Inp label="Volume (sacas)" value={volume} onChange={setVolume} step="500" />
           </div>
         </div>
 
         {/* Preço + dados automáticos */}
-        <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "16px 18px" }}>
-          <div style={{ color: "#6B7280", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10, paddingBottom: 6, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>Preço ofertado</div>
+        <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "16px 18px" }}>
+          <div style={{ color: "#8A7E6F", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10, paddingBottom: 6, borderBottom: "1px solid #ECE7DD" }}>Preço ofertado</div>
           <div style={{ display: "flex", gap: 8, alignItems: "flex-end", marginBottom: 12 }}>
             <div style={{ flex: 1 }}>
-              <label style={{ fontSize: 9, color: "#6B7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 3 }}>Preço informado</label>
+              <label style={{ fontSize: 9, color: "#8A7E6F", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 3 }}>Preço informado</label>
               <div style={{ display: "flex", alignItems: "center" }}>
                 <input type="number" step="0.5" value={precoInput} onChange={e => setPrecoInput(parseFloat(e.target.value) || 0)}
-                  style={{ background: "#111827", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "7px 0 0 7px", color: "#F1F5F9", padding: "8px 10px", fontSize: 16, fontFamily: "'JetBrains Mono',monospace", fontWeight: 700, outline: "none", width: 120 }} />
+                  style={{ background: "#F6F3ED", border: "1px solid #E4DECF", borderRadius: "7px 0 0 7px", color: "#4A2C16", padding: "8px 10px", fontSize: 16, fontFamily: "'JetBrains Mono',monospace", fontWeight: 700, outline: "none", width: 120 }} />
                 <div style={{ display: "flex" }}>
                   {["BRL", "USD"].map(m => (
                     <div key={m} onClick={() => setMoeda(m)} style={{
                       padding: "8px 12px", cursor: "pointer", fontSize: 11, fontWeight: 600,
-                      background: moeda === m ? "#457B9D" : "#1F2937",
-                      color: moeda === m ? "#fff" : "#6B7280",
-                      border: "1px solid rgba(255,255,255,0.08)",
+                      background: moeda === m ? "#B67A33" : "#EFE8DB",
+                      color: moeda === m ? "#fff" : "#8A7E6F",
+                      border: "1px solid #E4DECF",
                       borderRadius: m === "USD" ? "0 7px 7px 0" : 0,
                     }}>{m === "BRL" ? "R$/sc" : "US$/sc"}</div>
                   ))}
@@ -2049,20 +2049,20 @@ function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
           </div>
           {/* Dual display */}
           <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-            <div style={{ background: "#111827", borderRadius: 7, padding: "8px 12px", flex: 1 }}>
-              <div style={{ color: "#4B5563", fontSize: 8 }}>Em reais</div>
-              <span style={{ fontSize: 14, fontWeight: 600, color: "#F1F5F9", fontFamily: "'JetBrains Mono',monospace" }}>R$ {fmt(preco)}/sc</span>
+            <div style={{ background: "#F6F3ED", borderRadius: 7, padding: "8px 12px", flex: 1 }}>
+              <div style={{ color: "#A89C8A", fontSize: 8 }}>Em reais</div>
+              <span style={{ fontSize: 14, fontWeight: 600, color: "#4A2C16", fontFamily: "'JetBrains Mono',monospace" }}>R$ {fmt(preco)}/sc</span>
             </div>
-            <div style={{ background: "#111827", borderRadius: 7, padding: "8px 12px", flex: 1 }}>
-              <div style={{ color: "#4B5563", fontSize: 8 }}>Em dólar</div>
-              <span style={{ fontSize: 14, fontWeight: 600, color: "#F1F5F9", fontFamily: "'JetBrains Mono',monospace" }}>US$ {fmt(precoUSD)}/sc</span>
+            <div style={{ background: "#F6F3ED", borderRadius: 7, padding: "8px 12px", flex: 1 }}>
+              <div style={{ color: "#A89C8A", fontSize: 8 }}>Em dólar</div>
+              <span style={{ fontSize: 14, fontWeight: 600, color: "#4A2C16", fontFamily: "'JetBrains Mono',monospace" }}>US$ {fmt(precoUSD)}/sc</span>
             </div>
           </div>
 
-          <div style={{ color: "#4B5563", fontSize: 8, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Dados automáticos (da API)</div>
+          <div style={{ color: "#A89C8A", fontSize: 8, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Dados automáticos (da API)</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-            <AutoCard label="Chicago atual" value={fmt(chicagoAtual, 2)} unit="US$/bu" sym={cCurShort} color="#22C55E" />
-            <AutoCard label="Câmbio atual" value={`R$ ${fmt(cambioAtual, 4)}`} unit="" sym={dCurShort} color="#457B9D" />
+            <AutoCard label="Chicago atual" value={fmt(chicagoAtual, 2)} unit="US$/bu" sym={cCurShort} color="#4E7C5A" />
+            <AutoCard label="Câmbio atual" value={`R$ ${fmt(cambioAtual, 4)}`} unit="" sym={dCurShort} color="#B67A33" />
             <AutoCard label="Chicago futuro" value={fmt(chicagoFut, 2)} unit="US$/bu" sym={cFutShort} />
             <AutoCard label="Câmbio futuro" value={`R$ ${fmt(cambioFut, 4)}`} unit="" sym={dFutShort} />
           </div>
@@ -2071,8 +2071,8 @@ function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
 
       {/* Custos de carrego + Basis */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
-        <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "16px 18px" }}>
-          <div style={{ color: "#6B7280", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10, paddingBottom: 6, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>Custos de carrego</div>
+        <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "16px 18px" }}>
+          <div style={{ color: "#8A7E6F", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10, paddingBottom: 6, borderBottom: "1px solid #ECE7DD" }}>Custos de carrego</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 10 }}>
             <Inp label="Armazenagem (R$/sc/mês)" value={armMes} onChange={setArmMes} step="0.05" />
             <Inp label="Quebra (% a.m.)" value={quebraAm} onChange={setQuebraAm} step="0.05" />
@@ -2085,17 +2085,17 @@ function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
               { l: "Financeiro", v: custoFin },
               { l: "TOTAL", v: custoTotal, hl: true },
             ].map((c, i) => (
-              <div key={i} style={{ background: c.hl ? "rgba(245,158,11,0.08)" : "#111827", border: c.hl ? "1px solid rgba(245,158,11,0.2)" : "none", borderRadius: 6, padding: "8px 10px" }}>
-                <div style={{ color: c.hl ? "#F59E0B" : "#4B5563", fontSize: 8, fontWeight: 600 }}>{c.l}</div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: c.hl ? "#F59E0B" : "#F1F5F9", fontFamily: "'JetBrains Mono',monospace" }}>R$ {fmt(c.v)}</div>
-                <div style={{ color: "#374151", fontSize: 8 }}>por saca</div>
+              <div key={i} style={{ background: c.hl ? "rgba(245,158,11,0.08)" : "#F6F3ED", border: c.hl ? "1px solid rgba(245,158,11,0.2)" : "none", borderRadius: 6, padding: "8px 10px" }}>
+                <div style={{ color: c.hl ? "#D5A246" : "#A89C8A", fontSize: 8, fontWeight: 600 }}>{c.l}</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: c.hl ? "#D5A246" : "#4A2C16", fontFamily: "'JetBrains Mono',monospace" }}>R$ {fmt(c.v)}</div>
+                <div style={{ color: "#C2B7A6", fontSize: 8 }}>por saca</div>
               </div>
             ))}
           </div>
         </div>
 
-        <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "16px 18px" }}>
-          <div style={{ color: "#6B7280", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10, paddingBottom: 6, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>Cálculo do basis atual</div>
+        <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "16px 18px" }}>
+          <div style={{ color: "#8A7E6F", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10, paddingBottom: 6, borderBottom: "1px solid #ECE7DD" }}>Cálculo do basis atual</div>
           {[
             ["Preço atual", `R$ ${fmt(preco)}`, "R$/sc"],
             ["÷ Câmbio atual", fmt(cambioAtual, 4), "BRL/USD"],
@@ -2104,14 +2104,14 @@ function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
             ["= Preço em US$/bu", fmt(precoUsdBu, 4), "US$/bu"],
             ["- Chicago atual", fmt(chicagoAtual, 4), "US$/bu"],
           ].map(([l, v, u], i) => (
-            <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", borderBottom: "1px solid rgba(255,255,255,0.04)", fontSize: 12 }}>
-              <span style={{ color: "#9CA3AF" }}>{l}</span>
-              <span style={{ color: "#F1F5F9", fontFamily: "'JetBrains Mono',monospace" }}>{v} <span style={{ color: "#4B5563", fontSize: 9 }}>{u}</span></span>
+            <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", borderBottom: "1px solid #F2EEE6", fontSize: 12 }}>
+              <span style={{ color: "#6B6052" }}>{l}</span>
+              <span style={{ color: "#4A2C16", fontFamily: "'JetBrains Mono',monospace" }}>{v} <span style={{ color: "#A89C8A", fontSize: 9 }}>{u}</span></span>
             </div>
           ))}
           <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", marginTop: 4 }}>
-            <span style={{ color: "#F59E0B", fontSize: 13, fontWeight: 600 }}>= BASIS ATUAL</span>
-            <span style={{ color: "#F59E0B", fontSize: 16, fontWeight: 700, fontFamily: "'JetBrains Mono',monospace" }}>{fmt(basisAtual, 4)} US$/bu</span>
+            <span style={{ color: "#D5A246", fontSize: 13, fontWeight: 600 }}>= BASIS ATUAL</span>
+            <span style={{ color: "#D5A246", fontSize: 16, fontWeight: 700, fontFamily: "'JetBrains Mono',monospace" }}>{fmt(basisAtual, 4)} US$/bu</span>
           </div>
         </div>
       </div>
@@ -2119,33 +2119,33 @@ function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
       {/* Ponto de equilíbrio 0x0 */}
       <div style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: 10, padding: "18px 22px", marginBottom: 14, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <div style={{ color: "#F59E0B", fontSize: 13, fontWeight: 700 }}>Ponto de equilíbrio (0×0)</div>
-          <div style={{ color: "#F59E0B", fontSize: 10, opacity: 0.7, marginTop: 2 }}>Preço atual (R$ {fmt(preco)}) + custos de carrego (R$ {fmt(custoTotal)}) = preço mínimo para não perder</div>
+          <div style={{ color: "#D5A246", fontSize: 13, fontWeight: 700 }}>Ponto de equilíbrio (0×0)</div>
+          <div style={{ color: "#D5A246", fontSize: 10, opacity: 0.7, marginTop: 2 }}>Preço atual (R$ {fmt(preco)}) + custos de carrego (R$ {fmt(custoTotal)}) = preço mínimo para não perder</div>
         </div>
-        <div style={{ fontSize: 30, fontWeight: 800, color: "#F59E0B", fontFamily: "'JetBrains Mono',monospace" }}>R$ {fmt(precoViab)}/sc</div>
+        <div style={{ fontSize: 30, fontWeight: 800, color: "#D5A246", fontFamily: "'JetBrains Mono',monospace" }}>R$ {fmt(precoViab)}/sc</div>
       </div>
 
       {/* Tabela de ganho */}
-      <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "18px 22px", marginBottom: 14 }}>
-        <div style={{ color: "#F1F5F9", fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Se vender acima do equilíbrio</div>
-        <div style={{ color: "#6B7280", fontSize: 10, marginBottom: 12 }}>Quanto rende cada real acima do 0×0 ({volume.toLocaleString("pt-BR")} sacas)</div>
+      <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "18px 22px", marginBottom: 14 }}>
+        <div style={{ color: "#4A2C16", fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Se vender acima do equilíbrio</div>
+        <div style={{ color: "#8A7E6F", fontSize: 10, marginBottom: 12 }}>Quanto rende cada real acima do 0×0 ({volume.toLocaleString("pt-BR")} sacas)</div>
 
         <div style={{ display: "grid", gridTemplateColumns: "80px 1fr 120px 1fr", gap: 0, fontSize: 12 }}>
           {["Acima", "Preço venda", "Ganho/sc", "Ganho total"].map(h => (
-            <div key={h} style={{ padding: "6px 10px", color: "#4B5563", fontWeight: 600, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>{h}</div>
+            <div key={h} style={{ padding: "6px 10px", color: "#A89C8A", fontWeight: 600, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em", borderBottom: "1px solid #ECE7DD" }}>{h}</div>
           ))}
           {ganhoTable.map((g, i) => (
             <React.Fragment key={i}>
-              <div style={{ padding: "7px 10px", borderBottom: "1px solid rgba(255,255,255,0.04)", color: i === 0 ? "#F59E0B" : "#9CA3AF", fontWeight: i === 0 ? 600 : 400 }}>
+              <div style={{ padding: "7px 10px", borderBottom: "1px solid #F2EEE6", color: i === 0 ? "#D5A246" : "#6B6052", fontWeight: i === 0 ? 600 : 400 }}>
                 {i === 0 ? "0×0" : `+R$ ${i}`}
               </div>
-              <div style={{ padding: "7px 10px", borderBottom: "1px solid rgba(255,255,255,0.04)", fontFamily: "'JetBrains Mono',monospace", fontWeight: 600, color: i === 0 ? "#F59E0B" : "#F1F5F9" }}>
+              <div style={{ padding: "7px 10px", borderBottom: "1px solid #F2EEE6", fontFamily: "'JetBrains Mono',monospace", fontWeight: 600, color: i === 0 ? "#D5A246" : "#4A2C16" }}>
                 R$ {fmt(g.precoVenda)}
               </div>
-              <div style={{ padding: "7px 10px", borderBottom: "1px solid rgba(255,255,255,0.04)", fontFamily: "'JetBrains Mono',monospace", color: i === 0 ? "#F59E0B" : "#22C55E" }}>
+              <div style={{ padding: "7px 10px", borderBottom: "1px solid #F2EEE6", fontFamily: "'JetBrains Mono',monospace", color: i === 0 ? "#D5A246" : "#4E7C5A" }}>
                 {i === 0 ? "—" : `+R$ ${fmt(g.ganhaSc)}`}
               </div>
-              <div style={{ padding: "7px 10px", borderBottom: "1px solid rgba(255,255,255,0.04)", fontFamily: "'JetBrains Mono',monospace", color: i === 0 ? "#F59E0B" : "#22C55E" }}>
+              <div style={{ padding: "7px 10px", borderBottom: "1px solid #F2EEE6", fontFamily: "'JetBrains Mono',monospace", color: i === 0 ? "#D5A246" : "#4E7C5A" }}>
                 {i === 0 ? "—" : `+R$ ${g.ganhaTotal.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}`}
               </div>
             </React.Fragment>
@@ -2154,23 +2154,23 @@ function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
       </div>
 
       {/* Projeção: o mercado consegue pagar? */}
-      <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "18px 22px", marginBottom: 14 }}>
-        <div style={{ color: "#F1F5F9", fontSize: 13, fontWeight: 600, marginBottom: 4 }}>O mercado consegue pagar?</div>
-        <div style={{ color: "#6B7280", fontSize: 10, marginBottom: 14 }}>Projeção de preço em {MESES[fut.mi]} {fut.yr} usando basis histórico 5 anos + Chicago ({cFutShort}) + câmbio projetado (R$ {fmt(cambioFut, 4)})</div>
+      <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "18px 22px", marginBottom: 14 }}>
+        <div style={{ color: "#4A2C16", fontSize: 13, fontWeight: 600, marginBottom: 4 }}>O mercado consegue pagar?</div>
+        <div style={{ color: "#8A7E6F", fontSize: 10, marginBottom: 14 }}>Projeção de preço em {MESES[fut.mi]} {fut.yr} usando basis histórico 5 anos + Chicago ({cFutShort}) + câmbio projetado (R$ {fmt(cambioFut, 4)})</div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 14 }}>
           {[
-            { label: "Pior cenário", sub: `Basis mín: ${fmt(basisMinFut, 0)} c/bu`, valor: precoFutPior, viavel: piorViavel, color: "#EF4444" },
-            { label: "Cenário médio", sub: `Basis médio: ${fmt(basisMedFut, 0)} c/bu`, valor: precoFutMedio, viavel: medioViavel, color: "#F59E0B" },
-            { label: "Melhor cenário", sub: `Basis máx: ${fmt(basisMaxFut, 0)} c/bu`, valor: precoFutMelhor, viavel: melhorViavel, color: "#22C55E" },
+            { label: "Pior cenário", sub: `Basis mín: ${fmt(basisMinFut, 0)} c/bu`, valor: precoFutPior, viavel: piorViavel, color: "#B0503F" },
+            { label: "Cenário médio", sub: `Basis médio: ${fmt(basisMedFut, 0)} c/bu`, valor: precoFutMedio, viavel: medioViavel, color: "#D5A246" },
+            { label: "Melhor cenário", sub: `Basis máx: ${fmt(basisMaxFut, 0)} c/bu`, valor: precoFutMelhor, viavel: melhorViavel, color: "#4E7C5A" },
           ].map((c, i) => (
             <div key={i} style={{ background: `${c.viavel ? "rgba(34,197,94,0.06)" : "rgba(239,68,68,0.06)"}`, border: `1px solid ${c.viavel ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)"}`, borderRadius: 8, padding: "14px 16px" }}>
               <div style={{ color: c.color, fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>{c.label}</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: "#F1F5F9", fontFamily: "'JetBrains Mono',monospace", marginBottom: 4 }}>R$ {fmt(c.valor)}</div>
-              <div style={{ color: "#6B7280", fontSize: 9, marginBottom: 6 }}>{c.sub}</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "#4A2C16", fontFamily: "'JetBrains Mono',monospace", marginBottom: 4 }}>R$ {fmt(c.valor)}</div>
+              <div style={{ color: "#8A7E6F", fontSize: 9, marginBottom: 6 }}>{c.sub}</div>
               <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <div style={{ width: 6, height: 6, borderRadius: "50%", background: c.viavel ? "#22C55E" : "#EF4444" }} />
-                <span style={{ color: c.viavel ? "#22C55E" : "#EF4444", fontSize: 10, fontWeight: 600 }}>
+                <div style={{ width: 6, height: 6, borderRadius: "50%", background: c.viavel ? "#4E7C5A" : "#B0503F" }} />
+                <span style={{ color: c.viavel ? "#4E7C5A" : "#B0503F", fontSize: 10, fontWeight: 600 }}>
                   {c.viavel ? `Cobre o 0×0 (+R$ ${fmt(c.valor - precoViab)})` : `Não cobre (falta R$ ${fmt(precoViab - c.valor)})`}
                 </span>
               </div>
@@ -2187,17 +2187,17 @@ function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
             const rng = mx - mn || 1;
             const toPct = (v) => Math.max(2, Math.min(98, ((v - mn) / rng) * 100));
             return <>
-              <div style={{ position: "absolute", left: 0, right: 0, top: 12, height: 8, background: "rgba(255,255,255,0.03)", borderRadius: 4 }} />
+              <div style={{ position: "absolute", left: 0, right: 0, top: 12, height: 8, background: "#F5F1EA", borderRadius: 4 }} />
               {/* 0x0 marker */}
               <div style={{ position: "absolute", left: `${toPct(precoViab)}%`, top: 4, transform: "translateX(-50%)", zIndex: 2 }}>
-                <div style={{ background: "#F59E0B", color: "#080A0F", fontSize: 8, fontWeight: 700, padding: "1px 5px", borderRadius: 3, whiteSpace: "nowrap", fontFamily: "'JetBrains Mono',monospace" }}>0×0: {fmt(precoViab, 0)}</div>
-                <div style={{ width: 2, height: 10, background: "#F59E0B", margin: "1px auto 0", borderRadius: 1 }} />
+                <div style={{ background: "#D5A246", color: "#F7F7F5", fontSize: 8, fontWeight: 700, padding: "1px 5px", borderRadius: 3, whiteSpace: "nowrap", fontFamily: "'JetBrains Mono',monospace" }}>0×0: {fmt(precoViab, 0)}</div>
+                <div style={{ width: 2, height: 10, background: "#D5A246", margin: "1px auto 0", borderRadius: 1 }} />
               </div>
               {/* Scenario markers */}
               {[
-                { v: precoFutPior, c: "#EF4444", l: "Pior" },
-                { v: precoFutMedio, c: "#F59E0B", l: "Médio" },
-                { v: precoFutMelhor, c: "#22C55E", l: "Melhor" },
+                { v: precoFutPior, c: "#B0503F", l: "Pior" },
+                { v: precoFutMedio, c: "#D5A246", l: "Médio" },
+                { v: precoFutMelhor, c: "#4E7C5A", l: "Melhor" },
               ].map((s, i) => (
                 <div key={i} style={{ position: "absolute", left: `${toPct(s.v)}%`, top: 26, transform: "translateX(-50%)" }}>
                   <div style={{ width: 8, height: 8, borderRadius: "50%", background: s.c, margin: "0 auto" }} />
@@ -2206,9 +2206,9 @@ function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
             </>;
           })()}
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 8, color: "#374151", marginTop: 8 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 8, color: "#C2B7A6", marginTop: 8 }}>
           <span>Pior: R$ {fmt(precoFutPior, 0)}</span>
-          <span style={{ color: "#F59E0B" }}>0×0: R$ {fmt(precoViab, 0)}</span>
+          <span style={{ color: "#D5A246" }}>0×0: R$ {fmt(precoViab, 0)}</span>
           <span>Melhor: R$ {fmt(precoFutMelhor, 0)}</span>
         </div>
       </div>
@@ -2241,10 +2241,10 @@ function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
         onMouseEnter={e => e.currentTarget.style.background = "rgba(34,197,94,0.18)"}
         onMouseLeave={e => e.currentTarget.style.background = "rgba(34,197,94,0.1)"}>
         <div>
-          <div style={{ color: "#22C55E", fontSize: 13, fontWeight: 700 }}>Travar posição e acompanhar</div>
-          <div style={{ color: "#22C55E", fontSize: 10, opacity: 0.7, marginTop: 2 }}>Salva os dados e permite acompanhar até a venda</div>
+          <div style={{ color: "#4E7C5A", fontSize: 13, fontWeight: 700 }}>Travar posição e acompanhar</div>
+          <div style={{ color: "#4E7C5A", fontSize: 10, opacity: 0.7, marginTop: 2 }}>Salva os dados e permite acompanhar até a venda</div>
         </div>
-        <div style={{ color: "#22C55E", fontSize: 20 }}>+</div>
+        <div style={{ color: "#4E7C5A", fontSize: 20 }}>+</div>
       </div>
     </>
   );
@@ -2253,9 +2253,9 @@ function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
   const renderPosicoes = () => (
     <div>
       {posicoes.length === 0 ? (
-        <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "40px", textAlign: "center" }}>
-          <div style={{ color: "#4B5563", fontSize: 14 }}>Nenhuma posição travada</div>
-          <div style={{ color: "#374151", fontSize: 11, marginTop: 4 }}>Use a calculadora, simule e clique "Travar posição"</div>
+        <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "40px", textAlign: "center" }}>
+          <div style={{ color: "#A89C8A", fontSize: 14 }}>Nenhuma posição travada</div>
+          <div style={{ color: "#C2B7A6", fontSize: 11, marginTop: 4 }}>Use a calculadora, simule e clique "Travar posição"</div>
         </div>
       ) : posicoes.map(pos => {
         const rawC = buildSoja(pos.mesFutIdx, pos.mesFutYr);
@@ -2276,21 +2276,21 @@ function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
         const varMax = ptMaxHj - (pos.ptEntradaMax || ptMaxHj);
 
         return (
-          <div key={pos.id} style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "18px 22px", marginBottom: 14 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, paddingBottom: 8, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+          <div key={pos.id} style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "18px 22px", marginBottom: 14 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, paddingBottom: 8, borderBottom: "1px solid #ECE7DD" }}>
               <div>
-                <span style={{ color: "#F1F5F9", fontSize: 14, fontWeight: 700 }}>{pos.praca}</span>
-                <span style={{ color: "#6B7280", fontSize: 10, marginLeft: 10 }}>Aberta {pos.dataAbertura} — {pos.volume.toLocaleString("pt-BR")} sc</span>
+                <span style={{ color: "#4A2C16", fontSize: 14, fontWeight: 700 }}>{pos.praca}</span>
+                <span style={{ color: "#8A7E6F", fontSize: 10, marginLeft: 10 }}>Aberta {pos.dataAbertura} — {pos.volume.toLocaleString("pt-BR")} sc</span>
               </div>
               <div style={{ display: "flex", gap: 6 }}>
-                <div style={{ background: "rgba(34,197,94,0.1)", borderRadius: 5, padding: "3px 10px", fontSize: 9, fontWeight: 600, color: "#22C55E" }}>Aberta</div>
-                <div onClick={() => setPosicoes(prev => prev.filter(p => p.id !== pos.id))} style={{ color: "#374151", fontSize: 11, cursor: "pointer", padding: "3px 6px" }}>✕</div>
+                <div style={{ background: "rgba(34,197,94,0.1)", borderRadius: 5, padding: "3px 10px", fontSize: 9, fontWeight: 600, color: "#4E7C5A" }}>Aberta</div>
+                <div onClick={() => setPosicoes(prev => prev.filter(p => p.id !== pos.id))} style={{ color: "#C2B7A6", fontSize: 11, cursor: "pointer", padding: "3px 6px" }}>✕</div>
               </div>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               {/* Dados travados */}
               <div>
-                <div style={{ color: "#4B5563", fontSize: 8, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Dados travados</div>
+                <div style={{ color: "#A89C8A", fontSize: 8, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Dados travados</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5 }}>
                   {[
                     ["Preço entrada", `R$ ${fmt(pos.precoEntrada)}`],
@@ -2300,9 +2300,9 @@ function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
                     ["Custo carrego", `R$ ${fmt(pos.custoTotal)}/sc`],
                     ["Entrega futura", pos.dtEntregaFut],
                   ].map(([l, v], i) => (
-                    <div key={i} style={{ background: "#111827", borderRadius: 5, padding: "6px 8px" }}>
-                      <div style={{ color: "#374151", fontSize: 7 }}>{l}</div>
-                      <div style={{ color: "#9CA3AF", fontSize: 11, fontWeight: 600, fontFamily: "'JetBrains Mono',monospace" }}>{v}</div>
+                    <div key={i} style={{ background: "#F6F3ED", borderRadius: 5, padding: "6px 8px" }}>
+                      <div style={{ color: "#C2B7A6", fontSize: 7 }}>{l}</div>
+                      <div style={{ color: "#6B6052", fontSize: 11, fontWeight: 600, fontFamily: "'JetBrains Mono',monospace" }}>{v}</div>
                     </div>
                   ))}
                 </div>
@@ -2310,35 +2310,35 @@ function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
 
               {/* Mercado hoje */}
               <div>
-                <div style={{ color: "#4B5563", fontSize: 8, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Mercado hoje</div>
+                <div style={{ color: "#A89C8A", fontSize: 8, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Mercado hoje</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5, marginBottom: 8 }}>
                   {[
                     { l: `Chicago ${pos.cFutShort}`, v: `${fmt(chiHj, 0)} c/bu`, d: chiHj - pos.chicagoEntrada },
                     { l: `Câmbio ${pos.dFutShort}`, v: `R$ ${fmt(camHj, 4)}`, d: camHj - pos.cambioEntrada },
                   ].map((d, i) => (
-                    <div key={i} style={{ background: "#111827", borderRadius: 5, padding: "6px 8px" }}>
-                      <div style={{ color: "#374151", fontSize: 7 }}>{d.l}</div>
-                      <div style={{ color: "#F1F5F9", fontSize: 13, fontWeight: 700, fontFamily: "'JetBrains Mono',monospace" }}>{d.v}</div>
-                      <div style={{ color: d.d >= 0 ? "#22C55E" : "#EF4444", fontSize: 8 }}>{d.d >= 0 ? "▲" : "▼"} {d.d >= 0 ? "+" : ""}{fmt(d.d, i === 0 ? 0 : 4)} vs entrada</div>
+                    <div key={i} style={{ background: "#F6F3ED", borderRadius: 5, padding: "6px 8px" }}>
+                      <div style={{ color: "#C2B7A6", fontSize: 7 }}>{d.l}</div>
+                      <div style={{ color: "#4A2C16", fontSize: 13, fontWeight: 700, fontFamily: "'JetBrains Mono',monospace" }}>{d.v}</div>
+                      <div style={{ color: d.d >= 0 ? "#4E7C5A" : "#B0503F", fontSize: 8 }}>{d.d >= 0 ? "▲" : "▼"} {d.d >= 0 ? "+" : ""}{fmt(d.d, i === 0 ? 0 : 4)} vs entrada</div>
                     </div>
                   ))}
                 </div>
 
                 {/* Preço teórico com variação vs entrada */}
-                <div style={{ color: "#4B5563", fontSize: 8, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>Preço teórico {MESES[pos.mesFutIdx]} {pos.mesFutYr}</div>
+                <div style={{ color: "#A89C8A", fontSize: 8, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>Preço teórico {MESES[pos.mesFutIdx]} {pos.mesFutYr}</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 5 }}>
                   {[
                     { l: "Pior", v: ptMinHj, var: varMin, ent: pos.ptEntradaMin },
                     { l: "Médio", v: ptMedHj, var: varMed, ent: pos.ptEntradaMed },
                     { l: "Melhor", v: ptMaxHj, var: varMax, ent: pos.ptEntradaMax },
                   ].map((s, i) => (
-                    <div key={i} style={{ background: "#111827", borderRadius: 5, padding: "6px 8px", border: "1px solid rgba(255,255,255,0.04)" }}>
-                      <div style={{ color: "#4B5563", fontSize: 7 }}>{s.l}</div>
-                      <div style={{ color: "#F1F5F9", fontSize: 13, fontWeight: 700, fontFamily: "'JetBrains Mono',monospace" }}>R$ {fmt(s.v)}</div>
-                      <div style={{ color: s.var >= 0 ? "#22C55E" : "#EF4444", fontSize: 8, marginTop: 2 }}>
+                    <div key={i} style={{ background: "#F6F3ED", borderRadius: 5, padding: "6px 8px", border: "1px solid #F2EEE6" }}>
+                      <div style={{ color: "#A89C8A", fontSize: 7 }}>{s.l}</div>
+                      <div style={{ color: "#4A2C16", fontSize: 13, fontWeight: 700, fontFamily: "'JetBrains Mono',monospace" }}>R$ {fmt(s.v)}</div>
+                      <div style={{ color: s.var >= 0 ? "#4E7C5A" : "#B0503F", fontSize: 8, marginTop: 2 }}>
                         {s.var >= 0 ? "▲" : "▼"} {s.var >= 0 ? "+" : ""}{fmt(s.var)} vs entrada
                       </div>
-                      <div style={{ color: "#374151", fontSize: 7, marginTop: 1 }}>Entrada: R$ {fmt(s.ent || s.v)}</div>
+                      <div style={{ color: "#C2B7A6", fontSize: 7, marginTop: 1 }}>Entrada: R$ {fmt(s.ent || s.v)}</div>
                     </div>
                   ))}
                 </div>
@@ -2346,8 +2346,8 @@ function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
             </div>
 
             {/* Disclaimer */}
-            <div style={{ marginTop: 12, padding: "8px 14px", borderRadius: 6, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
-              <div style={{ color: "#374151", fontSize: 9, lineHeight: 1.5 }}>
+            <div style={{ marginTop: 12, padding: "8px 14px", borderRadius: 6, background: "#FAF7F1", border: "1px solid #F2EEE6" }}>
+              <div style={{ color: "#C2B7A6", fontSize: 9, lineHeight: 1.5 }}>
                 Preço teórico baseado em basis histórico 5 anos — referência para o produtor se direcionar sobre o preço justo. O risco da operação é por conta e escolha do produtor.
               </div>
             </div>
@@ -2360,17 +2360,17 @@ function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
   return (
     <div style={{ maxWidth: 1060, margin: "0 auto", padding: "20px 28px 48px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-        <div style={{ width: 3, height: 18, background: "#E63946", borderRadius: 2 }} />
+        <div style={{ width: 3, height: 18, background: "#D5A246", borderRadius: 2 }} />
         <span style={{ fontSize: 15, fontWeight: 700 }}>Custo de carrego</span>
-        {posicoes.length > 0 && <div style={{ background: "rgba(34,197,94,0.1)", borderRadius: 10, padding: "2px 8px", fontSize: 10, fontWeight: 600, color: "#22C55E" }}>{posicoes.length} aberta{posicoes.length > 1 ? "s" : ""}</div>}
+        {posicoes.length > 0 && <div style={{ background: "rgba(34,197,94,0.1)", borderRadius: 10, padding: "2px 8px", fontSize: 10, fontWeight: 600, color: "#4E7C5A" }}>{posicoes.length} aberta{posicoes.length > 1 ? "s" : ""}</div>}
       </div>
       <div style={{ display: "flex", gap: 4, marginBottom: 16 }}>
         {[{ id: "calc", label: "Calculadora" }, { id: "posicoes", label: `Minhas posições (${posicoes.length})` }].map(t => (
           <div key={t.id} onClick={() => setSubTab(t.id)} style={{
             padding: "8px 18px", borderRadius: 7, cursor: "pointer", fontSize: 12, fontWeight: 600,
-            background: subTab === t.id ? "rgba(230,57,70,0.1)" : "rgba(255,255,255,0.03)",
-            color: subTab === t.id ? "#E63946" : "#6B7280",
-            border: `1px solid ${subTab === t.id ? "rgba(230,57,70,0.3)" : "rgba(255,255,255,0.06)"}`,
+            background: subTab === t.id ? "rgba(230,57,70,0.1)" : "#F5F1EA",
+            color: subTab === t.id ? "#D5A246" : "#8A7E6F",
+            border: `1px solid ${subTab === t.id ? "rgba(230,57,70,0.3)" : "#ECE7DD"}`,
           }}>{t.label}</div>
         ))}
       </div>
@@ -2490,9 +2490,9 @@ _Gerado via ProSafra_`;
   function Inp2({ label, value, onChange, type = "text", placeholder, w }) {
     return (
       <div style={{ minWidth: w, flex: w ? undefined : 1 }}>
-        <label style={{ fontSize: 9, color: "#6B7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 3 }}>{label}</label>
+        <label style={{ fontSize: 9, color: "#8A7E6F", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 3 }}>{label}</label>
         <input type={type} value={value} onChange={e => onChange(type === "number" ? parseFloat(e.target.value) || 0 : e.target.value)} placeholder={placeholder}
-          style={{ background: "#111827", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 7, color: "#F1F5F9", padding: "9px 10px", fontSize: 13, fontFamily: type === "number" ? "'JetBrains Mono',monospace" : "'Outfit',sans-serif", outline: "none", width: "100%", boxSizing: "border-box" }} />
+          style={{ background: "#F6F3ED", border: "1px solid #E4DECF", borderRadius: 7, color: "#4A2C16", padding: "9px 10px", fontSize: 13, fontFamily: type === "number" ? "'JetBrains Mono',monospace" : "'Outfit',sans-serif", outline: "none", width: "100%", boxSizing: "border-box" }} />
       </div>
     );
   }
@@ -2500,13 +2500,13 @@ _Gerado via ProSafra_`;
   return (
     <div style={{ maxWidth: 1060, margin: "0 auto", padding: "20px 28px 48px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
-        <div style={{ width: 3, height: 18, background: "#E63946", borderRadius: 2 }} />
+        <div style={{ width: 3, height: 18, background: "#D5A246", borderRadius: 2 }} />
         <span style={{ fontSize: 15, fontWeight: 700 }}>Ofertas firmes</span>
-        <span style={{ color: "#4B5563", fontSize: 11 }}>Gere sua oferta e envie via WhatsApp</span>
+        <span style={{ color: "#A89C8A", fontSize: 11 }}>Gere sua oferta e envie via WhatsApp</span>
       </div>
 
       {/* Mercado */}
-      <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "14px 18px", marginBottom: 14, display: "flex", gap: 10, alignItems: "flex-end" }}>
+      <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "14px 18px", marginBottom: 14, display: "flex", gap: 10, alignItems: "flex-end" }}>
         <Sel label="Produto / Mercado" value={mercadoOf} onChange={setMercadoOf} w={200}>
           <option value="Soja Exportação">Soja Exportação</option>
           <option value="Milho Exportação">Milho Exportação</option>
@@ -2516,28 +2516,28 @@ _Gerado via ProSafra_`;
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
         {/* Dados do produtor */}
-        <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "16px 18px" }}>
-          <div style={{ color: "#6B7280", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10, paddingBottom: 6, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>Dados do produtor</div>
+        <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "16px 18px" }}>
+          <div style={{ color: "#8A7E6F", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10, paddingBottom: 6, borderBottom: "1px solid #ECE7DD" }}>Dados do produtor</div>
           <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
             <Inp2 label="Nome / Empresa" value={nome} onChange={setNome} placeholder="João Silva" />
             <Inp2 label="Fazenda" value={fazenda} onChange={setFazenda} placeholder="Fazenda Boa Vista" />
           </div>
           <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
             <div style={{ flex: 1 }}>
-              <label style={{ fontSize: 9, color: "#6B7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 3 }}>Volume</label>
+              <label style={{ fontSize: 9, color: "#8A7E6F", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 3 }}>Volume</label>
               <div style={{ display: "flex" }}>
                 <input type="number" value={volQtd} onChange={e => setVolQtd(parseFloat(e.target.value) || 0)}
-                  style={{ background: "#111827", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "7px 0 0 7px", color: "#F1F5F9", padding: "9px 10px", fontSize: 13, fontFamily: "'JetBrains Mono',monospace", outline: "none", width: 100 }} />
+                  style={{ background: "#F6F3ED", border: "1px solid #E4DECF", borderRadius: "7px 0 0 7px", color: "#4A2C16", padding: "9px 10px", fontSize: 13, fontFamily: "'JetBrains Mono',monospace", outline: "none", width: 100 }} />
                 {["sacas", "toneladas"].map(u => (
                   <div key={u} onClick={() => setVolUnit(u)} style={{
                     padding: "9px 10px", cursor: "pointer", fontSize: 10, fontWeight: 600,
-                    background: volUnit === u ? "#457B9D" : "#1F2937", color: volUnit === u ? "#fff" : "#6B7280",
-                    border: "1px solid rgba(255,255,255,0.08)", borderLeft: "none",
+                    background: volUnit === u ? "#B67A33" : "#EFE8DB", color: volUnit === u ? "#fff" : "#8A7E6F",
+                    border: "1px solid #E4DECF", borderLeft: "none",
                     borderRadius: u === "toneladas" ? "0 7px 7px 0" : 0,
                   }}>{u === "sacas" ? "Sacas" : "Ton"}</div>
                 ))}
               </div>
-              <div style={{ color: "#374151", fontSize: 9, marginTop: 3 }}>
+              <div style={{ color: "#C2B7A6", fontSize: 9, marginTop: 3 }}>
                 = {volUnit === "sacas" ? `${fmt(volTon, 1)} ton` : `${volSacas.toLocaleString("pt-BR")} sacas`}
               </div>
             </div>
@@ -2552,8 +2552,8 @@ _Gerado via ProSafra_`;
         </div>
 
         {/* Condições comerciais */}
-        <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "16px 18px" }}>
-          <div style={{ color: "#6B7280", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10, paddingBottom: 6, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>Condições comerciais</div>
+        <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "16px 18px" }}>
+          <div style={{ color: "#8A7E6F", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10, paddingBottom: 6, borderBottom: "1px solid #ECE7DD" }}>Condições comerciais</div>
           <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
             <Sel label="Mês de entrega" value={entK} onChange={setEntK} w={150}>
               {OPTS.map(o => <option key={`${o.mi}-${o.yr}`} value={`${o.mi}-${o.yr}`}>{o.label}</option>)}
@@ -2564,26 +2564,26 @@ _Gerado via ProSafra_`;
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <div>
-              <label style={{ fontSize: 9, color: "#6B7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 3 }}>Modalidade</label>
+              <label style={{ fontSize: 9, color: "#8A7E6F", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 3 }}>Modalidade</label>
               <div style={{ display: "flex" }}>
                 {["FOB", "CIF"].map(m => (
                   <div key={m} onClick={() => setModalidade(m)} style={{
                     padding: "9px 16px", cursor: "pointer", fontSize: 12, fontWeight: 600,
-                    background: modalidade === m ? "#457B9D" : "#1F2937", color: modalidade === m ? "#fff" : "#6B7280",
-                    border: "1px solid rgba(255,255,255,0.08)",
+                    background: modalidade === m ? "#B67A33" : "#EFE8DB", color: modalidade === m ? "#fff" : "#8A7E6F",
+                    border: "1px solid #E4DECF",
                     borderRadius: m === "FOB" ? "7px 0 0 7px" : "0 7px 7px 0",
                   }}>{m}</div>
                 ))}
               </div>
             </div>
             <div>
-              <label style={{ fontSize: 9, color: "#6B7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 3 }}>Funrural</label>
+              <label style={{ fontSize: 9, color: "#8A7E6F", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 3 }}>Funrural</label>
               <div style={{ display: "flex" }}>
                 {[{ id: "descontado", l: "Descontado" }, { id: "folha", l: "Em folha" }].map(f => (
                   <div key={f.id} onClick={() => setFunrural(f.id)} style={{
                     padding: "9px 12px", cursor: "pointer", fontSize: 11, fontWeight: 600,
-                    background: funrural === f.id ? "#457B9D" : "#1F2937", color: funrural === f.id ? "#fff" : "#6B7280",
-                    border: "1px solid rgba(255,255,255,0.08)",
+                    background: funrural === f.id ? "#B67A33" : "#EFE8DB", color: funrural === f.id ? "#fff" : "#8A7E6F",
+                    border: "1px solid #E4DECF",
                     borderRadius: f.id === "descontado" ? "7px 0 0 7px" : "0 7px 7px 0",
                   }}>{f.l}</div>
                 ))}
@@ -2593,31 +2593,31 @@ _Gerado via ProSafra_`;
           {/* Coordenadas FOB */}
           {modalidade === "FOB" && (
             <div style={{ marginTop: 10 }}>
-              <label style={{ fontSize: 9, color: "#6B7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 3 }}>Localização da fazenda (FOB)</label>
+              <label style={{ fontSize: 9, color: "#8A7E6F", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 3 }}>Localização da fazenda (FOB)</label>
               <input value={coordenadas} onChange={e => setCoordenadas(e.target.value)} placeholder="Cole o link do Google Maps ou lat, lng"
-                style={{ background: "#111827", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 7, color: "#F1F5F9", padding: "9px 10px", fontSize: 12, outline: "none", width: "100%", boxSizing: "border-box" }} />
-              <div style={{ color: "#374151", fontSize: 8, marginTop: 3 }}>Ex: -17.7969, -49.3197 ou link do Google Maps</div>
+                style={{ background: "#F6F3ED", border: "1px solid #E4DECF", borderRadius: 7, color: "#4A2C16", padding: "9px 10px", fontSize: 12, outline: "none", width: "100%", boxSizing: "border-box" }} />
+              <div style={{ color: "#C2B7A6", fontSize: 8, marginTop: 3 }}>Ex: -17.7969, -49.3197 ou link do Google Maps</div>
             </div>
           )}
         </div>
       </div>
 
       {/* Preço da oferta */}
-      <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "16px 18px", marginBottom: 14 }}>
-        <div style={{ color: "#6B7280", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10, paddingBottom: 6, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+      <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "16px 18px", marginBottom: 14 }}>
+        <div style={{ color: "#8A7E6F", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10, paddingBottom: 6, borderBottom: "1px solid #ECE7DD" }}>
           Preço da oferta — {pLabel} — {MESES[eMi]} {eYr}
         </div>
 
         {/* Moeda primeiro */}
         <div style={{ marginBottom: 14 }}>
-          <div style={{ color: "#6B7280", fontSize: 9, marginBottom: 6 }}>Sua oferta será em:</div>
+          <div style={{ color: "#8A7E6F", fontSize: 9, marginBottom: 6 }}>Sua oferta será em:</div>
           <div style={{ display: "flex", gap: 0 }}>
             {["BRL", "USD"].map(m => (
               <div key={m} onClick={() => { setMoedaOferta(m); setPrecoOferta(0); }} style={{
                 padding: "10px 24px", cursor: "pointer", fontSize: 13, fontWeight: 700,
-                background: moedaOferta === m ? "#457B9D" : "#1F2937",
-                color: moedaOferta === m ? "#fff" : "#6B7280",
-                border: "1px solid rgba(255,255,255,0.08)",
+                background: moedaOferta === m ? "#B67A33" : "#EFE8DB",
+                color: moedaOferta === m ? "#fff" : "#8A7E6F",
+                border: "1px solid #E4DECF",
                 borderRadius: m === "BRL" ? "8px 0 0 8px" : "0 8px 8px 0",
               }}>{m === "BRL" ? "R$ / saca" : "US$ / saca"}</div>
             ))}
@@ -2625,12 +2625,12 @@ _Gerado via ProSafra_`;
         </div>
 
         {/* Regiões na moeda selecionada */}
-        <div style={{ color: "#6B7280", fontSize: 9, marginBottom: 8 }}>Clique em uma região para preencher, ou digite seu preço:</div>
+        <div style={{ color: "#8A7E6F", fontSize: 9, marginBottom: 8 }}>Clique em uma região para preencher, ou digite seu preço:</div>
         <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
           {[
-            { l: "Mínimo", brl: pMin, usd: pMinU, c: "#F59E0B" },
-            { l: "Justo", brl: pJusto, usd: pJustoU, c: "#22C55E" },
-            { l: "Agressivo", brl: pMax, usd: pMaxU, c: "#10B981" },
+            { l: "Mínimo", brl: pMin, usd: pMinU, c: "#D5A246" },
+            { l: "Justo", brl: pJusto, usd: pJustoU, c: "#4E7C5A" },
+            { l: "Agressivo", brl: pMax, usd: pMaxU, c: "#4E7C5A" },
           ].map((r, i) => {
             const val = moedaOferta === "BRL" ? r.brl : r.usd;
             const isSelected = Math.abs(precoOferta - val) < 0.01 && precoOferta > 0;
@@ -2638,15 +2638,15 @@ _Gerado via ProSafra_`;
             return (
               <div key={i} onClick={() => setPrecoOferta(Math.round(val * 100) / 100)} style={{
                 flex: 1, cursor: "pointer", borderRadius: 8, padding: "14px 16px",
-                background: isSelected ? `${r.c}15` : "#111827",
-                border: `1px solid ${isSelected ? `${r.c}44` : "rgba(255,255,255,0.06)"}`,
+                background: isSelected ? `${r.c}15` : "#F6F3ED",
+                border: `1px solid ${isSelected ? `${r.c}44` : "#ECE7DD"}`,
                 transition: "all 0.15s",
               }}
                 onMouseEnter={e => { if (!isSelected) e.currentTarget.style.borderColor = `${r.c}33`; }}
-                onMouseLeave={e => { if (!isSelected) e.currentTarget.style.borderColor = isSelected ? `${r.c}44` : "rgba(255,255,255,0.06)"; }}>
+                onMouseLeave={e => { if (!isSelected) e.currentTarget.style.borderColor = isSelected ? `${r.c}44` : "#ECE7DD"; }}>
                 <div style={{ color: r.c, fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>{r.l}</div>
-                <div style={{ fontSize: 20, fontWeight: 700, color: "#F1F5F9", fontFamily: "'JetBrains Mono',monospace" }}>{simbolo} {fmt(val)}</div>
-                <div style={{ fontSize: 10, color: "#4B5563", marginTop: 2 }}>por saca</div>
+                <div style={{ fontSize: 20, fontWeight: 700, color: "#4A2C16", fontFamily: "'JetBrains Mono',monospace" }}>{simbolo} {fmt(val)}</div>
+                <div style={{ fontSize: 10, color: "#A89C8A", marginTop: 2 }}>por saca</div>
               </div>
             );
           })}
@@ -2655,19 +2655,19 @@ _Gerado via ProSafra_`;
         {/* Input de preço */}
         <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
           <div>
-            <label style={{ fontSize: 9, color: "#6B7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 3 }}>Preço da oferta ({moedaOferta === "BRL" ? "R$/sc" : "US$/sc"})</label>
+            <label style={{ fontSize: 9, color: "#8A7E6F", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 3 }}>Preço da oferta ({moedaOferta === "BRL" ? "R$/sc" : "US$/sc"})</label>
             <div style={{ display: "flex", alignItems: "center" }}>
-              <span style={{ background: "#1F2937", border: "1px solid rgba(255,255,255,0.08)", borderRight: "none", borderRadius: "7px 0 0 7px", padding: "10px 12px", color: "#6B7280", fontSize: 13 }}>
+              <span style={{ background: "#EFE8DB", border: "1px solid #E4DECF", borderRight: "none", borderRadius: "7px 0 0 7px", padding: "10px 12px", color: "#8A7E6F", fontSize: 13 }}>
                 {moedaOferta === "BRL" ? "R$" : "US$"}
               </span>
               <input type="number" step="0.01" value={precoOferta || ""} onChange={e => setPrecoOferta(parseFloat(e.target.value) || 0)}
-                style={{ background: "#111827", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "0 7px 7px 0", color: "#22C55E", padding: "10px 12px", fontSize: 22, fontFamily: "'JetBrains Mono',monospace", fontWeight: 800, outline: "none", width: 140 }} />
-              <span style={{ color: "#4B5563", fontSize: 11, marginLeft: 6 }}>/saca</span>
+                style={{ background: "#F6F3ED", border: "1px solid #E4DECF", borderRadius: "0 7px 7px 0", color: "#4E7C5A", padding: "10px 12px", fontSize: 22, fontFamily: "'JetBrains Mono',monospace", fontWeight: 800, outline: "none", width: 140 }} />
+              <span style={{ color: "#A89C8A", fontSize: 11, marginLeft: 6 }}>/saca</span>
             </div>
           </div>
           {precoOferta > 0 && (
             <div style={{ paddingBottom: 12 }}>
-              <div style={{ color: "#374151", fontSize: 10 }}>
+              <div style={{ color: "#C2B7A6", fontSize: 10 }}>
                 Total: {moedaOferta === "BRL" ? "R$" : "US$"} {(precoOferta * volSacas).toLocaleString("pt-BR", { minimumFractionDigits: 0 })} ({volSacas.toLocaleString("pt-BR")} sc)
               </div>
             </div>
@@ -2677,9 +2677,9 @@ _Gerado via ProSafra_`;
 
       {/* Preview + botão copiar — sempre visível quando tem preço */}
       {precoOferta > 0 && (
-        <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "16px 18px", marginBottom: 14 }}>
-          <div style={{ color: "#6B7280", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10, paddingBottom: 6, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>Preview da oferta</div>
-          <div style={{ background: "#111827", borderRadius: 8, padding: "14px 16px", fontFamily: "'JetBrains Mono',monospace", fontSize: 12, color: "#9CA3AF", lineHeight: 1.8, whiteSpace: "pre-wrap", marginBottom: 12 }}>
+        <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "16px 18px", marginBottom: 14 }}>
+          <div style={{ color: "#8A7E6F", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10, paddingBottom: 6, borderBottom: "1px solid #ECE7DD" }}>Preview da oferta</div>
+          <div style={{ background: "#F6F3ED", borderRadius: 8, padding: "14px 16px", fontFamily: "'JetBrains Mono',monospace", fontSize: 12, color: "#6B6052", lineHeight: 1.8, whiteSpace: "pre-wrap", marginBottom: 12 }}>
             {gerarTexto()}
           </div>
           <div onClick={copiarOferta} style={{
@@ -2689,7 +2689,7 @@ _Gerado via ProSafra_`;
             display: "flex", justifyContent: "center", alignItems: "center", gap: 8,
             transition: "all 0.2s",
           }}>
-            <span style={{ color: "#22C55E", fontSize: 14, fontWeight: 700 }}>
+            <span style={{ color: "#4E7C5A", fontSize: 14, fontWeight: 700 }}>
               {copied ? "Copiado! Cole no WhatsApp" : "Copiar oferta para WhatsApp"}
             </span>
           </div>
@@ -2698,12 +2698,12 @@ _Gerado via ProSafra_`;
 
       {/* Histórico */}
       {historico.length > 0 && (
-        <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "16px 18px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, paddingBottom: 6, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-            <div style={{ color: "#6B7280", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+        <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "16px 18px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, paddingBottom: 6, borderBottom: "1px solid #ECE7DD" }}>
+            <div style={{ color: "#8A7E6F", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>
               Ofertas enviadas ({historico.length})
             </div>
-            <div style={{ color: "#374151", fontSize: 9 }}>Cotações se atualizam diariamente</div>
+            <div style={{ color: "#C2B7A6", fontSize: 9 }}>Cotações se atualizam diariamente</div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {historico.map(o => {
@@ -2722,24 +2722,24 @@ _Gerado via ProSafra_`;
               const simb = o.moeda === "USD" ? "US$" : "R$";
 
               return (
-                <div key={o.id} style={{ background: "#111827", borderRadius: 8, padding: "14px 16px" }}>
+                <div key={o.id} style={{ background: "#F6F3ED", borderRadius: 8, padding: "14px 16px" }}>
                   {/* Header */}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, paddingBottom: 8, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, paddingBottom: 8, borderBottom: "1px solid #ECE7DD" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <span style={{ color: "#22C55E", fontSize: 16, fontWeight: 800, fontFamily: "'JetBrains Mono',monospace" }}>{simb} {fmt(o.preco)}/sc</span>
-                      <span style={{ color: "#F1F5F9", fontSize: 11, fontWeight: 500 }}>{o.fazenda || o.nome}</span>
-                      {o.mercado && <span style={{ color: "#374151", fontSize: 9 }}>{o.mercado}</span>}
+                      <span style={{ color: "#4E7C5A", fontSize: 16, fontWeight: 800, fontFamily: "'JetBrains Mono',monospace" }}>{simb} {fmt(o.preco)}/sc</span>
+                      <span style={{ color: "#4A2C16", fontSize: 11, fontWeight: 500 }}>{o.fazenda || o.nome}</span>
+                      {o.mercado && <span style={{ color: "#C2B7A6", fontSize: 9 }}>{o.mercado}</span>}
                     </div>
-                    <span style={{ color: "#4B5563", fontSize: 9 }}>{o.data}</span>
+                    <span style={{ color: "#A89C8A", fontSize: 9 }}>{o.data}</span>
                   </div>
                   {/* Info */}
-                  <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 10, color: "#6B7280", marginBottom: 10 }}>
+                  <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 10, color: "#8A7E6F", marginBottom: 10 }}>
                     <span>{o.praca}</span>
                     <span>{o.volume.toLocaleString("pt-BR")} sc</span>
                     <span>Entrega: {o.entrega}</span>
                     <span>{o.modalidade}</span>
-                    <span style={{ color: "#4B5563", fontFamily: "'JetBrains Mono',monospace" }}>Chi: {fmt(chiHj, 0)} c/bu</span>
-                    <span style={{ color: "#4B5563", fontFamily: "'JetBrains Mono',monospace" }}>Dol: R$ {fmt(dolHj, 4)}</span>
+                    <span style={{ color: "#A89C8A", fontFamily: "'JetBrains Mono',monospace" }}>Chi: {fmt(chiHj, 0)} c/bu</span>
+                    <span style={{ color: "#A89C8A", fontFamily: "'JetBrains Mono',monospace" }}>Dol: R$ {fmt(dolHj, 4)}</span>
                   </div>
                   {/* Buttons */}
                   <div style={{ display: "flex", gap: 6 }}>
@@ -2761,7 +2761,7 @@ _Gerado via ProSafra_`;
                       setHistorico(prev => prev.map(p => p.id === o.id ? { ...p, chicago: chiHj, dolar: dolHj, data: new Date().toLocaleDateString("pt-BR") } : p));
                     }} style={{
                       background: "rgba(69,123,157,0.1)", border: "1px solid rgba(69,123,157,0.2)",
-                      borderRadius: 5, padding: "6px 14px", cursor: "pointer", fontSize: 10, fontWeight: 600, color: "#457B9D",
+                      borderRadius: 5, padding: "6px 14px", cursor: "pointer", fontSize: 10, fontWeight: 600, color: "#B67A33",
                     }}>Atualizar cotações e copiar</div>
                     <div onClick={() => {
                       const txt = `*OFERTA FIRME — ProSafra*
@@ -2779,8 +2779,8 @@ _Oferta reenviada_
 _Gerado via ProSafra_`;
                       navigator.clipboard.writeText(txt);
                     }} style={{
-                      background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
-                      borderRadius: 5, padding: "6px 14px", cursor: "pointer", fontSize: 10, fontWeight: 500, color: "#6B7280",
+                      background: "#F5F1EA", border: "1px solid #ECE7DD",
+                      borderRadius: 5, padding: "6px 14px", cursor: "pointer", fontSize: 10, fontWeight: 500, color: "#8A7E6F",
                     }}>Reenviar original</div>
                   </div>
                 </div>
@@ -3038,17 +3038,17 @@ function AdminPage() {
     setULoading(false);
   };
 
-  const inputStyle = { background: "#0D1117", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: "8px 12px", color: "#F1F5F9", fontSize: 13, outline: "none", width: "100%" };
-  const btnStyle = { background: "#E63946", border: "none", borderRadius: 7, padding: "10px 24px", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" };
+  const inputStyle = { background: "#FFFFFF", border: "1px solid #DED8CC", borderRadius: 6, padding: "8px 12px", color: "#4A2C16", fontSize: 13, outline: "none", width: "100%" };
+  const btnStyle = { background: "#D5A246", border: "none", borderRadius: 7, padding: "10px 24px", color: "#4A2C16", fontSize: 13, fontWeight: 600, cursor: "pointer" };
 
   if (!authed) {
     return (
       <div style={{ maxWidth: 400, margin: "80px auto", padding: "0 28px" }}>
-        <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: 32 }}>
+        <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 12, padding: 32 }}>
           <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>⚙ Admin ProSafra</div>
-          <div style={{ color: "#6B7280", fontSize: 12, marginBottom: 24 }}>Digite a senha para acessar o painel</div>
+          <div style={{ color: "#8A7E6F", fontSize: 12, marginBottom: 24 }}>Digite a senha para acessar o painel</div>
           <input type="password" value={pw} onChange={e => setPw(e.target.value)} onKeyDown={e => e.key === "Enter" && doLogin()} placeholder="Senha" style={{ ...inputStyle, marginBottom: 14 }} />
-          {authErr && <div style={{ color: "#EF4444", fontSize: 12, marginBottom: 10 }}>{authErr}</div>}
+          {authErr && <div style={{ color: "#B0503F", fontSize: 12, marginBottom: 10 }}>{authErr}</div>}
           <button onClick={doLogin} style={btnStyle}>Entrar</button>
         </div>
       </div>
@@ -3066,9 +3066,9 @@ function AdminPage() {
   return (
     <div style={{ maxWidth: 900, margin: "0 auto", padding: "20px 28px 60px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}>
-        <div style={{ width: 3, height: 18, background: "#E63946", borderRadius: 2 }} />
+        <div style={{ width: 3, height: 18, background: "#D5A246", borderRadius: 2 }} />
         <span style={{ fontSize: 15, fontWeight: 700 }}>Painel Admin</span>
-        <span style={{ color: "#4B5563", fontSize: 11 }}>Atualizar dados manualmente</span>
+        <span style={{ color: "#A89C8A", fontSize: 11 }}>Atualizar dados manualmente</span>
       </div>
 
       {/* Tabs */}
@@ -3076,9 +3076,9 @@ function AdminPage() {
         {[{ id: "fundos", label: "Posição Fundos" }, { id: "premios", label: "Prêmios Porto" }, { id: "analise", label: "Análise Técnica" }, { id: "usda", label: "Fundamentos USDA" }].map(t => (
           <div key={t.id} onClick={() => setTab(t.id)} style={{
             padding: "8px 20px", borderRadius: 7, cursor: "pointer", fontSize: 12, fontWeight: 600,
-            background: tab === t.id ? "rgba(230,57,70,0.1)" : "rgba(255,255,255,0.03)",
-            color: tab === t.id ? "#E63946" : "#6B7280",
-            border: `1px solid ${tab === t.id ? "rgba(230,57,70,0.3)" : "rgba(255,255,255,0.06)"}`,
+            background: tab === t.id ? "rgba(230,57,70,0.1)" : "#F5F1EA",
+            color: tab === t.id ? "#D5A246" : "#8A7E6F",
+            border: `1px solid ${tab === t.id ? "rgba(230,57,70,0.3)" : "#ECE7DD"}`,
           }}>{t.label}</div>
         ))}
       </div>
@@ -3086,49 +3086,49 @@ function AdminPage() {
       {/* ═══ FUNDOS TAB ═══ */}
       {tab === "fundos" && (
         <div>
-          <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: 24, marginBottom: 20 }}>
+          <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 12, padding: 24, marginBottom: 20 }}>
             <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 16 }}>Lançar posição dos fundos</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 14 }}>
               <div>
-                <label style={{ color: "#6B7280", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Data (CFTC)</label>
+                <label style={{ color: "#8A7E6F", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Data (CFTC)</label>
                 <input type="date" value={fDataRef} onChange={e => setFDataRef(e.target.value)} style={inputStyle} />
               </div>
               <div>
-                <label style={{ color: "#6B7280", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Soja Net (contratos)</label>
+                <label style={{ color: "#8A7E6F", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Soja Net (contratos)</label>
                 <input type="number" value={fSoja} onChange={e => setFSoja(e.target.value)} placeholder="ex: 187573" style={inputStyle} />
               </div>
               <div>
-                <label style={{ color: "#6B7280", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Milho Net (contratos)</label>
+                <label style={{ color: "#8A7E6F", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Milho Net (contratos)</label>
                 <input type="number" value={fMilho} onChange={e => setFMilho(e.target.value)} placeholder="ex: 182213" style={inputStyle} />
               </div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
               <button onClick={saveFundos} disabled={fLoading} style={{ ...btnStyle, opacity: fLoading ? 0.6 : 1 }}>{fLoading ? "Salvando..." : "Salvar"}</button>
-              {fMsg && <span style={{ fontSize: 12, color: fMsg.startsWith("✓") ? "#22C55E" : "#EF4444" }}>{fMsg}</span>}
+              {fMsg && <span style={{ fontSize: 12, color: fMsg.startsWith("✓") ? "#4E7C5A" : "#B0503F" }}>{fMsg}</span>}
             </div>
           </div>
-          <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: 24 }}>
+          <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 12, padding: 24 }}>
             <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 16 }}>Histórico ({fundosDates.length} datas)</div>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-              <thead><tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-                <th style={{ textAlign: "left", padding: "8px 12px", color: "#6B7280", fontWeight: 500 }}>Data</th>
-                <th style={{ textAlign: "right", padding: "8px 12px", color: "#6B7280", fontWeight: 500 }}>Soja Net</th>
-                <th style={{ textAlign: "right", padding: "8px 12px", color: "#6B7280", fontWeight: 500 }}>Milho Net</th>
-                <th style={{ textAlign: "center", padding: "8px 12px", color: "#6B7280", fontWeight: 500 }}>Ações</th>
+              <thead><tr style={{ borderBottom: "1px solid #E4DECF" }}>
+                <th style={{ textAlign: "left", padding: "8px 12px", color: "#8A7E6F", fontWeight: 500 }}>Data</th>
+                <th style={{ textAlign: "right", padding: "8px 12px", color: "#8A7E6F", fontWeight: 500 }}>Soja Net</th>
+                <th style={{ textAlign: "right", padding: "8px 12px", color: "#8A7E6F", fontWeight: 500 }}>Milho Net</th>
+                <th style={{ textAlign: "center", padding: "8px 12px", color: "#8A7E6F", fontWeight: 500 }}>Ações</th>
               </tr></thead>
               <tbody>
                 {fundosDates.map(dt => { const row = fundosByDate[dt]; return (
-                  <tr key={dt} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                    <td style={{ padding: "8px 12px", color: "#9CA3AF" }}>{dt.split("-").reverse().join("/")}</td>
-                    <td style={{ padding: "8px 12px", textAlign: "right", fontFamily: "'JetBrains Mono',monospace", color: row.soja >= 0 ? "#22C55E" : "#EF4444" }}>{row.soja !== undefined ? row.soja.toLocaleString("pt-BR") : "—"}</td>
-                    <td style={{ padding: "8px 12px", textAlign: "right", fontFamily: "'JetBrains Mono',monospace", color: row.milho >= 0 ? "#22C55E" : "#EF4444" }}>{row.milho !== undefined ? row.milho.toLocaleString("pt-BR") : "—"}</td>
+                  <tr key={dt} style={{ borderBottom: "1px solid #F2EEE6" }}>
+                    <td style={{ padding: "8px 12px", color: "#6B6052" }}>{dt.split("-").reverse().join("/")}</td>
+                    <td style={{ padding: "8px 12px", textAlign: "right", fontFamily: "'JetBrains Mono',monospace", color: row.soja >= 0 ? "#4E7C5A" : "#B0503F" }}>{row.soja !== undefined ? row.soja.toLocaleString("pt-BR") : "—"}</td>
+                    <td style={{ padding: "8px 12px", textAlign: "right", fontFamily: "'JetBrains Mono',monospace", color: row.milho >= 0 ? "#4E7C5A" : "#B0503F" }}>{row.milho !== undefined ? row.milho.toLocaleString("pt-BR") : "—"}</td>
                     <td style={{ padding: "8px 12px", textAlign: "center" }}>
-                      {row.soja !== undefined && <span onClick={() => deleteFundos(dt, "soja")} style={{ color: "#EF4444", cursor: "pointer", fontSize: 10, marginRight: 8 }}>✕ soja</span>}
-                      {row.milho !== undefined && <span onClick={() => deleteFundos(dt, "milho")} style={{ color: "#EF4444", cursor: "pointer", fontSize: 10 }}>✕ milho</span>}
+                      {row.soja !== undefined && <span onClick={() => deleteFundos(dt, "soja")} style={{ color: "#B0503F", cursor: "pointer", fontSize: 10, marginRight: 8 }}>✕ soja</span>}
+                      {row.milho !== undefined && <span onClick={() => deleteFundos(dt, "milho")} style={{ color: "#B0503F", cursor: "pointer", fontSize: 10 }}>✕ milho</span>}
                     </td>
                   </tr>
                 ); })}
-                {fundosDates.length === 0 && <tr><td colSpan={4} style={{ padding: "20px 12px", textAlign: "center", color: "#4B5563" }}>Nenhum registro.</td></tr>}
+                {fundosDates.length === 0 && <tr><td colSpan={4} style={{ padding: "20px 12px", textAlign: "center", color: "#A89C8A" }}>Nenhum registro.</td></tr>}
               </tbody>
             </table>
           </div>
@@ -3138,39 +3138,39 @@ function AdminPage() {
       {/* ═══ PRÊMIOS TAB ═══ */}
       {tab === "premios" && (
         <div>
-          <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: 24, marginBottom: 20 }}>
+          <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 12, padding: 24, marginBottom: 20 }}>
             <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>Lançar prêmios — Soja Paranaguá</div>
-            <div style={{ color: "#6B7280", fontSize: 11, marginBottom: 16 }}>Adicione cada mês de embarque, depois clique "Salvar todos"</div>
+            <div style={{ color: "#8A7E6F", fontSize: 11, marginBottom: 16 }}>Adicione cada mês de embarque, depois clique "Salvar todos"</div>
 
             {/* Date ref */}
             <div style={{ marginBottom: 14 }}>
-              <label style={{ color: "#6B7280", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Data de referência</label>
+              <label style={{ color: "#8A7E6F", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Data de referência</label>
               <input type="date" value={pDataRef} onChange={e => setPDataRef(e.target.value)} style={{ ...inputStyle, width: 180 }} />
             </div>
 
             {/* Add row */}
             <div style={{ display: "flex", gap: 8, alignItems: "flex-end", marginBottom: 16, flexWrap: "wrap" }}>
               <div>
-                <label style={{ color: "#6B7280", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Mês embarque</label>
+                <label style={{ color: "#8A7E6F", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Mês embarque</label>
                 <select value={pNewMes} onChange={e => setPNewMes(e.target.value)} style={{ ...inputStyle, width: 140 }}>
                   {OPTS.map(o => <option key={`${o.mi}-${o.yr}`} value={`${o.mi}-${o.yr}`}>{o.label}</option>)}
                 </select>
               </div>
               <div>
-                <label style={{ color: "#6B7280", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Contrato ref.</label>
+                <label style={{ color: "#8A7E6F", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Contrato ref.</label>
                 <input value={pNewContrato} onChange={e => setPNewContrato(e.target.value)} placeholder="SK6" style={{ ...inputStyle, width: 70 }} />
               </div>
               <div>
-                <label style={{ color: "#6B7280", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Prêmio (c/bu)</label>
+                <label style={{ color: "#8A7E6F", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Prêmio (c/bu)</label>
                 <input type="number" value={pNewPremio} onChange={e => setPNewPremio(e.target.value)} placeholder="45.0" style={{ ...inputStyle, width: 90, fontFamily: "'JetBrains Mono',monospace" }} />
               </div>
               <div>
-                <label style={{ color: "#6B7280", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Var. dia</label>
+                <label style={{ color: "#8A7E6F", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Var. dia</label>
                 <input type="number" value={pNewVar} onChange={e => setPNewVar(e.target.value)} placeholder="0.0" style={{ ...inputStyle, width: 70, fontFamily: "'JetBrains Mono',monospace" }} />
               </div>
               <button type="button" onClick={addPremioItem} style={{
                 background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)", borderRadius: 7,
-                padding: "9px 16px", cursor: "pointer", color: "#22C55E", fontSize: 12, fontWeight: 600,
+                padding: "9px 16px", cursor: "pointer", color: "#4E7C5A", fontSize: 12, fontWeight: 600,
               }}>+ Adicionar</button>
             </div>
 
@@ -3179,15 +3179,15 @@ function AdminPage() {
               <div style={{ marginBottom: 16 }}>
                 <div style={{ display: "grid", gridTemplateColumns: "130px 70px 100px 70px 40px", gap: 0, fontSize: 11 }}>
                   {["Embarque", "Contrato", "Prêmio (c/bu)", "Var.", ""].map(h => (
-                    <div key={h} style={{ padding: "6px 8px", color: "#4B5563", fontWeight: 600, textTransform: "uppercase", fontSize: 9, letterSpacing: "0.06em", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>{h}</div>
+                    <div key={h} style={{ padding: "6px 8px", color: "#A89C8A", fontWeight: 600, textTransform: "uppercase", fontSize: 9, letterSpacing: "0.06em", borderBottom: "1px solid #ECE7DD" }}>{h}</div>
                   ))}
                   {pSorted.map(p => (
                     <React.Fragment key={`${p.mes_idx}-${p.ano}`}>
-                      <div style={{ padding: "8px 8px", color: "#9CA3AF", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>{MESES_SHORT[p.mes_idx]}/{String(p.ano).slice(-2)}</div>
-                      <div style={{ padding: "8px 8px", color: "#6B7280", borderBottom: "1px solid rgba(255,255,255,0.04)", fontFamily: "'JetBrains Mono',monospace", fontSize: 11 }}>{p.contrato}</div>
-                      <div style={{ padding: "8px 8px", color: p.venda >= 0 ? "#22C55E" : "#EF4444", borderBottom: "1px solid rgba(255,255,255,0.04)", fontFamily: "'JetBrains Mono',monospace", fontSize: 12, fontWeight: 600 }}>{p.venda > 0 ? "+" : ""}{p.venda}</div>
-                      <div style={{ padding: "8px 8px", color: "#6B7280", borderBottom: "1px solid rgba(255,255,255,0.04)", fontFamily: "'JetBrains Mono',monospace", fontSize: 11 }}>{p.var_dia || 0}</div>
-                      <div onClick={() => removePremioItem(p.mes_idx, p.ano)} style={{ padding: "8px 4px", borderBottom: "1px solid rgba(255,255,255,0.04)", color: "#EF4444", cursor: "pointer", textAlign: "center", fontSize: 13 }}>✕</div>
+                      <div style={{ padding: "8px 8px", color: "#6B6052", borderBottom: "1px solid #F2EEE6" }}>{MESES_SHORT[p.mes_idx]}/{String(p.ano).slice(-2)}</div>
+                      <div style={{ padding: "8px 8px", color: "#8A7E6F", borderBottom: "1px solid #F2EEE6", fontFamily: "'JetBrains Mono',monospace", fontSize: 11 }}>{p.contrato}</div>
+                      <div style={{ padding: "8px 8px", color: p.venda >= 0 ? "#4E7C5A" : "#B0503F", borderBottom: "1px solid #F2EEE6", fontFamily: "'JetBrains Mono',monospace", fontSize: 12, fontWeight: 600 }}>{p.venda > 0 ? "+" : ""}{p.venda}</div>
+                      <div style={{ padding: "8px 8px", color: "#8A7E6F", borderBottom: "1px solid #F2EEE6", fontFamily: "'JetBrains Mono',monospace", fontSize: 11 }}>{p.var_dia || 0}</div>
+                      <div onClick={() => removePremioItem(p.mes_idx, p.ano)} style={{ padding: "8px 4px", borderBottom: "1px solid #F2EEE6", color: "#B0503F", cursor: "pointer", textAlign: "center", fontSize: 13 }}>✕</div>
                     </React.Fragment>
                   ))}
                 </div>
@@ -3198,30 +3198,30 @@ function AdminPage() {
               <button onClick={savePremios} disabled={pLoading || pSorted.length === 0} style={{ ...btnStyle, opacity: pLoading || pSorted.length === 0 ? 0.6 : 1 }}>
                 {pLoading ? "Salvando..." : `Salvar todos (${pSorted.length})`}
               </button>
-              {pMsg && <span style={{ fontSize: 12, color: pMsg.startsWith("✓") ? "#22C55E" : "#EF4444" }}>{pMsg}</span>}
+              {pMsg && <span style={{ fontSize: 12, color: pMsg.startsWith("✓") ? "#4E7C5A" : "#B0503F" }}>{pMsg}</span>}
             </div>
           </div>
 
           {/* Histórico de lançamentos */}
-          <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: 24 }}>
+          <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 12, padding: 24 }}>
             <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 16 }}>Histórico de lançamentos ({pHist.length} registros)</div>
             {pHist.length > 0 ? (
               <div style={{ overflowX: "auto", maxHeight: 400, overflowY: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                   <thead>
-                    <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)", position: "sticky", top: 0, background: "#0D1117" }}>
-                      <th style={{ textAlign: "left", padding: "8px 12px", color: "#6B7280", fontWeight: 500 }}>Data ref.</th>
-                      <th style={{ textAlign: "left", padding: "8px 12px", color: "#6B7280", fontWeight: 500 }}>Embarque</th>
-                      <th style={{ textAlign: "right", padding: "8px 12px", color: "#6B7280", fontWeight: 500 }}>Prêmio (c/bu)</th>
-                      <th style={{ textAlign: "center", padding: "8px 12px", color: "#6B7280", fontWeight: 500 }}>Excluir</th>
+                    <tr style={{ borderBottom: "1px solid #E4DECF", position: "sticky", top: 0, background: "#FFFFFF" }}>
+                      <th style={{ textAlign: "left", padding: "8px 12px", color: "#8A7E6F", fontWeight: 500 }}>Data ref.</th>
+                      <th style={{ textAlign: "left", padding: "8px 12px", color: "#8A7E6F", fontWeight: 500 }}>Embarque</th>
+                      <th style={{ textAlign: "right", padding: "8px 12px", color: "#8A7E6F", fontWeight: 500 }}>Prêmio (c/bu)</th>
+                      <th style={{ textAlign: "center", padding: "8px 12px", color: "#8A7E6F", fontWeight: 500 }}>Excluir</th>
                     </tr>
                   </thead>
                   <tbody>
                     {[...pHist].reverse().map((h, i) => (
-                      <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                        <td style={{ padding: "6px 12px", color: "#9CA3AF" }}>{h.data_ref?.split("-").reverse().join("/")}</td>
-                        <td style={{ padding: "6px 12px", color: "#9CA3AF" }}>{MESES_SHORT[h.mes_idx]}/{String(h.ano).slice(-2)}</td>
-                        <td style={{ padding: "6px 12px", textAlign: "right", fontFamily: "'JetBrains Mono',monospace", color: h.premio >= 0 ? "#22C55E" : "#EF4444", fontWeight: 600 }}>
+                      <tr key={i} style={{ borderBottom: "1px solid #F2EEE6" }}>
+                        <td style={{ padding: "6px 12px", color: "#6B6052" }}>{h.data_ref?.split("-").reverse().join("/")}</td>
+                        <td style={{ padding: "6px 12px", color: "#6B6052" }}>{MESES_SHORT[h.mes_idx]}/{String(h.ano).slice(-2)}</td>
+                        <td style={{ padding: "6px 12px", textAlign: "right", fontFamily: "'JetBrains Mono',monospace", color: h.premio >= 0 ? "#4E7C5A" : "#B0503F", fontWeight: 600 }}>
                           {h.premio > 0 ? "+" : ""}{h.premio}
                         </td>
                         <td style={{ padding: "6px 12px", textAlign: "center" }}>
@@ -3234,7 +3234,7 @@ function AdminPage() {
                               });
                               loadPremios();
                             } catch {}
-                          }} style={{ color: "#EF4444", cursor: "pointer", fontSize: 11 }}>✕</span>
+                          }} style={{ color: "#B0503F", cursor: "pointer", fontSize: 11 }}>✕</span>
                         </td>
                       </tr>
                     ))}
@@ -3242,7 +3242,7 @@ function AdminPage() {
                 </table>
               </div>
             ) : (
-              <div style={{ color: "#4B5563", fontSize: 11 }}>Nenhum histórico ainda. Lance prêmios acima e clique "Salvar todos".</div>
+              <div style={{ color: "#A89C8A", fontSize: 11 }}>Nenhum histórico ainda. Lance prêmios acima e clique "Salvar todos".</div>
             )}
           </div>
         </div>
@@ -3251,21 +3251,21 @@ function AdminPage() {
       {/* ═══ ANÁLISE TÉCNICA TAB ═══ */}
       {tab === "analise" && (
         <div>
-          <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: 24, marginBottom: 20 }}>
+          <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 12, padding: 24, marginBottom: 20 }}>
             <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>Publicar análise técnica</div>
-            <div style={{ color: "#6B7280", fontSize: 11, marginBottom: 16 }}>Defina o contrato, as 3 zonas de preço e a leitura do mercado</div>
+            <div style={{ color: "#8A7E6F", fontSize: 11, marginBottom: 16 }}>Defina o contrato, as 3 zonas de preço e a leitura do mercado</div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 14 }}>
               <div>
-                <label style={{ color: "#6B7280", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Contrato (símbolo)</label>
+                <label style={{ color: "#8A7E6F", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Contrato (símbolo)</label>
                 <input value={aSym} onChange={e => setASym(e.target.value)} placeholder="CBOT:ZSN2026" style={inputStyle} />
               </div>
               <div>
-                <label style={{ color: "#6B7280", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Nome para exibição</label>
+                <label style={{ color: "#8A7E6F", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Nome para exibição</label>
                 <input value={aLabel} onChange={e => setALabel(e.target.value)} placeholder="Soja Jul/26 (ZSN2026)" style={inputStyle} />
               </div>
               <div>
-                <label style={{ color: "#6B7280", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Produto</label>
+                <label style={{ color: "#8A7E6F", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Produto</label>
                 <select value={aProduto} onChange={e => setAProduto(e.target.value)} style={inputStyle}>
                   <option value="Soja">Soja</option>
                   <option value="Milho">Milho</option>
@@ -3275,21 +3275,21 @@ function AdminPage() {
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 14 }}>
               <div>
-                <label style={{ color: "#15803D", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Zona 1 — Intensificar (c/bu)</label>
+                <label style={{ color: "#2F6A45", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Zona 1 — Intensificar (c/bu)</label>
                 <input type="number" value={aZ1} onChange={e => setAZ1(e.target.value)} placeholder="1255" style={{ ...inputStyle, fontFamily: "'JetBrains Mono',monospace" }} />
               </div>
               <div>
-                <label style={{ color: "#22C55E", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Zona 2 — Buscar negócios (c/bu)</label>
+                <label style={{ color: "#4E7C5A", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Zona 2 — Buscar negócios (c/bu)</label>
                 <input type="number" value={aZ2} onChange={e => setAZ2(e.target.value)} placeholder="1192" style={{ ...inputStyle, fontFamily: "'JetBrains Mono',monospace" }} />
               </div>
               <div>
-                <label style={{ color: "#F59E0B", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Zona 3 — Segurar (c/bu)</label>
+                <label style={{ color: "#D5A246", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Zona 3 — Segurar (c/bu)</label>
                 <input type="number" value={aZ3} onChange={e => setAZ3(e.target.value)} placeholder="1162" style={{ ...inputStyle, fontFamily: "'JetBrains Mono',monospace" }} />
               </div>
             </div>
 
             <div style={{ marginBottom: 14 }}>
-              <label style={{ color: "#6B7280", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Leitura do mercado</label>
+              <label style={{ color: "#8A7E6F", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Leitura do mercado</label>
               <textarea value={aLeitura} onChange={e => setALeitura(e.target.value)} placeholder="Seguimos em tendência de alta..." rows={3}
                 style={{ ...inputStyle, resize: "vertical" }} />
             </div>
@@ -3298,41 +3298,41 @@ function AdminPage() {
               <button onClick={saveAnalise} disabled={aLoading} style={{ ...btnStyle, opacity: aLoading ? 0.6 : 1 }}>
                 {aLoading ? "Salvando..." : "Salvar análise"}
               </button>
-              {aMsg && <span style={{ fontSize: 12, color: aMsg.startsWith("✓") ? "#22C55E" : "#EF4444" }}>{aMsg}</span>}
+              {aMsg && <span style={{ fontSize: 12, color: aMsg.startsWith("✓") ? "#4E7C5A" : "#B0503F" }}>{aMsg}</span>}
             </div>
           </div>
 
           {/* Análises publicadas */}
-          <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: 24 }}>
+          <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 12, padding: 24 }}>
             <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 16 }}>Análises publicadas ({aItems.length})</div>
             {aItems.length > 0 ? (
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                 <thead>
-                  <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-                    <th style={{ textAlign: "left", padding: "8px 12px", color: "#6B7280", fontWeight: 500 }}>Contrato</th>
-                    <th style={{ textAlign: "right", padding: "8px 12px", color: "#15803D", fontWeight: 500 }}>Intensificar</th>
-                    <th style={{ textAlign: "right", padding: "8px 12px", color: "#22C55E", fontWeight: 500 }}>Buscar</th>
-                    <th style={{ textAlign: "right", padding: "8px 12px", color: "#F59E0B", fontWeight: 500 }}>Segurar</th>
-                    <th style={{ textAlign: "center", padding: "8px 12px", color: "#6B7280", fontWeight: 500 }}>Ações</th>
+                  <tr style={{ borderBottom: "1px solid #E4DECF" }}>
+                    <th style={{ textAlign: "left", padding: "8px 12px", color: "#8A7E6F", fontWeight: 500 }}>Contrato</th>
+                    <th style={{ textAlign: "right", padding: "8px 12px", color: "#2F6A45", fontWeight: 500 }}>Intensificar</th>
+                    <th style={{ textAlign: "right", padding: "8px 12px", color: "#4E7C5A", fontWeight: 500 }}>Buscar</th>
+                    <th style={{ textAlign: "right", padding: "8px 12px", color: "#D5A246", fontWeight: 500 }}>Segurar</th>
+                    <th style={{ textAlign: "center", padding: "8px 12px", color: "#8A7E6F", fontWeight: 500 }}>Ações</th>
                   </tr>
                 </thead>
                 <tbody>
                   {aItems.map(a => (
-                    <tr key={a.sym} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                      <td style={{ padding: "8px 12px", color: "#9CA3AF" }}>{a.label}</td>
-                      <td style={{ padding: "8px 12px", textAlign: "right", fontFamily: "'JetBrains Mono',monospace", color: "#15803D" }}>{a.zona1_valor}</td>
-                      <td style={{ padding: "8px 12px", textAlign: "right", fontFamily: "'JetBrains Mono',monospace", color: "#22C55E" }}>{a.zona2_valor}</td>
-                      <td style={{ padding: "8px 12px", textAlign: "right", fontFamily: "'JetBrains Mono',monospace", color: "#F59E0B" }}>{a.zona3_valor}</td>
+                    <tr key={a.sym} style={{ borderBottom: "1px solid #F2EEE6" }}>
+                      <td style={{ padding: "8px 12px", color: "#6B6052" }}>{a.label}</td>
+                      <td style={{ padding: "8px 12px", textAlign: "right", fontFamily: "'JetBrains Mono',monospace", color: "#2F6A45" }}>{a.zona1_valor}</td>
+                      <td style={{ padding: "8px 12px", textAlign: "right", fontFamily: "'JetBrains Mono',monospace", color: "#4E7C5A" }}>{a.zona2_valor}</td>
+                      <td style={{ padding: "8px 12px", textAlign: "right", fontFamily: "'JetBrains Mono',monospace", color: "#D5A246" }}>{a.zona3_valor}</td>
                       <td style={{ padding: "8px 12px", textAlign: "center" }}>
-                        <span onClick={() => editAnalise(a)} style={{ color: "#457B9D", cursor: "pointer", fontSize: 10, marginRight: 10 }}>✎ editar</span>
-                        <span onClick={() => deleteAnalise(a.sym)} style={{ color: "#EF4444", cursor: "pointer", fontSize: 10 }}>✕ excluir</span>
+                        <span onClick={() => editAnalise(a)} style={{ color: "#B67A33", cursor: "pointer", fontSize: 10, marginRight: 10 }}>✎ editar</span>
+                        <span onClick={() => deleteAnalise(a.sym)} style={{ color: "#B0503F", cursor: "pointer", fontSize: 10 }}>✕ excluir</span>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             ) : (
-              <div style={{ color: "#4B5563", fontSize: 11 }}>Nenhuma análise publicada. Preencha acima e clique "Salvar análise".</div>
+              <div style={{ color: "#A89C8A", fontSize: 11 }}>Nenhuma análise publicada. Preencha acima e clique "Salvar análise".</div>
             )}
           </div>
         </div>
@@ -3340,19 +3340,19 @@ function AdminPage() {
       {/* ═══ FUNDAMENTOS USDA TAB ═══ */}
       {tab === "usda" && (
         <div>
-          <div style={{ background: "#0D1117", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: 24 }}>
+          <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 12, padding: 24 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
               <div>
                 <div style={{ fontSize: 14, fontWeight: 600 }}>Fundamentos USDA/WASDE</div>
-                <div style={{ color: "#6B7280", fontSize: 11 }}>Preencha os números do último relatório (milhões de toneladas)</div>
+                <div style={{ color: "#8A7E6F", fontSize: 11 }}>Preencha os números do último relatório (milhões de toneladas)</div>
               </div>
               <div style={{ display: "flex", gap: 6 }}>
                 {["soja","milho"].map(p => (
                   <div key={p} onClick={() => { setUProduto(p); setTimeout(loadFundamentos, 100); }} style={{
                     padding: "6px 16px", borderRadius: 6, cursor: "pointer", fontSize: 12, fontWeight: 600,
-                    background: uProduto === p ? "rgba(230,57,70,0.1)" : "rgba(255,255,255,0.03)",
-                    color: uProduto === p ? "#E63946" : "#6B7280",
-                    border: `1px solid ${uProduto === p ? "rgba(230,57,70,0.3)" : "rgba(255,255,255,0.06)"}`,
+                    background: uProduto === p ? "rgba(230,57,70,0.1)" : "#F5F1EA",
+                    color: uProduto === p ? "#D5A246" : "#8A7E6F",
+                    border: `1px solid ${uProduto === p ? "rgba(230,57,70,0.3)" : "#ECE7DD"}`,
                     textTransform: "capitalize",
                   }}>{p}</div>
                 ))}
@@ -3362,55 +3362,55 @@ function AdminPage() {
             {/* Safras */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 20 }}>
               <div>
-                <label style={{ color: "#6B7280", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Safra atual</label>
+                <label style={{ color: "#8A7E6F", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Safra atual</label>
                 <input value={uData.safra_atual} onChange={e => setUData(d => ({...d, safra_atual: e.target.value}))} placeholder="2025/26" style={inputStyle} />
               </div>
               <div>
-                <label style={{ color: "#6B7280", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Safra anterior</label>
+                <label style={{ color: "#8A7E6F", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Safra anterior</label>
                 <input value={uData.safra_anterior} onChange={e => setUData(d => ({...d, safra_anterior: e.target.value}))} placeholder="2024/25" style={inputStyle} />
               </div>
               <div>
-                <label style={{ color: "#6B7280", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Data do relatório</label>
+                <label style={{ color: "#8A7E6F", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Data do relatório</label>
                 <input value={uData.leitura_date} onChange={e => setUData(d => ({...d, leitura_date: e.target.value}))} placeholder="Jun/2026" style={inputStyle} />
               </div>
             </div>
 
             {/* MUNDO */}
-            <div style={{ color: "#E63946", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Mundo</div>
+            <div style={{ color: "#D5A246", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Mundo</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 8, marginBottom: 16 }}>
               {[["prod_mundo","Produção"],["consumo_mundo","Consumo"],["export_mundo","Exportação"],["estoque_mundo","Est. Final"],["rel_estoque_uso","Est/Uso %"]].map(([k,l]) => (
                 <div key={k}>
-                  <label style={{ color: "#22C55E", fontSize: 9, display: "block", marginBottom: 2 }}>{l} (atual)</label>
+                  <label style={{ color: "#4E7C5A", fontSize: 9, display: "block", marginBottom: 2 }}>{l} (atual)</label>
                   <input type="number" value={uData[k]} onChange={e => setUData(d => ({...d, [k]: e.target.value}))} style={{ ...inputStyle, fontSize: 12, fontFamily: "'JetBrains Mono',monospace", padding: "6px 8px" }} />
                 </div>
               ))}
               {[["prod_mundo_ant","Produção"],["consumo_mundo_ant","Consumo"],["export_mundo_ant","Exportação"],["estoque_mundo_ant","Est. Final"],["rel_estoque_uso_ant","Est/Uso %"]].map(([k,l]) => (
                 <div key={k}>
-                  <label style={{ color: "#6B7280", fontSize: 9, display: "block", marginBottom: 2 }}>{l} (ant.)</label>
+                  <label style={{ color: "#8A7E6F", fontSize: 9, display: "block", marginBottom: 2 }}>{l} (ant.)</label>
                   <input type="number" value={uData[k]} onChange={e => setUData(d => ({...d, [k]: e.target.value}))} style={{ ...inputStyle, fontSize: 12, fontFamily: "'JetBrains Mono',monospace", padding: "6px 8px" }} />
                 </div>
               ))}
             </div>
 
             {/* PAÍSES */}
-            <div style={{ color: "#E63946", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Principais países</div>
-            <div style={{ display: "grid", gridTemplateColumns: "80px repeat(4,1fr)", gap: 8, marginBottom: 4, fontSize: 9, color: "#4B5563" }}>
+            <div style={{ color: "#D5A246", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Principais países</div>
+            <div style={{ display: "grid", gridTemplateColumns: "80px repeat(4,1fr)", gap: 8, marginBottom: 4, fontSize: 9, color: "#A89C8A" }}>
               <div></div><div>Prod. atual</div><div>Prod. ant.</div><div>Exp. atual</div><div>Exp. ant.</div>
             </div>
             {[["brasil","Brasil"],["eua","EUA"],["argentina","Argentina"]].map(([k,l]) => (
               <div key={k} style={{ display: "grid", gridTemplateColumns: "80px repeat(4,1fr)", gap: 8, marginBottom: 6 }}>
-                <div style={{ color: "#9CA3AF", fontSize: 11, paddingTop: 6 }}>{l}</div>
+                <div style={{ color: "#6B6052", fontSize: 11, paddingTop: 6 }}>{l}</div>
                 <input type="number" value={uData[`${k}_prod`]} onChange={e => setUData(d => ({...d, [`${k}_prod`]: e.target.value}))} style={{ ...inputStyle, fontSize: 12, fontFamily: "'JetBrains Mono',monospace", padding: "6px 8px" }} />
                 <input type="number" value={uData[`${k}_prod_ant`]} onChange={e => setUData(d => ({...d, [`${k}_prod_ant`]: e.target.value}))} style={{ ...inputStyle, fontSize: 12, fontFamily: "'JetBrains Mono',monospace", padding: "6px 8px" }} />
                 <input type="number" value={uData[`${k}_exp`]} onChange={e => setUData(d => ({...d, [`${k}_exp`]: e.target.value}))} style={{ ...inputStyle, fontSize: 12, fontFamily: "'JetBrains Mono',monospace", padding: "6px 8px" }} />
                 <input type="number" value={uData[`${k}_exp_ant`]} onChange={e => setUData(d => ({...d, [`${k}_exp_ant`]: e.target.value}))} style={{ ...inputStyle, fontSize: 12, fontFamily: "'JetBrains Mono',monospace", padding: "6px 8px" }} />
               </div>
             ))}
-            <div style={{ display: "grid", gridTemplateColumns: "80px repeat(4,1fr)", gap: 8, marginBottom: 16, fontSize: 9, color: "#4B5563" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "80px repeat(4,1fr)", gap: 8, marginBottom: 16, fontSize: 9, color: "#A89C8A" }}>
               <div></div><div>Consumo atual</div><div>Consumo ant.</div><div>Import. atual</div><div>Import. ant.</div>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "80px repeat(4,1fr)", gap: 8, marginBottom: 16 }}>
-              <div style={{ color: "#9CA3AF", fontSize: 11, paddingTop: 6 }}>China</div>
+              <div style={{ color: "#6B6052", fontSize: 11, paddingTop: 6 }}>China</div>
               <input type="number" value={uData.china_consumo} onChange={e => setUData(d => ({...d, china_consumo: e.target.value}))} style={{ ...inputStyle, fontSize: 12, fontFamily: "'JetBrains Mono',monospace", padding: "6px 8px" }} />
               <input type="number" value={uData.china_consumo_ant} onChange={e => setUData(d => ({...d, china_consumo_ant: e.target.value}))} style={{ ...inputStyle, fontSize: 12, fontFamily: "'JetBrains Mono',monospace", padding: "6px 8px" }} />
               <input type="number" value={uData.china_import} onChange={e => setUData(d => ({...d, china_import: e.target.value}))} style={{ ...inputStyle, fontSize: 12, fontFamily: "'JetBrains Mono',monospace", padding: "6px 8px" }} />
@@ -3419,7 +3419,7 @@ function AdminPage() {
 
             {/* Leitura */}
             <div style={{ marginBottom: 14 }}>
-              <label style={{ color: "#6B7280", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Leitura do relatório</label>
+              <label style={{ color: "#8A7E6F", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Leitura do relatório</label>
               <textarea value={uData.leitura} onChange={e => setUData(d => ({...d, leitura: e.target.value}))} placeholder="O relatório indica..." rows={3}
                 style={{ ...inputStyle, resize: "vertical" }} />
             </div>
@@ -3428,7 +3428,7 @@ function AdminPage() {
               <button onClick={saveFundamentos} disabled={uLoading} style={{ ...btnStyle, opacity: uLoading ? 0.6 : 1 }}>
                 {uLoading ? "Salvando..." : `Salvar ${uProduto}`}
               </button>
-              {uMsg && <span style={{ fontSize: 12, color: uMsg.startsWith("✓") ? "#22C55E" : "#EF4444" }}>{uMsg}</span>}
+              {uMsg && <span style={{ fontSize: 12, color: uMsg.startsWith("✓") ? "#4E7C5A" : "#B0503F" }}>{uMsg}</span>}
             </div>
           </div>
         </div>
@@ -3555,7 +3555,7 @@ export default function ProSafraApp() {
           </div>
         )}
 
-        <div style={{borderTop:"1px solid rgba(255,255,255,0.04)",margin:"0 28px",paddingTop:14,paddingBottom:20,display:"flex",justifyContent:"space-between",color:"#374151",fontSize:9}}>
+        <div style={{borderTop:"1px solid #F2EEE6",margin:"0 28px",paddingTop:14,paddingBottom:20,display:"flex",justifyContent:"space-between",color:"#C2B7A6",fontSize:9}}>
           <span>Fonte: TradingView Data via RapidAPI • Supabase{isLive?" ✓":""} • {lastUpdate ? `Atualizado: ${new Date(lastUpdate).toLocaleTimeString("pt-BR")}` : "Dados com delay 10-15min"}</span>
           <span>ProSafra © 2026 — O que realmente vale seu grão</span>
         </div>
