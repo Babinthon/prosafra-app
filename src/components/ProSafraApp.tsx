@@ -68,6 +68,7 @@ function BZLogo({size=34}) {
 const NAV = [
   {id:"dashboard",label:"Dashboard",icon:"◉"},
   {id:"preco-justo",label:"Preço Justo",icon:"◎"},
+  {id:"resultado",label:"Resultado",icon:"▦"},
   {id:"premios",label:"Prêmios Porto",icon:"⚓"},
   {id:"analise",label:"Análise Técnica",icon:"△"},
   {id:"fundamentos",label:"Fundamentos",icon:"▤"},
@@ -3441,6 +3442,152 @@ function AdminPage() {
 // MAIN APP
 // ═══════════════════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════════════════
+// ANÁLISE DE RESULTADO (RECEITA BRUTA POR CENÁRIO)
+// ═══════════════════════════════════════════════════════════════
+
+function bzHexLerp(a,b,t){
+  const p=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+  const A=p(a),B=p(b);
+  return "#"+[0,1,2].map(i=>("0"+Math.round(A[i]+(B[i]-A[i])*t).toString(16)).slice(-2)).join("");
+}
+function bzCellColor(res){
+  if(res>=0){const t=Math.min(res/6000,1);return{bg:bzHexLerp("#EEF4EF","#A9CBB0",t),fg:"#2F6A45"};}
+  const t=Math.min(-res/6000,1);return{bg:bzHexLerp("#F7ECEA","#E2B8AE",t),fg:"#8A3D31"};
+}
+const RES_PRECOS=(()=>{const a=[];for(let p=85;p<=150;p+=5)a.push(p);return a;})();
+const RES_PRODS=(()=>{const a=[];for(let q=50;q<=130;q+=10)a.push(q);return a;})();
+const nearestVal=(arr,v)=>arr.reduce((a,b)=>Math.abs(b-v)<Math.abs(a-v)?b:a);
+
+function ResultadoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
+  const mercado="Soja Exportação";
+  const [custo,setCusto]=useState(5500);
+  const [prod,setProd]=useState(60);
+  const [pracaId,setPracaId]=useState(null);
+  const [cenario,setCenario]=useState("disp");
+
+  useEffect(()=>{try{
+    const c=localStorage.getItem("bz_custo"); if(c) setCusto(parseFloat(c));
+    const q=localStorage.getItem("bz_prod"); if(q) setProd(parseFloat(q));
+    const r=localStorage.getItem("bz_praca_ref"); if(r) setPracaId(parseInt(r));
+  }catch(e){}},[]);
+  useEffect(()=>{try{localStorage.setItem("bz_custo",String(custo));}catch(e){}},[custo]);
+  useEffect(()=>{try{localStorage.setItem("bz_prod",String(prod));}catch(e){}},[prod]);
+  useEffect(()=>{if(pracaId!=null){try{localStorage.setItem("bz_praca_ref",String(pracaId));}catch(e){}}},[pracaId]);
+
+  const byState=useMemo(()=>{
+    const g={};
+    PRACAS.forEach(p=>{const bk=`${p.cidade}-${p.estado}-${mercado}`; if(BASIS_DATA[bk]){(g[p.estado]||=[]).push(p);}});
+    return g;
+  },[PRACAS,BASIS_DATA]);
+  const availPracas=useMemo(()=>Object.values(byState).flat(),[byState]);
+  const effId=availPracas.some(p=>p.id===pracaId)?pracaId:(availPracas[0]?.id);
+  const praca=PRACAS.find(p=>p.id===effId);
+  const pLabel=praca?`${praca.cidade} - ${praca.estado}`:"—";
+  const bKey=praca?`${praca.cidade}-${praca.estado}-${mercado}`:"";
+  const bAll=BASIS_DATA[bKey]||DEFAULT_BASIS;
+
+  const allK=Object.keys(COTACOES);
+  const dolKeys=allK.filter(k=>k.includes("DOL"));
+  function precoJusto(eMi,eYr,pMi,pYr){
+    const bM=bAll[eMi]||{medio:-100};
+    const csym=findClosest(buildSoja(eMi,eYr),allK,COTACOES);
+    const chi=COTACOES[csym]?COTACOES[csym].lp:1150;
+    const dsym=findClosest(buildDol(pMi,pYr),dolKeys,COTACOES);
+    const dol=COTACOES[dsym]?COTACOES[dsym].lp/1000:5.05;
+    return calc(chi,bM.medio,dol);
+  }
+  const now=new Date();
+  const pag30=new Date(now); pag30.setDate(pag30.getDate()+30);
+  const pjDisp=precoJusto(now.getMonth(),now.getFullYear(),pag30.getMonth(),pag30.getFullYear());
+  const pjFut=precoJusto(2,2027,3,2027);
+  const pj=cenario==="disp"?pjDisp:pjFut;
+
+  const custoN=parseFloat(custo)||0;
+  const prodN=parseFloat(prod)||0;
+  const recJusto=prodN*pj;
+  const resJusto=recJusto-custoN;
+  const be=prodN?custoN/prodN:0;
+  const rowSel=nearestVal(RES_PRODS,prodN);
+  const colSel=nearestVal(RES_PRECOS,pj);
+  const fmtBR=n=>Math.round(n).toLocaleString("pt-BR");
+  const inpStyle={display:"flex",alignItems:"center",background:"#F6F3ED",border:`1px solid #E4DECF`,borderRadius:7,padding:"0 9px"};
+  const inpField={background:"transparent",border:"none",color:BZ.brownDeep,padding:"9px 4px",fontSize:14,fontWeight:600,fontFamily:"'JetBrains Mono',monospace",outline:"none"};
+
+  return (
+    <div style={{maxWidth:1100,margin:"0 auto",padding:"20px 28px"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",flexWrap:"wrap",gap:12,marginBottom:18}}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <div style={{width:3,height:18,background:BZ.gold,borderRadius:2}}/>
+          <span style={{fontSize:15,fontWeight:700,color:BZ.brownDeep}}>Análise de resultado</span>
+          <span style={{color:BZ.textMute,fontSize:11}}>Receita bruta por cenário — Soja</span>
+        </div>
+        <div style={{display:"flex",gap:5,background:BZ.surfaceAlt,border:`1px solid ${BZ.border}`,borderRadius:8,padding:3}}>
+          {[["disp","Disponível"],["fut","Futuro Mar/27"]].map(([k,l])=>(
+            <div key={k} onClick={()=>setCenario(k)} style={{padding:"6px 12px",borderRadius:6,cursor:"pointer",fontSize:11,fontWeight:600,
+              background:cenario===k?BZ.goldSoft:"transparent",color:cenario===k?BZ.brown:BZ.textMute}}>{l}</div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{display:"flex",gap:14,flexWrap:"wrap",marginBottom:16,alignItems:"flex-end"}}>
+        <Sel label="Praça de referência" value={effId} onChange={v=>setPracaId(+v)} w={220} grow>
+          {Object.entries(byState).sort().map(([st,cs])=><optgroup key={st} label={st}>{cs.map(c=><option key={c.id} value={c.id}>{c.cidade} - {c.estado}</option>)}</optgroup>)}
+        </Sel>
+        <div>
+          <label style={{fontSize:9,color:BZ.textMute,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",display:"block",marginBottom:3}}>Custo / hectare</label>
+          <div style={inpStyle}><span style={{fontSize:12,color:BZ.textFaint}}>R$</span><input type="number" value={custo} onChange={e=>setCusto(e.target.value)} style={{...inpField,width:90}}/></div>
+        </div>
+        <div>
+          <label style={{fontSize:9,color:BZ.textMute,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",display:"block",marginBottom:3}}>Produtividade</label>
+          <div style={inpStyle}><input type="number" value={prod} onChange={e=>setProd(e.target.value)} style={{...inpField,width:54}}/><span style={{fontSize:11,color:BZ.textFaint}}>sc/ha</span></div>
+        </div>
+      </div>
+
+      <div style={{background:BZ.surface,border:`1px solid ${BZ.border}`,borderRadius:12,padding:"14px 18px",marginBottom:14,display:"flex",flexWrap:"wrap",gap:"12px 24px",alignItems:"center"}}>
+        <div>
+          <div style={{fontSize:9,color:BZ.textFaint,textTransform:"uppercase",letterSpacing:"0.05em"}}>No preço justo {cenario==="disp"?"disponível":"futuro"} (R$ {fmt(pj)}/sc) · {pLabel}</div>
+          <div style={{fontSize:13,color:BZ.brownDeep,marginTop:3}}>Receita bruta <b style={{fontWeight:600}}>R$ {fmtBR(recJusto)}/ha</b> · Resultado bruto <b style={{fontWeight:600,color:resJusto>=0?"#2F6A45":"#8A3D31"}}>{resJusto>=0?"+":""}R$ {fmtBR(resJusto)}/ha</b></div>
+        </div>
+        <div style={{borderLeft:`1px solid ${BZ.border}`,paddingLeft:20}}>
+          <div style={{fontSize:9,color:BZ.textFaint,textTransform:"uppercase",letterSpacing:"0.05em"}}>Ponto de equilíbrio</div>
+          <div style={{fontSize:18,fontWeight:700,color:BZ.brown,fontFamily:"'JetBrains Mono',monospace",marginTop:2}}>R$ {fmt(be)}<span style={{fontSize:11,fontWeight:400,color:BZ.textFaint}}>/saca</span></div>
+        </div>
+      </div>
+
+      <div style={{display:"flex",gap:16,marginBottom:9,flexWrap:"wrap",alignItems:"center"}}>
+        <span style={{display:"flex",alignItems:"center",gap:6,fontSize:10,color:BZ.textMute}}><span style={{width:10,height:10,borderRadius:2,background:"#A9CBB0"}}/>Lucro bruto</span>
+        <span style={{display:"flex",alignItems:"center",gap:6,fontSize:10,color:BZ.textMute}}><span style={{width:10,height:10,borderRadius:2,background:"#E2B8AE"}}/>Prejuízo</span>
+        <span style={{display:"flex",alignItems:"center",gap:6,fontSize:10,color:BZ.textMute}}><span style={{width:10,height:10,borderRadius:2,border:`2px solid ${BZ.gold}`}}/>Você hoje</span>
+        <span style={{fontSize:9,color:BZ.textFaint,marginLeft:"auto"}}>Receita bruta = produtividade × preço. Não inclui impostos nem frete.</span>
+      </div>
+
+      <div style={{overflowX:"auto"}}>
+        <table style={{borderCollapse:"separate",borderSpacing:3,minWidth:1080}}>
+          <tbody>
+            <tr>
+              <th style={{textAlign:"left",fontSize:9,color:BZ.textFaint,textTransform:"uppercase",letterSpacing:"0.05em",fontWeight:600,padding:"4px 8px"}}>Prod. / Preço</th>
+              {RES_PRECOS.map(p=><th key={p} style={{fontSize:10,color:p===colSel?BZ.brown:BZ.textMute,fontWeight:600,padding:"4px 6px",fontFamily:"'JetBrains Mono',monospace"}}>R$ {p}</th>)}
+            </tr>
+            {RES_PRODS.map(pr=>(
+              <tr key={pr}>
+                <td style={{fontSize:10,color:pr===rowSel?BZ.brown:BZ.textMute,fontWeight:600,padding:"4px 8px",whiteSpace:"nowrap"}}>{pr} sc</td>
+                {RES_PRECOS.map(pc=>{
+                  const rec=pr*pc, res=rec-custoN, c=bzCellColor(res), me=(pr===rowSel&&pc===colSel);
+                  return <td key={pc} style={{background:c.bg,borderRadius:7,padding:"7px 4px",textAlign:"center",boxShadow:me?`0 0 0 2px ${BZ.gold}`:"none"}}>
+                    <div style={{fontSize:11,fontWeight:600,color:"#3A2E22",fontFamily:"'JetBrains Mono',monospace"}}>R$ {fmtBR(rec)}</div>
+                    <div style={{fontSize:9,color:c.fg,fontFamily:"'JetBrains Mono',monospace"}}>{res>=0?"+":""}{fmtBR(res)}</div>
+                  </td>;
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 export default function ProSafraApp() {
   const [page,setPage]=useState("dashboard");
   const [sbOpen,setSbOpen]=useState(true);
@@ -3516,6 +3663,7 @@ export default function ProSafraApp() {
               <span style={{fontSize:16,fontWeight:700,color:BZ.brownDeep}}>{page==="dashboard"?greeting:NAV.find(n=>n.id===page)?.label||""}</span>
               {!isMobile&&page==="dashboard"&&<span style={{color:BZ.textFaint,fontSize:11,marginLeft:10}}>{dateStr}</span>}
               {!isMobile&&page==="preco-justo"&&<span style={{color:BZ.textMute,fontSize:11,marginLeft:8}}>Regiões de preço para negociação</span>}
+              {!isMobile&&page==="resultado"&&<span style={{color:BZ.textMute,fontSize:11,marginLeft:8}}>Receita bruta e resultado por cenário</span>}
               {!isMobile&&page==="premios"&&<span style={{color:BZ.textMute,fontSize:11,marginLeft:8}}>Prêmios de exportação — Base Paranaguá</span>}
               {!isMobile&&page==="analise"&&<span style={{color:BZ.textMute,fontSize:11,marginLeft:8}}>Regiões de preço em Chicago — Análise semanal</span>}
               {!isMobile&&page==="fundamentos"&&<span style={{color:BZ.textMute,fontSize:11,marginLeft:8}}>Oferta e demanda mundial — Dados USDA/WASDE</span>}
@@ -3539,6 +3687,7 @@ export default function ProSafraApp() {
 
         {page==="dashboard"&&<DashboardPage goTo={setPage} contractsDash={contractsDash}/>}
         {page==="preco-justo"&&<PrecoJustoPage {...dataProps}/>}
+        {page==="resultado"&&<ResultadoPage {...dataProps}/>}
         {page==="premios"&&<PremiosPortoPage premiosData={premiosData}/>}
         {page==="analise"&&<AnaliseTecnicaPage COTACOES={cotacoes} analiseData={analiseData}/>}
         {page==="fundamentos"&&<FundamentosPage fundamentosData={fundamentosData}/>}
@@ -3548,7 +3697,7 @@ export default function ProSafraApp() {
         {page==="carrego"&&<CustoCarregoPage {...dataProps}/>}
         {page==="ofertas"&&<OfertasFirmesPage {...dataProps}/>}
         {page==="admin"&&<AdminPage/>}
-        {!["dashboard","preco-justo","premios","analise","fundamentos","fundos","cambio","paridade","carrego","ofertas","admin"].includes(page)&&(
+        {!["dashboard","preco-justo","resultado","premios","analise","fundamentos","fundos","cambio","paridade","carrego","ofertas","admin"].includes(page)&&(
           <div style={{padding:"60px 28px",textAlign:"center"}}>
             <div style={{fontSize:40,marginBottom:16,opacity:0.3,color:BZ.bronze}}>{NAV.find(n=>n.id===page)?.icon}</div>
             <div style={{color:BZ.textMute,fontSize:14}}>{NAV.find(n=>n.id===page)?.label} — Em construção</div>
