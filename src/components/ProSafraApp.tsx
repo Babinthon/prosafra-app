@@ -3825,23 +3825,27 @@ export default function ProSafraApp() {
   const regHydrated=useRef(false);
   useEffect(()=>{
     if(regHydrated.current) return;
-    if(!pracas||pracas.length===0) return;
     try{
       const raw=localStorage.getItem("bz_pracas");
-      let stored=raw?JSON.parse(raw):[];
-      if(!Array.isArray(stored)) stored=[];
-      let list=stored.map(sid=>{const m=pracas.find(p=>String(p.id)===String(sid)); return m?m.id:null;}).filter(x=>x!=null);
+      let list=[];
+      if(raw){ const arr=JSON.parse(raw); if(Array.isArray(arr)) list=arr.map(x=>parseInt(x)).filter(x=>!isNaN(x)); }
       const refRaw=localStorage.getItem("bz_praca_ref");
-      let ref=null;
-      if(refRaw!=null&&refRaw!==""){const m=pracas.find(p=>String(p.id)===String(refRaw)); if(m) ref=m.id;}
-      if(!list.length){
-        const firstSoja=pracas.find(p=>basisData[`${p.cidade}-${p.estado}-Soja Exportação`])||pracas[0];
-        if(firstSoja) list=[firstSoja.id];
+      let ref=(refRaw!=null&&refRaw!=="")?parseInt(refRaw):null;
+      if(ref!=null&&isNaN(ref)) ref=null;
+      // Há referência salva: confia nela (o nome resolve nas telas quando as praças chegam)
+      if(ref!=null){
+        if(!list.includes(ref)) list=[ref,...list];
+        setPracaList(list); setPracaRef(ref); regHydrated.current=true; return;
       }
-      if(ref==null&&list.length) ref=list[0];
-      if(ref!=null&&!list.includes(ref)) list=[...list,ref];
-      setPracaList(list); setPracaRef(ref);
-      regHydrated.current=true;
+      // Sem ref, mas há lista salva
+      if(list.length){
+        setPracaList(list); setPracaRef(list[0]); regHydrated.current=true; return;
+      }
+      // Nada salvo: semeia a primeira praça (precisa das praças carregadas)
+      if(pracas&&pracas.length>0){
+        const firstSoja=pracas.find(p=>basisData[`${p.cidade}-${p.estado}-Soja Exportação`])||pracas[0];
+        if(firstSoja){ setPracaList([firstSoja.id]); setPracaRef(firstSoja.id); regHydrated.current=true; }
+      }
     }catch(e){}
   },[pracas,basisData]);
   // Backup via efeito (após hidratar)
