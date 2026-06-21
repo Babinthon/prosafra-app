@@ -463,6 +463,10 @@ function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRef, 
       const bk=`${p.cidade}-${p.estado}-${mercado}`;
       if(BASIS_DATA[bk]){(g[p.estado]||=[]).push(p);}
     });
+    // Sem basis cadastrado para este mercado: ainda assim lista as praças (usa basis padrão)
+    if(Object.keys(g).length===0){
+      PRACAS.forEach(p=>{(g[p.estado]||=[]).push(p);});
+    }
     return g;
   },[PRACAS,mercado,BASIS_DATA]);
   const availPracas=useMemo(()=>Object.values(byState).flat(),[byState]);
@@ -551,6 +555,10 @@ function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRef, 
         <Sel label="Data de pagamento" value={pagK} onChange={setPagK} w={165}>
           {OPTS.map(o=><option key={`${o.mi}-${o.yr}`} value={`${o.mi}-${o.yr}`}>{o.label}</option>)}
         </Sel>
+      </div>
+
+      <div style={{fontSize:10,fontFamily:"'JetBrains Mono',monospace",color:"#8A3D31",background:"#FBF0EE",border:"1px solid #E2B8AE",borderRadius:8,padding:"8px 10px",marginBottom:14,wordBreak:"break-all"}}>
+        🔧 diagnóstico — mercado atual=<b>"{mercado}"</b> · praças neste mercado=<b>{availPracas.length}</b> · mercados nos dados: <b>{(()=>{const set=new Set();Object.keys(BASIS_DATA).forEach(k=>{for(const p of PRACAS){const pre=`${p.cidade}-${p.estado}-`;if(k.startsWith(pre)){set.add(k.slice(pre.length));break;}}});return Array.from(set).join(" | ")||"(nenhum)";})()}</b>
       </div>
 
       {/* Dados de mercado */}
