@@ -461,7 +461,7 @@ function MercadoPage({goTo, contractsDash}) {
 
 function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
   const [mercado,setMercado]=useState("Soja Exportação");
-  const [pracaId,setPracaId]=useState(1);
+  const [pracaId,setPracaId]=useState(null);
   // Default to current month and next month for payment
   const now = new Date();
   const defMi = now.getMonth();
@@ -471,6 +471,8 @@ function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
   const [entK,setEntK]=useState(`${defMi}-${defYr}`);
   const [pagK,setPagK]=useState(`${defPagMi}-${defPagYr}`);
   const [offer,setOffer]=useState(0);
+  useEffect(()=>{try{const r=localStorage.getItem("bz_praca_ref"); if(r)setPracaId(parseInt(r));}catch(e){}},[]);
+  useEffect(()=>{if(pracaId!=null){try{localStorage.setItem("bz_praca_ref",String(pracaId));}catch(e){}}},[pracaId]);
 
   const [eMi,eYr]=entK.split("-").map(Number);
   const [pMi,pYr]=pagK.split("-").map(Number);
@@ -528,7 +530,8 @@ function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
       const b=bAll[mi];
       const rawC=isSoja?buildSoja(mi,yr):buildMilho(mi,yr);
       const cs=findClosest(rawC,allK,COTACOES); const cc=COTACOES[cs]; const ch=cc?cc.lp:null;
-      const rawD=buildDol(mi,yr);
+      const pmi=(mi+1)%12; const pyr=(mi===11)?yr+1:yr;
+      const rawD=buildDol(pmi,pyr);
       const ds=findClosest(rawD,dolKeys,COTACOES); const dc=COTACOES[ds]; const md=dc?dc.lp/1000:null;
       const has=ch!==null&&md!==null;
       ms.push({label:`${MESES_SHORT[mi]}/${String(yr).slice(-2)}`,basis:b.medio,bMin:b.basis_min,bMax:b.basis_max,has,
@@ -560,7 +563,7 @@ function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
           <option value="Milho Exportação">Milho Exportação</option>
           <option value="Milho Interno (B3)">Milho Interno (B3)</option>
         </Sel>
-        <Sel label="Praça" value={pracaId} onChange={v=>setPracaId(+v)} w={220} grow>
+        <Sel label="Praça" value={effPracaId} onChange={v=>setPracaId(+v)} w={220} grow>
           {Object.entries(byState).sort().map(([st,cs])=><optgroup key={st} label={st}>{cs.map(c=><option key={c.id} value={c.id}>{c.cidade} - {c.estado}</option>)}</optgroup>)}
         </Sel>
         <Sel label="Mês de entrega" value={entK} onChange={setEntK} w={165}>
