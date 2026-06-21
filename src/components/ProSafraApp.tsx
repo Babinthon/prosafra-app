@@ -102,9 +102,10 @@ const OPTS = buildOpts();
 
 function Sel({label,value,onChange,children,w,grow}) {
   return (
-    <div style={{display:"flex",flexDirection:"column",gap:3,minWidth:w,flex:grow?1:undefined}}>
+    <div style={{display:"flex",flexDirection:"column",gap:3,flex:grow?`1 1 ${w||140}px`:`0 1 ${w||140}px`,minWidth:0,maxWidth:"100%"}}>
       <label style={{fontSize:9,color:"#8A7E6F",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em"}}>{label}</label>
       <select value={value} onChange={e=>onChange(e.target.value)} style={{
+        width:"100%",boxSizing:"border-box",
         background:"#F6F3ED",border:"1px solid #E4DECF",borderRadius:7,
         color:"#4A2C16",padding:"9px 10px",fontSize:12,fontFamily:"'Outfit',sans-serif",
         cursor:"pointer",outline:"none",appearance:"none",
@@ -242,8 +243,6 @@ function DashboardPage({goTo, PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, premi
   const pLabel=praca?`${praca.cidade} - ${praca.estado}`:"—";
   const savedPracas=(pracaList||[]).map(id=>PRACAS.find(p=>p.id===id)).filter(Boolean);
   const addable=availPracas.filter(p=>!(pracaList||[]).includes(p.id));
-  const [dbg,setDbg]=useState({ref:"?",list:"?"});
-  useEffect(()=>{try{setDbg({ref:localStorage.getItem("bz_praca_ref"),list:localStorage.getItem("bz_pracas")});}catch(e){}},[pracaRef,pracaList]);
 
   const now=new Date();
   const pag30=new Date(now); pag30.setDate(pag30.getDate()+30);
@@ -287,9 +286,6 @@ function DashboardPage({goTo, PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, premi
 
   return (
     <div style={{maxWidth:1100,margin:"0 auto",padding:"20px 28px"}}>
-      <div style={{fontSize:10,fontFamily:"'JetBrains Mono',monospace",color:"#8A3D31",background:"#FBF0EE",border:"1px solid #E2B8AE",borderRadius:8,padding:"8px 10px",marginBottom:14,wordBreak:"break-all"}}>
-        🔧 diagnóstico — storage.bz_praca_ref=<b>{String(dbg.ref)}</b> · storage.bz_pracas=<b>{String(dbg.list)}</b> · memória pracaRef=<b>{String(pracaRef)}</b> · exibindo=<b>{pLabel}</b>
-      </div>
       <div style={{marginBottom:16}}>
         <div style={{fontSize:9,color:BZ.textMute,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:7}}>Minhas regiões</div>
         <div style={{display:"flex",flexWrap:"wrap",gap:7,alignItems:"center"}}>
@@ -558,7 +554,7 @@ function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRef, 
       </div>
 
       {/* Dados de mercado */}
-      <div style={{display:"flex",gap:12,marginBottom:16}}>
+      <div style={{display:"flex",gap:12,marginBottom:16,flexWrap:"wrap"}}>
         <MktCard label={`Chicago ${isSoja?"Soja":"Milho"} — ${cLabel}`} value={fmt(chi)} unit="c/bu" sym={cShort} ch={cCh} chp={cChp} color="#4E7C5A" fb={cFB}/>
         <MktCard label={`Dólar projetado — ${MESES[pMi]} ${pYr}`} value={`R$ ${fmt(dol,4)}`} sym={dShort} ch={dCh} chp={dChp} color="#B67A33" fb={dFB} fd={4}/>
         <div style={{background:"#FFFFFF",border:"1px solid #ECE7DD",borderRadius:10,padding:"14px 18px",minWidth:155}}>
@@ -578,7 +574,7 @@ function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRef, 
         <span style={{fontSize:15,fontWeight:700}}>Regiões de preço</span>
         <span style={{color:"#A89C8A",fontSize:11}}>{pLabel} — {MESES[eMi]} {eYr}</span>
       </div>
-      <div style={{display:"flex",gap:14,marginBottom:20,alignItems:"stretch"}}>
+      <div style={{display:"flex",gap:14,marginBottom:20,alignItems:"stretch",flexWrap:"wrap"}}>
         <RegCard label="Preço Mínimo" brl={pMin} usd={pMinU} basis={bM.basis_min} color="#D5A246" sub="Abaixo disso, preço está ruim"/>
         <RegCard label="Preço Justo" brl={pJusto} usd={pJustoU} basis={bM.medio} color="#4E7C5A" hl sub="Região ideal para negociar"/>
         <RegCard label="Preço Agressivo" brl={pMax} usd={pMaxU} basis={bM.basis_max} color="#4E7C5A" sub="Oportunidade excepcional, raro"/>
@@ -710,7 +706,7 @@ function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRef, 
 }
 
 function MktCard({label,value,unit,sym,ch,chp,color,fb,fd=2}) {
-  return <div style={{background:"#FFFFFF",border:"1px solid #ECE7DD",borderRadius:10,padding:"14px 18px",flex:1,position:"relative",overflow:"hidden"}}>
+  return <div style={{background:"#FFFFFF",border:"1px solid #ECE7DD",borderRadius:10,padding:"14px 18px",flex:"1 1 150px",minWidth:150,position:"relative",overflow:"hidden"}}>
     <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:`linear-gradient(90deg,transparent,${color},transparent)`,opacity:0.5}}/>
     <div style={{color:"#8A7E6F",fontSize:9,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:5}}>{label}</div>
     <div style={{display:"flex",alignItems:"baseline",gap:5,marginBottom:3}}>
@@ -726,7 +722,7 @@ function MktCard({label,value,unit,sym,ch,chp,color,fb,fd=2}) {
 }
 
 function RegCard({label,brl,usd,basis,color,hl,sub}) {
-  return <div style={{background:hl?`${color}0D`:"#FFFFFF",border:`1px solid ${hl?`${color}33`:"#ECE7DD"}`,borderRadius:10,padding:hl?"22px 18px":"18px",flex:1,position:"relative",overflow:"hidden"}}>
+  return <div style={{background:hl?`${color}0D`:"#FFFFFF",border:`1px solid ${hl?`${color}33`:"#ECE7DD"}`,borderRadius:10,padding:hl?"22px 18px":"18px",flex:"1 1 165px",minWidth:165,position:"relative",overflow:"hidden"}}>
     <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:color}}/>
     {hl&&<div style={{position:"absolute",top:10,right:10,background:`${color}22`,color,fontSize:8,fontWeight:700,padding:"2px 7px",borderRadius:3,textTransform:"uppercase",letterSpacing:"0.1em"}}>Região ideal</div>}
     <div style={{color:"#6B6052",fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:10}}>{label}</div>
@@ -813,8 +809,8 @@ function PremiosPortoPage({premiosData}) {
       </div>
 
       {/* ─── PRODUTOR VIEW — TABLE ─── */}
-      <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, overflow: "hidden", marginBottom: 20 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "140px 80px 100px 100px 1fr 100px", padding: "10px 16px", borderBottom: "1px solid #ECE7DD" }}>
+      <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, overflowX: "auto", marginBottom: 20 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "140px 80px 100px 100px 1fr 100px", minWidth: 680, padding: "10px 16px", borderBottom: "1px solid #ECE7DD" }}>
           {["Embarque", "Contrato", "Prêmio atual", "Média hist.", "Termômetro", "Var. dia"].map(h => (
             <div key={h} style={{ color: "#A89C8A", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>{h}</div>
           ))}
@@ -832,7 +828,7 @@ function PremiosPortoPage({premiosData}) {
 
           return (
             <div key={p.id} style={{
-              display: "grid", gridTemplateColumns: "140px 80px 100px 100px 1fr 100px",
+              display: "grid", gridTemplateColumns: "140px 80px 100px 100px 1fr 100px", minWidth: 680,
               padding: "12px 16px", borderBottom: "1px solid #F2EEE6",
               alignItems: "center",
             }}
@@ -1148,11 +1144,11 @@ function AnaliseTecnicaPage({COTACOES, analiseData}) {
           </div>
 
           {/* Tabela de pontos */}
-          <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, overflow: "hidden", marginTop: 20 }}>
+          <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, overflowX: "auto", marginTop: 20 }}>
             <div style={{ padding: "14px 18px", borderBottom: "1px solid #ECE7DD" }}>
               <span style={{ color: "#4A2C16", fontSize: 13, fontWeight: 600 }}>Pontos de referência — {contrato?.label}</span>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "100px 1fr 160px 80px", padding: "8px 18px", borderBottom: "1px solid #ECE7DD" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "100px 1fr 160px 80px", minWidth: 520, padding: "8px 18px", borderBottom: "1px solid #ECE7DD" }}>
               {["Preço (c/bu)", "Região", "Ação", "Distância"].map(h => (
                 <span key={h} style={{ color: "#A89C8A", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>{h}</span>
               ))}
@@ -1161,7 +1157,7 @@ function AnaliseTecnicaPage({COTACOES, analiseData}) {
               const dist = preco - f.valor;
               const isAtOrAbove = preco >= f.valor;
               return (
-                <div key={i} style={{ display: "grid", gridTemplateColumns: "100px 1fr 160px 80px", padding: "12px 18px", borderBottom: "1px solid #F2EEE6", alignItems: "center" }}>
+                <div key={i} style={{ display: "grid", gridTemplateColumns: "100px 1fr 160px 80px", minWidth: 520, padding: "12px 18px", borderBottom: "1px solid #F2EEE6", alignItems: "center" }}>
                   <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 14, fontWeight: 700, color: f.color }}>{fmt(f.valor, 0)}</span>
                   <div>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -1802,11 +1798,11 @@ function CambioPage({COTACOES, ptax}) {
       </div>
 
       {/* Tabela de vencimentos */}
-      <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, overflow: "hidden" }}>
+      <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, overflowX: "auto" }}>
         <div style={{ padding: "14px 18px", borderBottom: "1px solid #ECE7DD" }}>
           <span style={{ color: "#4A2C16", fontSize: 13, fontWeight: 600 }}>Todos os vencimentos</span>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "140px 1fr 100px 100px", padding: "8px 18px", borderBottom: "1px solid #ECE7DD" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "140px 1fr 100px 100px", minWidth: 520, padding: "8px 18px", borderBottom: "1px solid #ECE7DD" }}>
           {["Vencimento", "Cotação (R$)", "Var. dia", "Vs. spot"].map(h => (
             <span key={h} style={{ color: "#A89C8A", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>{h}</span>
           ))}
@@ -1814,7 +1810,7 @@ function CambioPage({COTACOES, ptax}) {
         {contracts.map((c, i) => {
           const vSpot = c.rate - spot;
           return (
-            <div key={i} style={{ display: "grid", gridTemplateColumns: "140px 1fr 100px 100px", padding: "11px 18px", borderBottom: "1px solid #F2EEE6", alignItems: "center" }}
+            <div key={i} style={{ display: "grid", gridTemplateColumns: "140px 1fr 100px 100px", minWidth: 520, padding: "11px 18px", borderBottom: "1px solid #F2EEE6", alignItems: "center" }}
               onMouseEnter={e => e.currentTarget.style.background = "#FAF7F1"}
               onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
               <div>
@@ -3382,7 +3378,7 @@ function AdminPage() {
             {/* Current items table */}
             {pSorted.length > 0 && (
               <div style={{ marginBottom: 16 }}>
-                <div style={{ display: "grid", gridTemplateColumns: "130px 70px 100px 70px 40px", gap: 0, fontSize: 11 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "130px 70px 100px 70px 40px", minWidth: 470, gap: 0, fontSize: 11 }}>
                   {["Embarque", "Contrato", "Prêmio (c/bu)", "Var.", ""].map(h => (
                     <div key={h} style={{ padding: "6px 8px", color: "#A89C8A", fontWeight: 600, textTransform: "uppercase", fontSize: 9, letterSpacing: "0.06em", borderBottom: "1px solid #ECE7DD" }}>{h}</div>
                   ))}
@@ -3854,7 +3850,7 @@ export default function ProSafraApp() {
   // Persistência SÍNCRONA no momento do clique (não depende de efeito)
   const _persistRef=(id)=>{ try{localStorage.setItem("bz_praca_ref",String(id));}catch(e){} };
   const _persistList=(arr)=>{ try{localStorage.setItem("bz_pracas",JSON.stringify(arr));}catch(e){} };
-  const selectPraca=(id)=>{ if(id==null||isNaN(id)) return; setPracaRef(id); _persistRef(id); setPracaList(prev=>{const nl=prev.includes(id)?prev:[...prev,id]; _persistList(nl); return nl;}); try{console.log("[BZ] selectPraca",id,"=> wrote bz_praca_ref, readback=",localStorage.getItem("bz_praca_ref"));}catch(e){} };
+  const selectPraca=(id)=>{ if(id==null||isNaN(id)) return; setPracaRef(id); _persistRef(id); setPracaList(prev=>{const nl=prev.includes(id)?prev:[...prev,id]; _persistList(nl); return nl;}); };
   const removePracaG=(id)=>{ setPracaList(prev=>{const nl=prev.filter(x=>x!==id); _persistList(nl); if(pracaRef===id){const nx=nl.length?nl[0]:null; setPracaRef(nx); if(nx!=null)_persistRef(nx);} return nl;}); };
   const regionProps = { pracaRef, pracaList, selectPraca, removePraca: removePracaG };
 
@@ -3898,7 +3894,7 @@ export default function ProSafraApp() {
       </div>
 
       {/* Main */}
-      <div style={{flex:1,minWidth:0,overflow:"auto",background:BZ.bg}}>
+      <div className="bz-main" style={{flex:1,minWidth:0,overflow:"auto",background:BZ.bg}}>
         <div style={{padding:"12px 20px",borderBottom:`1px solid ${BZ.border}`,display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:10,background:BZ.surfaceAlt,gap:10}}>
           <div style={{display:"flex",alignItems:"center",gap:12,minWidth:0}}>
             <button onClick={()=>setSbOpen(!sbOpen)} style={{background:"none",border:`1px solid ${BZ.border}`,color:BZ.brown,cursor:"pointer",borderRadius:6,padding:"5px 8px",fontSize:13,lineHeight:1}}>☰</button>

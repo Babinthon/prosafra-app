@@ -4,26 +4,32 @@
   padding: 0;
 }
 
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
-  background: #080A0F;
-  color: #F1F5F9;
+  background: #F7F7F5;
+  color: #2E2620;
   font-family: 'Outfit', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 7px;
+  height: 7px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.08);
-  border-radius: 3px;
+  background: rgba(74,44,22,0.18);
+  border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255,255,255,0.15);
+  background: rgba(74,44,22,0.32);
 }
 
 input[type="number"]::-webkit-outer-spin-button,
@@ -39,4 +45,24 @@ select {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
+}
+
+/* Rolagem horizontal suave em telas de toque */
+[style*="overflow-x"], [style*="overflowX"] {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ─────────── RESPONSIVO MOBILE ─────────── */
+@media (max-width: 768px) {
+  /* reduz o padding lateral de toda página */
+  .bz-main > div {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+}
+@media (max-width: 480px) {
+  .bz-main > div {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
 }
