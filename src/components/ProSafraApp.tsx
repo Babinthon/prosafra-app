@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useSupabaseData } from "../lib/useSupabaseData";
 import type { CotacaoRow, PracaRow, BasisMonth, ContractDash } from "../lib/useSupabaseData";
 
@@ -227,20 +227,7 @@ function DashboardPage({goTo, PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, premi
   const [custo,setCusto]=useState(5500);
   const [prod,setProd]=useState(60);
   const [cenario,setCenario]=useState("disp");
-
-  useEffect(()=>{try{
-    const raw=localStorage.getItem("bz_pracas");
-    let list=raw?JSON.parse(raw):[];
-    if(!Array.isArray(list))list=[];
-    if(!list.length){const r=localStorage.getItem("bz_praca_ref"); if(r)list=[parseInt(r)];}
-    setPracaIds(list); if(list.length)setActiveId(list[0]);
-    const c=localStorage.getItem("bz_custo"); if(c)setCusto(parseFloat(c));
-    const q=localStorage.getItem("bz_prod"); if(q)setProd(parseFloat(q));
-  }catch(e){}},[]);
-  useEffect(()=>{try{localStorage.setItem("bz_pracas",JSON.stringify(pracaIds));}catch(e){}},[pracaIds]);
-  useEffect(()=>{try{localStorage.setItem("bz_custo",String(custo));}catch(e){}},[custo]);
-  useEffect(()=>{try{localStorage.setItem("bz_prod",String(prod));}catch(e){}},[prod]);
-  useEffect(()=>{if(activeId!=null){try{localStorage.setItem("bz_praca_ref",String(activeId));}catch(e){}}},[activeId]);
+  const hydrated=useRef(false);
 
   const byState=useMemo(()=>{
     const g={};
@@ -249,9 +236,35 @@ function DashboardPage({goTo, PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, premi
   },[PRACAS,BASIS_DATA]);
   const availPracas=useMemo(()=>Object.values(byState).flat(),[byState]);
 
+  // Hidratação única: região ativa = a última salva (bz_praca_ref), nunca a primeira da lista
   useEffect(()=>{
-    if(pracaIds.length===0&&availPracas.length>0){const id=availPracas[0].id; setPracaIds([id]); setActiveId(id);}
+    if(hydrated.current) return;
+    try{
+      const c=localStorage.getItem("bz_custo"); if(c)setCusto(parseFloat(c));
+      const q=localStorage.getItem("bz_prod"); if(q)setProd(parseFloat(q));
+      const raw=localStorage.getItem("bz_pracas");
+      let list=raw?JSON.parse(raw):[];
+      if(!Array.isArray(list))list=[];
+      const refRaw=localStorage.getItem("bz_praca_ref");
+      const ref=(refRaw!=null&&refRaw!=="")?parseInt(refRaw):null;
+      if(ref!=null&&!list.includes(ref))list=[...list,ref];
+      if(list.length){
+        setPracaIds(list);
+        setActiveId(ref!=null?ref:list[0]);
+        hydrated.current=true;
+      } else if(availPracas.length>0){
+        const id=availPracas[0].id;
+        setPracaIds([id]); setActiveId(id);
+        hydrated.current=true;
+      }
+    }catch(e){}
   },[availPracas]);
+
+  // Persistência (só após hidratar, para não sobrescrever o que já está salvo)
+  useEffect(()=>{if(hydrated.current){try{localStorage.setItem("bz_pracas",JSON.stringify(pracaIds));}catch(e){}}},[pracaIds]);
+  useEffect(()=>{if(hydrated.current&&activeId!=null){try{localStorage.setItem("bz_praca_ref",String(activeId));}catch(e){}}},[activeId]);
+  useEffect(()=>{if(hydrated.current){try{localStorage.setItem("bz_custo",String(custo));}catch(e){}}},[custo]);
+  useEffect(()=>{if(hydrated.current){try{localStorage.setItem("bz_prod",String(prod));}catch(e){}}},[prod]);
 
   const effId=availPracas.some(p=>p.id===activeId)?activeId:(pracaIds.find(id=>availPracas.some(p=>p.id===id))??availPracas[0]?.id);
   const praca=PRACAS.find(p=>p.id===effId);
@@ -2055,6 +2068,9 @@ function ParidadePage({COTACOES}) {
 function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
   const mercado = "Soja Exportação"; // Custo carrego é só soja inicialmente
   const [pracaId, setPracaId] = useState(1);
+  const _carregoHyd = useRef(false);
+  useEffect(()=>{ if(_carregoHyd.current) return; if(!PRACAS||PRACAS.length===0) return; try{ const r=localStorage.getItem("bz_praca_ref"); if(r){const n=parseInt(r); if(PRACAS.some(p=>p.id===n)) setPracaId(n);} }catch(e){} _carregoHyd.current=true; },[PRACAS]);
+  useEffect(()=>{ if(_carregoHyd.current&&pracaId!=null){ try{localStorage.setItem("bz_praca_ref",String(pracaId));}catch(e){} } },[pracaId]);
 
   // Datas padrão calculadas na abertura da aba, a partir da data atual
   const _hoje = new Date();
@@ -2610,6 +2626,9 @@ function OfertasFirmesPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
   const [volUnit, setVolUnit] = useState("sacas");
   const [volQtd, setVolQtd] = useState(5000);
   const [pracaId, setPracaId] = useState(1);
+  const _ofertasHyd = useRef(false);
+  useEffect(()=>{ if(_ofertasHyd.current) return; if(!PRACAS||PRACAS.length===0) return; try{ const r=localStorage.getItem("bz_praca_ref"); if(r){const n=parseInt(r); if(PRACAS.some(p=>p.id===n)) setPracaId(n);} }catch(e){} _ofertasHyd.current=true; },[PRACAS]);
+  useEffect(()=>{ if(_ofertasHyd.current&&pracaId!=null){ try{localStorage.setItem("bz_praca_ref",String(pracaId));}catch(e){} } },[pracaId]);
   const [entK, setEntK] = useState("4-2026");
   const [pagK, setPagK] = useState("5-2026");
   const [modalidade, setModalidade] = useState("FOB");
