@@ -22,6 +22,7 @@ const DOL_CODE = {0:"F",1:"G",2:"H",3:"J",4:"K",5:"M",6:"N",7:"Q",8:"U",9:"V",10
 
 const buildSoja = (mi,yr) => { const c=SOJA_MAP[mi]; return `CBOT:ZS${c}${mi===11?yr+1:yr}`; };
 const buildMilho = (mi,yr) => `CBOT:ZC${MILHO_MAP[mi]}${yr}`;
+const buildMilhoB3 = (mi,yr) => `BMFBOVESPA:CCM${DOL_CODE[mi]}${yr}`;
 const buildDol = (mi,yr) => `BMFBOVESPA:DOL${DOL_CODE[mi]}${yr}`;
 
 function findClosest(sym, keys, cotacoes) {
@@ -457,6 +458,7 @@ function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRef, 
   const [eMi,eYr]=entK.split("-").map(Number);
   const [pMi,pYr]=pagK.split("-").map(Number);
   const isSoja=mercado==="Soja Exportação";
+  const isB3=mercado==="Milho B3";
   const byState=useMemo(()=>{
     const g={};
     PRACAS.forEach(p=>{
@@ -474,13 +476,13 @@ function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRef, 
   const bAll=BASIS_DATA[bKey]||DEFAULT_BASIS;
   const bM=bAll[eMi];
   const allK=Object.keys(COTACOES);
-  const rawCS=isSoja?buildSoja(eMi,eYr):buildMilho(eMi,eYr);
-  const csym=findClosest(rawCS,allK,COTACOES);
+  const rawCS=isSoja?buildSoja(eMi,eYr):(isB3?buildMilhoB3(eMi,eYr):buildMilho(eMi,eYr));
+  const csym=findClosest(rawCS,isB3?allK.filter(k=>k.includes("CCM")):allK,COTACOES);
   const ccot=COTACOES[csym];
-  const chi=ccot?ccot.lp:(isSoja?1165:490);
+  const chi=ccot?ccot.lp:(isSoja?1165:(isB3?67:490));
   const cCh=ccot?.ch||0; const cChp=ccot?.chp||0;
-  const cShort=csym.replace("CBOT:","");
-  const cCode=cShort.charAt(2);
+  const cShort=csym.replace("CBOT:","").replace("BMFBOVESPA:","");
+  const cCode=isB3?cShort.charAt(3):cShort.charAt(2);
   const cLabel=`${CODE_NAME[cCode]}/${cShort.slice(-4)}`;
   const cFB=csym!==rawCS;
   const rawDS=buildDol(pMi,pYr);
@@ -490,15 +492,15 @@ function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRef, 
   const dCh=dcot?dcot.ch/1000:0; const dChp=dcot?.chp||0;
   const dShort=dsym.replace("BMFBOVESPA:","");
   const dFB=dsym!==rawDS;
-  const pMin=calc(chi,bM.basis_min,dol);
-  const pJusto=calc(chi,bM.medio,dol);
-  const pMax=calc(chi,bM.basis_max,dol);
-  const pMinU=calcUSD(chi,bM.basis_min);
-  const pJustoU=calcUSD(chi,bM.medio);
-  const pMaxU=calcUSD(chi,bM.basis_max);
+  const pMin=isB3?chi+bM.basis_min:calc(chi,bM.basis_min,dol);
+  const pJusto=isB3?chi+bM.medio:calc(chi,bM.medio,dol);
+  const pMax=isB3?chi+bM.basis_max:calc(chi,bM.basis_max,dol);
+  const pMinU=isB3?null:calcUSD(chi,bM.basis_min);
+  const pJustoU=isB3?null:calcUSD(chi,bM.medio);
+  const pMaxU=isB3?null:calcUSD(chi,bM.basis_max);
 
-  // Seasonality: current month → 12 months forward
   const dolKeys=allK.filter(k=>k.includes("DOL"));
+  const ccmKeys=allK.filter(k=>k.includes("CCM"));
   const season=useMemo(()=>{
     const curM = new Date().getMonth();
     const curY = new Date().getFullYear();
@@ -507,18 +509,27 @@ function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRef, 
       const mi=(curM+n)%12;
       const yr=curY+Math.floor((curM+n)/12);
       const b=bAll[mi];
-      const rawC=isSoja?buildSoja(mi,yr):buildMilho(mi,yr);
-      const cs=findClosest(rawC,allK,COTACOES); const cc=COTACOES[cs]; const ch=cc?cc.lp:null;
-      const pmi=(mi+1)%12; const pyr=(mi===11)?yr+1:yr;
-      const rawD=buildDol(pmi,pyr);
-      const ds=findClosest(rawD,dolKeys,COTACOES); const dc=COTACOES[ds]; const md=dc?dc.lp/1000:null;
-      const has=ch!==null&&md!==null;
-      ms.push({label:`${MESES_SHORT[mi]}/${String(yr).slice(-2)}`,basis:b.medio,bMin:b.basis_min,bMax:b.basis_max,has,
-        pMin:has?calc(ch,b.basis_min,md):null,pJusto:has?calc(ch,b.medio,md):null,pMax:has?calc(ch,b.basis_max,md):null,idx:n,
-        chi:ch,dol:md,mi,yr});
+      if(isB3){
+        const rawC=buildMilhoB3(mi,yr);
+        const cs=findClosest(rawC,ccmKeys,COTACOES); const cc=COTACOES[cs]; const ch=cc?cc.lp:null;
+        const has=ch!==null;
+        ms.push({label:`${MESES_SHORT[mi]}/${String(yr).slice(-2)}`,basis:b.medio,bMin:b.basis_min,bMax:b.basis_max,has,
+          pMin:has?ch+b.basis_min:null,pJusto:has?ch+b.medio:null,pMax:has?ch+b.basis_max:null,idx:n,
+          chi:ch,dol:null,mi,yr});
+      }else{
+        const rawC=isSoja?buildSoja(mi,yr):buildMilho(mi,yr);
+        const cs=findClosest(rawC,allK,COTACOES); const cc=COTACOES[cs]; const ch=cc?cc.lp:null;
+        const pmi=(mi+1)%12; const pyr=(mi===11)?yr+1:yr;
+        const rawD=buildDol(pmi,pyr);
+        const ds=findClosest(rawD,dolKeys,COTACOES); const dc=COTACOES[ds]; const md=dc?dc.lp/1000:null;
+        const has=ch!==null&&md!==null;
+        ms.push({label:`${MESES_SHORT[mi]}/${String(yr).slice(-2)}`,basis:b.medio,bMin:b.basis_min,bMax:b.basis_max,has,
+          pMin:has?calc(ch,b.basis_min,md):null,pJusto:has?calc(ch,b.medio,md):null,pMax:has?calc(ch,b.basis_max,md):null,idx:n,
+          chi:ch,dol:md,mi,yr});
+      }
     }
     return ms;
-  },[bAll,isSoja,allK,dolKeys]);
+  },[bAll,isSoja,isB3,allK,dolKeys,ccmKeys]);
 
   const sWD=season.filter(s=>s.has);
   const sAllP=sWD.flatMap(s=>[s.pMin,s.pMax]);
@@ -553,21 +564,17 @@ function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRef, 
         </Sel>
       </div>
 
-      <div style={{fontSize:10,fontFamily:"'JetBrains Mono',monospace",color:"#8A3D31",background:"#FBF0EE",border:"1px solid #E2B8AE",borderRadius:8,padding:"8px 10px",marginBottom:14,wordBreak:"break-all"}}>
-        🔧 diagnóstico — mercado atual=<b>"{mercado}"</b> · praças neste mercado=<b>{availPracas.length}</b> · mercados nos dados: <b>{(()=>{const set=new Set();Object.keys(BASIS_DATA).forEach(k=>{for(const p of PRACAS){const pre=`${p.cidade}-${p.estado}-`;if(k.startsWith(pre)){set.add(k.slice(pre.length));break;}}});return Array.from(set).join(" | ")||"(nenhum)";})()}</b>
-      </div>
-
       {/* Dados de mercado */}
       <div style={{display:"flex",gap:12,marginBottom:16,flexWrap:"wrap"}}>
-        <MktCard label={`Chicago ${isSoja?"Soja":"Milho"} — ${cLabel}`} value={fmt(chi)} unit="c/bu" sym={cShort} ch={cCh} chp={cChp} color="#4E7C5A" fb={cFB}/>
-        <MktCard label={`Dólar projetado — ${MESES[pMi]} ${pYr}`} value={`R$ ${fmt(dol,4)}`} sym={dShort} ch={dCh} chp={dChp} color="#B67A33" fb={dFB} fd={4}/>
+        <MktCard label={isB3?`Milho B3 (CCM) — ${cLabel}`:`Chicago ${isSoja?"Soja":"Milho"} — ${cLabel}`} value={fmt(chi)} unit={isB3?"R$/sc":"c/bu"} sym={cShort} ch={cCh} chp={cChp} color="#4E7C5A" fb={cFB}/>
+        {!isB3&&<MktCard label={`Dólar projetado — ${MESES[pMi]} ${pYr}`} value={`R$ ${fmt(dol,4)}`} sym={dShort} ch={dCh} chp={dChp} color="#B67A33" fb={dFB} fd={4}/>}
         <div style={{background:"#FFFFFF",border:"1px solid #ECE7DD",borderRadius:10,padding:"14px 18px",minWidth:155}}>
           <div style={{color:"#8A7E6F",fontSize:9,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:5}}>Basis histórico — {MESES[eMi]}</div>
           <div style={{display:"flex",alignItems:"baseline",gap:4,marginBottom:3}}>
-            <span style={{fontSize:22,fontWeight:700,color:"#D5A246",fontFamily:"'JetBrains Mono',monospace"}}>{fmt(bM.medio,0)}</span>
-            <span style={{color:"#A89C8A",fontSize:10}}>c/bu</span>
+            <span style={{fontSize:22,fontWeight:700,color:"#D5A246",fontFamily:"'JetBrains Mono',monospace"}}>{fmt(bM.medio,isB3?1:0)}</span>
+            <span style={{color:"#A89C8A",fontSize:10}}>{isB3?"R$/sc":"c/bu"}</span>
           </div>
-          <div style={{color:"#C2B7A6",fontSize:9}}>Min {fmt(bM.basis_min,0)} | Max {fmt(bM.basis_max,0)}</div>
+          <div style={{color:"#C2B7A6",fontSize:9}}>Min {fmt(bM.basis_min,isB3?1:0)} | Max {fmt(bM.basis_max,isB3?1:0)}</div>
           <div style={{color:"#C2B7A6",fontSize:8,marginTop:3}}>Média 5 anos • {pLabel}</div>
         </div>
       </div>
@@ -579,9 +586,9 @@ function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRef, 
         <span style={{color:"#A89C8A",fontSize:11}}>{pLabel} — {MESES[eMi]} {eYr}</span>
       </div>
       <div style={{display:"flex",gap:14,marginBottom:20,alignItems:"stretch",flexWrap:"wrap"}}>
-        <RegCard label="Preço Mínimo" brl={pMin} usd={pMinU} basis={bM.basis_min} color="#D5A246" sub="Abaixo disso, preço está ruim"/>
-        <RegCard label="Preço Justo" brl={pJusto} usd={pJustoU} basis={bM.medio} color="#4E7C5A" hl sub="Região ideal para negociar"/>
-        <RegCard label="Preço Agressivo" brl={pMax} usd={pMaxU} basis={bM.basis_max} color="#4E7C5A" sub="Oportunidade excepcional, raro"/>
+        <RegCard label="Preço Mínimo" brl={pMin} usd={pMinU} basis={bM.basis_min} bUnit={isB3?"R$/sc":"c/bu"} color="#D5A246" sub="Abaixo disso, preço está ruim"/>
+        <RegCard label="Preço Justo" brl={pJusto} usd={pJustoU} basis={bM.medio} bUnit={isB3?"R$/sc":"c/bu"} color="#4E7C5A" hl sub="Região ideal para negociar"/>
+        <RegCard label="Preço Agressivo" brl={pMax} usd={pMaxU} basis={bM.basis_max} bUnit={isB3?"R$/sc":"c/bu"} color="#4E7C5A" sub="Oportunidade excepcional, raro"/>
       </div>
 
       {/* Oferta */}
@@ -620,7 +627,7 @@ function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRef, 
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}}>
           <div>
             <div style={{color:"#4A2C16",fontSize:13,fontWeight:600}}>Curva de preço projetado — {isSoja?"Soja":"Milho"}</div>
-            <div style={{color:"#8A7E6F",fontSize:10,marginTop:2}}>Preço justo R$/saca por mês de embarque • Chicago + basis × câmbio</div>
+            <div style={{color:"#8A7E6F",fontSize:10,marginTop:2}}>{isB3?"Preço justo R$/saca por mês • B3 (CCM) + basis":"Preço justo R$/saca por mês de embarque • Chicago + basis × câmbio"}</div>
           </div>
           <div style={{display:"flex",gap:14,flexWrap:"wrap",justifyContent:"flex-end"}}>
             <Legend color="#B67A3322" border="#B67A3344" text="Faixa min–max"/>
@@ -692,13 +699,13 @@ function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRef, 
         {/* Tabela detalhada */}
         <div style={{borderTop:"1px solid #ECE7DD",paddingTop:12,marginTop:4}}>
           <div style={{display:"grid",gridTemplateColumns:"90px repeat(4,1fr)",gap:0,fontSize:9,color:"#A89C8A",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6,paddingLeft:4}}>
-            <div>Embarque</div><div style={{textAlign:"right"}}>Chicago</div><div style={{textAlign:"right"}}>Câmbio</div><div style={{textAlign:"right"}}>R$/sc Min</div><div style={{textAlign:"right",color:"#B67A33"}}>R$/sc Justo</div>
+            <div>Embarque</div><div style={{textAlign:"right"}}>{isB3?"B3 R$/sc":"Chicago"}</div><div style={{textAlign:"right"}}>{isB3?"Basis R$/sc":"Câmbio"}</div><div style={{textAlign:"right"}}>R$/sc Min</div><div style={{textAlign:"right",color:"#B67A33"}}>R$/sc Justo</div>
           </div>
           {season.filter(s=>s.has).map(s=>(
             <div key={s.idx} style={{display:"grid",gridTemplateColumns:"90px repeat(4,1fr)",gap:0,fontSize:11,padding:"5px 4px",borderBottom:"1px solid #F5F1EA"}}>
               <div style={{color:"#6B6052",fontWeight:500}}>{s.label}</div>
-              <div style={{textAlign:"right",fontFamily:"'JetBrains Mono',monospace",color:"#8A7E6F"}}>{s.chi?fmt(s.chi,1):"-"}</div>
-              <div style={{textAlign:"right",fontFamily:"'JetBrains Mono',monospace",color:"#8A7E6F"}}>{s.dol?fmt(s.dol,4):"-"}</div>
+              <div style={{textAlign:"right",fontFamily:"'JetBrains Mono',monospace",color:"#8A7E6F"}}>{s.chi?fmt(s.chi,isB3?2:1):"-"}</div>
+              <div style={{textAlign:"right",fontFamily:"'JetBrains Mono',monospace",color:"#8A7E6F"}}>{isB3?fmt(s.basis,1):(s.dol?fmt(s.dol,4):"-")}</div>
               <div style={{textAlign:"right",fontFamily:"'JetBrains Mono',monospace",color:"#D5A246"}}>{s.pMin?fmt(s.pMin,0):"-"}</div>
               <div style={{textAlign:"right",fontFamily:"'JetBrains Mono',monospace",color:"#B67A33",fontWeight:600}}>{s.pJusto?fmt(s.pJusto,0):"-"}</div>
             </div>
@@ -725,14 +732,14 @@ function MktCard({label,value,unit,sym,ch,chp,color,fb,fd=2}) {
   </div>;
 }
 
-function RegCard({label,brl,usd,basis,color,hl,sub}) {
+function RegCard({label,brl,usd,basis,color,hl,sub,bUnit="c/bu"}) {
   return <div style={{background:hl?`${color}0D`:"#FFFFFF",border:`1px solid ${hl?`${color}33`:"#ECE7DD"}`,borderRadius:10,padding:hl?"22px 18px":"18px",flex:"1 1 165px",minWidth:165,position:"relative",overflow:"hidden"}}>
     <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:color}}/>
     {hl&&<div style={{position:"absolute",top:10,right:10,background:`${color}22`,color,fontSize:8,fontWeight:700,padding:"2px 7px",borderRadius:3,textTransform:"uppercase",letterSpacing:"0.1em"}}>Região ideal</div>}
     <div style={{color:"#6B6052",fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:10}}>{label}</div>
     <div style={{fontSize:hl?28:22,fontWeight:800,color:"#4A2C16",fontFamily:"'JetBrains Mono',monospace",lineHeight:1,marginBottom:5}}>R$ {fmt(brl)}</div>
-    <div style={{fontSize:12,color:"#6B6052",marginBottom:6,fontFamily:"'JetBrains Mono',monospace"}}>US$ {fmt(usd)}/sc</div>
-    <div style={{fontSize:10,color:"#A89C8A"}}>Basis: {fmt(basis,0)} c/bu</div>
+    {usd!=null&&<div style={{fontSize:12,color:"#6B6052",marginBottom:6,fontFamily:"'JetBrains Mono',monospace"}}>US$ {fmt(usd)}/sc</div>}
+    <div style={{fontSize:10,color:"#A89C8A"}}>Basis: {fmt(basis,bUnit==="R$/sc"?1:0)} {bUnit}</div>
     {sub&&<div style={{fontSize:9,color,marginTop:7,fontWeight:500}}>{sub}</div>}
   </div>;
 }
@@ -2715,7 +2722,6 @@ _Gerado via BZ Grãos_`;
         <Sel label="Produto / Mercado" value={mercadoOf} onChange={setMercadoOf} w={200}>
           <option value="Soja Exportação">Soja Exportação</option>
           <option value="Milho Exportação">Milho Exportação</option>
-          <option value="Milho B3">Milho Interno (B3)</option>
         </Sel>
       </div>
 

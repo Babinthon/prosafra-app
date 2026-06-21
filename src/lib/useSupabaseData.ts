@@ -241,6 +241,7 @@ function buildBasisData(rows: BasisHistoricoRow[]): Record<string, BasisMonth[]>
     "milho_exportacao": "Milho Exportação",
     "Milho Exportação": "Milho Exportação",
     "milho_b3": "Milho B3",
+    "milho_interno": "Milho B3",
     "Milho B3": "Milho B3",
   };
 
