@@ -68,17 +68,16 @@ function BZLogo({size=34}) {
 
 const NAV = [
   {id:"dashboard",label:"Dashboard",icon:"◉"},
-  {id:"preco-justo",label:"Preço Justo",icon:"◎"},
+  {id:"preco-justo",label:"Preço Justo",icon:"◎",star:true},
+  {id:"paridade",label:"Paridade Exportação",icon:"⬡"},
+  {id:"cambio",label:"Câmbio",icon:"◈"},
   {id:"premios",label:"Prêmios Porto",icon:"⚓"},
   {id:"analise",label:"Análise Técnica",icon:"△"},
   {id:"fundamentos",label:"Fundamentos",icon:"▤"},
   {id:"fundos",label:"Posição Fundos",icon:"◧"},
-  {id:"cambio",label:"Câmbio",icon:"◈"},
-  {id:"paridade",label:"Paridade",icon:"⬡"},
   {id:"carrego",label:"Custo Carrego",icon:"⊞"},
   {id:"ofertas",label:"Ofertas Firmes",icon:"✉"},
   {id:"mercado",label:"Mercado",icon:"≣"},
-  {id:"consultoria",label:"Consultoria",icon:"★"},
   {id:"admin",label:"Admin",icon:"⚙"},
 ];
 
@@ -3882,16 +3881,22 @@ export default function ProSafraApp() {
           </div>
         </div>
         <nav style={{flex:1,padding:"12px 8px",overflowY:"auto"}}>
-          {NAV.map(n=>(
+          {NAV.map(n=>{
+            const active=page===n.id;
+            const restBg=n.star?"#FCF6EA":"transparent";
+            return (
             <div key={n.id} onClick={()=>{setPage(n.id);if(isMobile)setSbOpen(false);}} style={{
               display:"flex",alignItems:"center",gap:10,padding:"9px 11px",borderRadius:8,cursor:"pointer",
-              background:page===n.id?BZ.goldSoft:"transparent",
-              color:page===n.id?BZ.brown:BZ.textMute,fontSize:12,fontWeight:page===n.id?600:500,marginBottom:2,transition:"all 0.15s",whiteSpace:"nowrap",
-            }} onMouseEnter={e=>{if(page!==n.id)e.currentTarget.style.background="#FAF7F1";}}
-               onMouseLeave={e=>{if(page!==n.id)e.currentTarget.style.background="transparent";}}>
-              <span style={{fontSize:13,width:18,textAlign:"center",color:page===n.id?BZ.bronze:BZ.textFaint}}>{n.icon}</span>{n.label}
+              background:active?BZ.goldSoft:restBg,
+              border:n.star?`1px solid ${active?BZ.goldBorder:"#F1E6C9"}`:"1px solid transparent",
+              color:active?BZ.brown:(n.star?BZ.bronze:BZ.textMute),fontSize:12,fontWeight:active||n.star?600:500,marginBottom:2,transition:"all 0.15s",whiteSpace:"nowrap",
+            }} onMouseEnter={e=>{if(!active)e.currentTarget.style.background=n.star?"#FAF1DE":"#FAF7F1";}}
+               onMouseLeave={e=>{if(!active)e.currentTarget.style.background=restBg;}}>
+              <span style={{fontSize:13,width:18,textAlign:"center",color:active?BZ.bronze:(n.star?BZ.gold:BZ.textFaint)}}>{n.icon}</span>
+              <span style={{flex:1}}>{n.label}</span>
+              {n.star&&<span style={{fontSize:10,color:BZ.gold,lineHeight:1}}>★</span>}
             </div>
-          ))}
+          );})}
         </nav>
         <div style={{padding:"12px 14px",borderTop:`1px solid ${BZ.borderSoft}`}}>
           <div style={{display:"flex",alignItems:"center",gap:9}}>
