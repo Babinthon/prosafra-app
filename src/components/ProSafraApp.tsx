@@ -463,10 +463,6 @@ function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRef, 
       const bk=`${p.cidade}-${p.estado}-${mercado}`;
       if(BASIS_DATA[bk]){(g[p.estado]||=[]).push(p);}
     });
-    // Sem basis cadastrado para este mercado: ainda assim lista as praças (usa basis padrão)
-    if(Object.keys(g).length===0){
-      PRACAS.forEach(p=>{(g[p.estado]||=[]).push(p);});
-    }
     return g;
   },[PRACAS,mercado,BASIS_DATA]);
   const availPracas=useMemo(()=>Object.values(byState).flat(),[byState]);
