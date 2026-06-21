@@ -41,30 +41,6 @@ const calcUSD = (c,b) => (c+b)*FATOR/100;
 const fmt = (n,d=2) => n.toLocaleString("pt-BR",{minimumFractionDigits:d,maximumFractionDigits:d});
 const fmtVol = v => v>=1000?(v/1000).toFixed(1).replace(".",",")+`k`:String(v);
 
-const BZ = {
-  bg:"#F7F7F5", surface:"#FFFFFF", surfaceAlt:"#FCFBF9",
-  border:"#ECE7DD", borderSoft:"#F2EEE6",
-  gold:"#D5A246", goldSoft:"#FBF4E6", goldBorder:"#EBD9B5", goldHover:"#F6EBD3",
-  bronze:"#B67A33", brown:"#6B4324", brownDeep:"#4A2C16",
-  text:"#2E2620", textMute:"#8A7E6F", textFaint:"#A89C8A",
-  up:"#4E7C5A", down:"#B0503F",
-};
-
-function BZLogo({size=34}) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" aria-hidden="true">
-      <path d="M9,26 A15,15 0 0 1 39,26" stroke="#D5A246" strokeWidth="2" strokeLinecap="round"/>
-      <line x1="17" y1="30" x2="17" y2="21" stroke="#D5A246" strokeWidth="2.1" strokeLinecap="round"/>
-      <line x1="20.5" y1="30" x2="20.5" y2="15.5" stroke="#CB933C" strokeWidth="2.1" strokeLinecap="round"/>
-      <line x1="24" y1="30" x2="24" y2="12.5" stroke="#B67A33" strokeWidth="2.1" strokeLinecap="round"/>
-      <line x1="27.5" y1="30" x2="27.5" y2="16.5" stroke="#9C6730" strokeWidth="2.1" strokeLinecap="round"/>
-      <line x1="31" y1="30" x2="31" y2="21.5" stroke="#6B4324" strokeWidth="2.1" strokeLinecap="round"/>
-      <path d="M11,32 Q24,38 37,32" stroke="#B67A33" strokeWidth="1.6" strokeLinecap="round" fill="none"/>
-      <path d="M14,35 Q24,40 34,35" stroke="#6B4324" strokeWidth="1.6" strokeLinecap="round" fill="none"/>
-    </svg>
-  );
-}
-
 const NAV = [
   {id:"dashboard",label:"Dashboard",icon:"◉"},
   {id:"preco-justo",label:"Preço Justo",icon:"◎"},
@@ -116,7 +92,7 @@ function Sel({label,value,onChange,children,w,grow}) {
 
 function Chg({ch,chp}) {
   const p=ch>=0;
-  return <span style={{color:p?BZ.up:BZ.down,fontSize:10,fontWeight:500}}>{p?"▲":"▼"} {p?"+":""}{fmt(ch)} ({p?"+":""}{fmt(chp)}%)</span>;
+  return <span style={{color:p?"#22C55E":"#EF4444",fontSize:10,fontWeight:500}}>{p?"▲":"▼"} {p?"+":""}{fmt(ch)} ({p?"+":""}{fmt(chp)}%)</span>;
 }
 
 function Legend({color,border,text,dot}) {
@@ -134,13 +110,13 @@ function DashContractRow({item,unit,isDol}) {
   const dp = isDol ? fmt(item.lp/1000,3) : fmt(item.lp,2);
   const u = isDol ? "R$" : unit||"c/bu";
   return (
-    <div style={{display:"grid",gridTemplateColumns:"80px 1fr 95px 70px",alignItems:"center",padding:"7px 12px",borderBottom:`1px solid ${BZ.borderSoft}`}}
-      onMouseEnter={e=>e.currentTarget.style.background=BZ.goldSoft}
+    <div style={{display:"grid",gridTemplateColumns:"80px 1fr 95px 70px",alignItems:"center",padding:"7px 12px",borderBottom:"1px solid rgba(255,255,255,0.04)"}}
+      onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.02)"}
       onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-      <span style={{color:BZ.textMute,fontSize:11,fontFamily:"'JetBrains Mono',monospace"}}>{item.mo}</span>
-      <span style={{color:BZ.brownDeep,fontSize:13,fontWeight:600,fontFamily:"'JetBrains Mono',monospace"}}>{dp} <span style={{color:BZ.textFaint,fontSize:10,fontWeight:400}}>{u}</span></span>
+      <span style={{color:"#9CA3AF",fontSize:11,fontFamily:"'JetBrains Mono',monospace"}}>{item.mo}</span>
+      <span style={{color:"#F1F5F9",fontSize:13,fontWeight:600,fontFamily:"'JetBrains Mono',monospace"}}>{dp} <span style={{color:"#6B7280",fontSize:10,fontWeight:400}}>{u}</span></span>
       <Chg ch={item.ch} chp={item.chp}/>
-      <span style={{color:BZ.textFaint,fontSize:10,textAlign:"right"}}>{fmtVol(item.vol)}</span>
+      <span style={{color:"#6B7280",fontSize:10,textAlign:"right"}}>{fmtVol(item.vol)}</span>
     </div>
   );
 }
@@ -149,34 +125,34 @@ function DashSection({title,sub,color,contracts,unit,isDol,defOpen=false}) {
   const [open,setOpen]=useState(defOpen);
   const lead=contracts[0];
   return (
-    <div style={{background:BZ.surface,border:`1px solid ${BZ.border}`,borderRadius:12,overflow:"hidden"}}
-      onMouseEnter={e=>e.currentTarget.style.borderColor=BZ.goldBorder}
-      onMouseLeave={e=>e.currentTarget.style.borderColor=BZ.border}>
+    <div style={{background:"#0D1117",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,overflow:"hidden"}}
+      onMouseEnter={e=>e.currentTarget.style.borderColor=`${color}33`}
+      onMouseLeave={e=>e.currentTarget.style.borderColor="rgba(255,255,255,0.06)"}>
       <div onClick={()=>setOpen(!open)} style={{padding:"14px 18px",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"flex-start",userSelect:"none"}}>
         <div>
           <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:3}}>
-            <div style={{width:7,height:7,borderRadius:"50%",background:color}}/>
-            <span style={{color:BZ.brownDeep,fontSize:13,fontWeight:600}}>{title}</span>
-            <span style={{fontSize:9,color:BZ.textMute,background:BZ.goldSoft,padding:"1px 6px",borderRadius:3}}>{contracts.length}</span>
+            <div style={{width:7,height:7,borderRadius:"50%",background:color,boxShadow:`0 0 6px ${color}44`}}/>
+            <span style={{color:"#F1F5F9",fontSize:13,fontWeight:600}}>{title}</span>
+            <span style={{fontSize:9,color:"#6B7280",background:"rgba(255,255,255,0.04)",padding:"1px 6px",borderRadius:3}}>{contracts.length}</span>
           </div>
-          <span style={{color:BZ.textMute,fontSize:11}}>{sub}</span>
+          <span style={{color:"#6B7280",fontSize:11}}>{sub}</span>
         </div>
         <div style={{textAlign:"right"}}>
-          <div style={{color:BZ.brownDeep,fontSize:18,fontWeight:700,fontFamily:"'JetBrains Mono',monospace",lineHeight:1}}>
+          <div style={{color:"#F1F5F9",fontSize:18,fontWeight:700,fontFamily:"'JetBrains Mono',monospace",lineHeight:1}}>
             {isDol?fmt(lead.lp/1000,3):fmt(lead.lp,2)}
           </div>
           <div style={{marginTop:2}}><Chg ch={lead.ch} chp={lead.chp}/></div>
-          <div style={{color:BZ.textFaint,fontSize:9,marginTop:1}}>{lead.sym}</div>
+          <div style={{color:"#4B5563",fontSize:9,marginTop:1}}>{lead.sym}</div>
         </div>
       </div>
-      {open && <div style={{borderTop:`1px solid ${BZ.borderSoft}`}}>
-        <div style={{display:"grid",gridTemplateColumns:"80px 1fr 95px 70px",padding:"5px 12px",borderBottom:`1px solid ${BZ.borderSoft}`}}>
-          {["Venc.","Último","Var.","Vol."].map(h=><span key={h} style={{color:BZ.textFaint,fontSize:9,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",textAlign:h==="Vol."?"right":undefined}}>{h}</span>)}
+      {open && <div style={{borderTop:"1px solid rgba(255,255,255,0.04)"}}>
+        <div style={{display:"grid",gridTemplateColumns:"80px 1fr 95px 70px",padding:"5px 12px",borderBottom:"1px solid rgba(255,255,255,0.04)"}}>
+          {["Venc.","Último","Var.","Vol."].map(h=><span key={h} style={{color:"#4B5563",fontSize:9,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",textAlign:h==="Vol."?"right":undefined}}>{h}</span>)}
         </div>
         {contracts.map(c=><DashContractRow key={c.sym} item={c} unit={unit} isDol={isDol}/>)}
       </div>}
-      <div onClick={()=>setOpen(!open)} style={{textAlign:"center",padding:"5px",cursor:"pointer",color:BZ.textMute,fontSize:10,borderTop:`1px solid ${BZ.borderSoft}`}}
-        onMouseEnter={e=>e.currentTarget.style.color=BZ.gold} onMouseLeave={e=>e.currentTarget.style.color=BZ.textMute}>
+      <div onClick={()=>setOpen(!open)} style={{textAlign:"center",padding:"5px",cursor:"pointer",color:"#4B5563",fontSize:10,borderTop:"1px solid rgba(255,255,255,0.04)"}}
+        onMouseEnter={e=>e.currentTarget.style.color=color} onMouseLeave={e=>e.currentTarget.style.color="#4B5563"}>
         {open?"▲ Recolher":"▼ Ver contratos"}
       </div>
     </div>
@@ -188,48 +164,49 @@ function DashboardPage({goTo, contractsDash}) {
   const mcLead = contractsDash.milhoCbot[0];
   const mbLead = contractsDash.milhoB3[0];
   const spots = [
-    {label:"Soja 1º Venc.",value:sLead?fmt(sLead.lp):"—",unit:"c/bu",ch:sLead?(sLead.ch>=0?"+":"")+fmt(sLead.ch):"—",up:sLead?sLead.ch>=0:true,sub:sLead?sLead.sym:"—"},
-    {label:"Milho CBOT 1º Venc.",value:mcLead?fmt(mcLead.lp):"—",unit:"c/bu",ch:mcLead?(mcLead.ch>=0?"+":"")+fmt(mcLead.ch):"—",up:mcLead?mcLead.ch>=0:true,sub:mcLead?mcLead.sym:"—"},
-    {label:"Milho B3 1º Venc.",value:mbLead?fmt(mbLead.lp):"—",unit:"R$/sc",ch:mbLead?(mbLead.ch>=0?"+":"")+fmt(mbLead.ch):"—",up:mbLead?mbLead.ch>=0:true,sub:mbLead?mbLead.sym:"—"},
+    {label:"Soja 1º Venc.",value:sLead?fmt(sLead.lp):"—",unit:"c/bu",ch:sLead?(sLead.ch>=0?"+":"")+fmt(sLead.ch):"—",color:sLead&&sLead.ch>=0?"#22C55E":"#EF4444",sub:sLead?sLead.sym:"—"},
+    {label:"Milho CBOT 1º Venc.",value:mcLead?fmt(mcLead.lp):"—",unit:"c/bu",ch:mcLead?(mcLead.ch>=0?"+":"")+fmt(mcLead.ch):"—",color:mcLead&&mcLead.ch>=0?"#22C55E":"#EF4444",sub:mcLead?mcLead.sym:"—"},
+    {label:"Milho B3 1º Venc.",value:mbLead?fmt(mbLead.lp):"—",unit:"R$/sc",ch:mbLead?(mbLead.ch>=0?"+":"")+fmt(mbLead.ch):"—",color:mbLead&&mbLead.ch>=0?"#22C55E":"#EF4444",sub:mbLead?mbLead.sym:"—"},
   ];
   const totalAtivos = contractsDash.sojaCbot.length + contractsDash.milhoCbot.length + contractsDash.milhoB3.length;
   return (
     <div style={{maxWidth:1100,margin:"0 auto",padding:"20px 28px"}}>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(210px,1fr))",gap:14,marginBottom:28}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14,marginBottom:28}}>
         {spots.map((s,i)=>(
-          <div key={i} style={{background:BZ.surface,border:`1px solid ${BZ.border}`,borderRadius:12,padding:"18px"}}>
-            <div style={{color:BZ.textFaint,fontSize:10,fontWeight:500,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:8}}>{s.label}</div>
+          <div key={i} style={{background:"#0D1117",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:"18px",position:"relative",overflow:"hidden"}}>
+            <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:`linear-gradient(90deg,${s.color}00,${s.color},${s.color}00)`,opacity:0.5}}/>
+            <div style={{color:"#6B7280",fontSize:10,fontWeight:500,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6}}>{s.label}</div>
             <div style={{display:"flex",alignItems:"baseline",gap:5}}>
-              <span style={{fontSize:24,fontWeight:700,color:BZ.brownDeep,fontFamily:"'JetBrains Mono',monospace"}}>{s.value}</span>
-              <span style={{color:BZ.textFaint,fontSize:11}}>{s.unit}</span>
+              <span style={{fontSize:22,fontWeight:700,color:"#F1F5F9",fontFamily:"'JetBrains Mono',monospace"}}>{s.value}</span>
+              <span style={{color:"#4B5563",fontSize:11}}>{s.unit}</span>
             </div>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8}}>
-              <span style={{color:s.up?BZ.up:BZ.down,fontSize:11,fontWeight:500}}>{s.up?"▲":"▼"} {s.ch}</span>
-              <span style={{color:BZ.textFaint,fontSize:9}}>{s.sub}</span>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:6}}>
+              <span style={{color:s.color,fontSize:11,fontWeight:500}}>{s.ch}</span>
+              <span style={{color:"#374151",fontSize:9}}>{s.sub}</span>
             </div>
           </div>
         ))}
       </div>
       <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
-        <div style={{width:3,height:18,background:BZ.gold,borderRadius:2}}/>
-        <span style={{fontSize:15,fontWeight:700,color:BZ.brownDeep}}>Todos os contratos</span>
-        <span style={{color:BZ.textMute,fontSize:11}}>{totalAtivos} ativos monitorados</span>
+        <div style={{width:3,height:18,background:"#E63946",borderRadius:2}}/>
+        <span style={{fontSize:15,fontWeight:700}}>Todos os contratos</span>
+        <span style={{color:"#4B5563",fontSize:11}}>{totalAtivos} ativos monitorados</span>
       </div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",gap:14,marginBottom:14}}>
-        <DashSection title="Soja CBOT" sub="c/bu" color={BZ.gold} contracts={contractsDash.sojaCbot} defOpen/>
-        <DashSection title="Milho CBOT" sub="c/bu" color={BZ.bronze} contracts={contractsDash.milhoCbot} defOpen/>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
+        <DashSection title="Soja CBOT" sub="c/bu" color="#22C55E" contracts={contractsDash.sojaCbot} defOpen/>
+        <DashSection title="Milho CBOT" sub="c/bu" color="#F59E0B" contracts={contractsDash.milhoCbot} defOpen/>
       </div>
       <div style={{marginBottom:28}}>
-        <DashSection title="Milho B3" sub="R$/saca" color={BZ.brown} contracts={contractsDash.milhoB3} unit="R$/sc" defOpen/>
+        <DashSection title="Milho B3" sub="R$/saca" color="#10B981" contracts={contractsDash.milhoB3} unit="R$/sc" defOpen/>
       </div>
-      <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
-        {[{label:"Preço Justo",color:BZ.gold,id:"preco-justo"},{label:"Paridade",color:BZ.bronze,id:"paridade"},{label:"Nova Oferta",color:BZ.brown,id:"ofertas"}].map(b=>(
+      <div style={{display:"flex",gap:12}}>
+        {[{label:"Preço Justo",color:"#22C55E",id:"preco-justo"},{label:"Paridade",color:"#457B9D",id:"paridade"},{label:"Nova Oferta",color:"#E63946",id:"ofertas"}].map(b=>(
           <div key={b.id} onClick={()=>goTo(b.id)} style={{
-            background:BZ.goldSoft,border:`1px solid ${BZ.goldBorder}`,borderRadius:8,
+            background:`${b.color}11`,border:`1px solid ${b.color}33`,borderRadius:8,
             padding:"12px 24px",cursor:"pointer",color:b.color,fontSize:13,fontWeight:600,
             transition:"all 0.15s",
-          }} onMouseEnter={e=>e.currentTarget.style.background=BZ.goldHover}
-             onMouseLeave={e=>e.currentTarget.style.background=BZ.goldSoft}>
+          }} onMouseEnter={e=>e.currentTarget.style.background=`${b.color}22`}
+             onMouseLeave={e=>e.currentTarget.style.background=`${b.color}11`}>
             {b.label}
           </div>
         ))}
@@ -3444,12 +3421,6 @@ function AdminPage() {
 export default function ProSafraApp() {
   const [page,setPage]=useState("dashboard");
   const [sbOpen,setSbOpen]=useState(true);
-  const [isMobile,setIsMobile]=useState(false);
-  useEffect(()=>{
-    const check=()=>setIsMobile(window.innerWidth<768);
-    check();window.addEventListener("resize",check);return()=>window.removeEventListener("resize",check);
-  },[]);
-  useEffect(()=>{setSbOpen(!isMobile);},[isMobile]);
   const [time,setTime]=useState(new Date());
   useEffect(()=>{const t=setInterval(()=>setTime(new Date()),60000);return()=>clearInterval(t);},[]);
   const greeting=time.getHours()<12?"Bom dia":time.getHours()<18?"Boa tarde":"Boa noite";
@@ -3469,71 +3440,66 @@ export default function ProSafraApp() {
   const dataProps = { PRACAS: pracas, COTACOES: cotacoes, BASIS_DATA: basisData, DEFAULT_BASIS: defaultBasis };
 
   return (
-    <div style={{display:"flex",minHeight:"100vh",background:BZ.bg,fontFamily:"'Outfit',sans-serif",color:BZ.text}}>
+    <div style={{display:"flex",minHeight:"100vh",background:"#080A0F",fontFamily:"'Outfit',sans-serif",color:"#F1F5F9"}}>
       <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 
-      {/* Backdrop (mobile) */}
-      {isMobile && sbOpen && <div onClick={()=>setSbOpen(false)} style={{position:"fixed",inset:0,background:"rgba(74,44,22,0.35)",zIndex:40}}/>}
-
       {/* Sidebar */}
-      <div style={isMobile
-        ? {position:"fixed",top:0,left:0,height:"100vh",width:244,background:BZ.surface,borderRight:`1px solid ${BZ.border}`,display:"flex",flexDirection:"column",zIndex:50,transform:sbOpen?"translateX(0)":"translateX(-100%)",transition:"transform 0.3s cubic-bezier(0.4,0,0.2,1)",boxShadow:sbOpen?"0 0 40px rgba(74,44,22,0.14)":"none"}
-        : {width:sbOpen?230:0,minHeight:"100vh",background:BZ.surface,borderRight:`1px solid ${BZ.border}`,display:"flex",flexDirection:"column",overflow:"hidden",transition:"width 0.3s cubic-bezier(0.4,0,0.2,1)",flexShrink:0}}>
-        <div style={{padding:"18px 16px 16px",borderBottom:`1px solid ${BZ.borderSoft}`}}>
-          <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <BZLogo size={34}/>
-            <div><div style={{fontSize:15,fontWeight:700,letterSpacing:"-0.01em"}}><span style={{color:BZ.brownDeep}}>BZ</span> <span style={{color:BZ.bronze}}>Grãos</span></div><div style={{fontSize:8,color:BZ.textFaint,marginTop:1,letterSpacing:"0.06em"}}>BAZAM AGRONEGÓCIOS</div></div>
+      <div style={{width:sbOpen?220:0,minHeight:"100vh",background:"#0B0E14",borderRight:"1px solid rgba(255,255,255,0.06)",display:"flex",flexDirection:"column",overflow:"hidden",transition:"width 0.3s cubic-bezier(0.4,0,0.2,1)",flexShrink:0}}>
+        <div style={{padding:"20px 16px 14px",borderBottom:"1px solid rgba(255,255,255,0.06)"}}>
+          <div style={{display:"flex",alignItems:"center",gap:9}}>
+            <div style={{width:30,height:30,borderRadius:7,background:"linear-gradient(135deg,#E63946,#C62828)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,color:"#fff"}}>PS</div>
+            <div><div style={{fontSize:15,fontWeight:700,letterSpacing:"-0.02em"}}>ProSafra</div><div style={{fontSize:9,color:"#6B7280",marginTop:-2}}>O que realmente vale seu grão</div></div>
           </div>
         </div>
-        <nav style={{flex:1,padding:"12px 8px",overflowY:"auto"}}>
+        <nav style={{flex:1,padding:"10px 6px",overflowY:"auto"}}>
           {NAV.map(n=>(
-            <div key={n.id} onClick={()=>{setPage(n.id);if(isMobile)setSbOpen(false);}} style={{
-              display:"flex",alignItems:"center",gap:10,padding:"9px 11px",borderRadius:8,cursor:"pointer",
-              background:page===n.id?BZ.goldSoft:"transparent",
-              color:page===n.id?BZ.brown:BZ.textMute,fontSize:12,fontWeight:page===n.id?600:500,marginBottom:2,transition:"all 0.15s",whiteSpace:"nowrap",
-            }} onMouseEnter={e=>{if(page!==n.id)e.currentTarget.style.background="#FAF7F1";}}
+            <div key={n.id} onClick={()=>setPage(n.id)} style={{
+              display:"flex",alignItems:"center",gap:9,padding:"9px 10px",borderRadius:7,cursor:"pointer",
+              background:page===n.id?"rgba(230,57,70,0.1)":"transparent",
+              color:page===n.id?"#E63946":"#9CA3AF",fontSize:12,fontWeight:page===n.id?600:400,marginBottom:1,transition:"all 0.15s",whiteSpace:"nowrap",
+            }} onMouseEnter={e=>{if(page!==n.id)e.currentTarget.style.background="rgba(255,255,255,0.03)";}}
                onMouseLeave={e=>{if(page!==n.id)e.currentTarget.style.background="transparent";}}>
-              <span style={{fontSize:13,width:18,textAlign:"center",color:page===n.id?BZ.bronze:BZ.textFaint}}>{n.icon}</span>{n.label}
+              <span style={{fontSize:13,width:18,textAlign:"center",opacity:0.7}}>{n.icon}</span>{n.label}
             </div>
           ))}
         </nav>
-        <div style={{padding:"12px 14px",borderTop:`1px solid ${BZ.borderSoft}`}}>
+        <div style={{padding:"14px 16px",borderTop:"1px solid rgba(255,255,255,0.06)"}}>
           <div style={{display:"flex",alignItems:"center",gap:9}}>
-            <div style={{width:28,height:28,borderRadius:"50%",background:"#F3EADB",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:600,color:BZ.bronze}}>PR</div>
-            <div><div style={{fontSize:11,fontWeight:500,color:BZ.brownDeep}}>Produtor</div>
-              <div style={{fontSize:9,color:BZ.bronze,background:BZ.goldSoft,padding:"1px 6px",borderRadius:3,display:"inline-block",marginTop:1}}>Plano Básico</div>
+            <div style={{width:30,height:30,borderRadius:"50%",background:"#1E293B",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:600,color:"#457B9D"}}>PR</div>
+            <div><div style={{fontSize:11,fontWeight:500,color:"#E2E8F0"}}>Produtor</div>
+              <div style={{fontSize:9,color:"#457B9D",background:"rgba(69,123,157,0.12)",padding:"1px 5px",borderRadius:3,display:"inline-block",marginTop:1}}>Plano Básico</div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Main */}
-      <div style={{flex:1,minWidth:0,overflow:"auto",background:BZ.bg}}>
-        <div style={{padding:"12px 20px",borderBottom:`1px solid ${BZ.border}`,display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:10,background:BZ.surfaceAlt,gap:10}}>
-          <div style={{display:"flex",alignItems:"center",gap:12,minWidth:0}}>
-            <button onClick={()=>setSbOpen(!sbOpen)} style={{background:"none",border:`1px solid ${BZ.border}`,color:BZ.brown,cursor:"pointer",borderRadius:6,padding:"5px 8px",fontSize:13,lineHeight:1}}>☰</button>
-            <div style={{minWidth:0}}>
-              <span style={{fontSize:16,fontWeight:700,color:BZ.brownDeep}}>{page==="dashboard"?greeting:NAV.find(n=>n.id===page)?.label||""}</span>
-              {!isMobile&&page==="dashboard"&&<span style={{color:BZ.textFaint,fontSize:11,marginLeft:10}}>{dateStr}</span>}
-              {!isMobile&&page==="preco-justo"&&<span style={{color:BZ.textMute,fontSize:11,marginLeft:8}}>Regiões de preço para negociação</span>}
-              {!isMobile&&page==="premios"&&<span style={{color:BZ.textMute,fontSize:11,marginLeft:8}}>Prêmios de exportação — Base Paranaguá</span>}
-              {!isMobile&&page==="analise"&&<span style={{color:BZ.textMute,fontSize:11,marginLeft:8}}>Regiões de preço em Chicago — Análise semanal</span>}
-              {!isMobile&&page==="fundamentos"&&<span style={{color:BZ.textMute,fontSize:11,marginLeft:8}}>Oferta e demanda mundial — Dados USDA/WASDE</span>}
-              {!isMobile&&page==="fundos"&&<span style={{color:BZ.textMute,fontSize:11,marginLeft:8}}>Managed Money — CFTC Commitments of Traders</span>}
-              {!isMobile&&page==="cambio"&&<span style={{color:BZ.textMute,fontSize:11,marginLeft:8}}>Dólar futuro B3 — Projeção do mercado</span>}
-              {!isMobile&&page==="paridade"&&<span style={{color:BZ.textMute,fontSize:11,marginLeft:8}}>Preço máximo no porto — Como a trading calcula</span>}
-              {!isMobile&&page==="carrego"&&<span style={{color:BZ.textMute,fontSize:11,marginLeft:8}}>Vale a pena carregar ou vender agora?</span>}
-              {!isMobile&&page==="ofertas"&&<span style={{color:BZ.textMute,fontSize:11,marginLeft:8}}>Gere sua oferta e envie via WhatsApp</span>}
-              {!isMobile&&page==="admin"&&<span style={{color:BZ.textMute,fontSize:11,marginLeft:8}}>Painel do fundador — atualizar dados</span>}
+      <div style={{flex:1,overflow:"auto"}}>
+        <div style={{padding:"12px 28px",borderBottom:"1px solid rgba(255,255,255,0.04)",display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:10,background:"rgba(8,10,15,0.88)",backdropFilter:"blur(12px)"}}>
+          <div style={{display:"flex",alignItems:"center",gap:14}}>
+            <button onClick={()=>setSbOpen(!sbOpen)} style={{background:"none",border:"1px solid rgba(255,255,255,0.08)",color:"#9CA3AF",cursor:"pointer",borderRadius:5,padding:"5px 7px",fontSize:13,lineHeight:1}}>☰</button>
+            <div>
+              <span style={{fontSize:16,fontWeight:700}}>{page==="dashboard"?greeting:NAV.find(n=>n.id===page)?.label||""}</span>
+              {page==="dashboard"&&<span style={{color:"#4B5563",fontSize:11,marginLeft:10}}>{dateStr}</span>}
+              {page==="preco-justo"&&<span style={{color:"#374151",fontSize:11,marginLeft:8}}>Regiões de preço para negociação</span>}
+              {page==="premios"&&<span style={{color:"#374151",fontSize:11,marginLeft:8}}>Prêmios de exportação — Base Paranaguá</span>}
+              {page==="analise"&&<span style={{color:"#374151",fontSize:11,marginLeft:8}}>Regiões de preço em Chicago — Análise semanal</span>}
+              {page==="fundamentos"&&<span style={{color:"#374151",fontSize:11,marginLeft:8}}>Oferta e demanda mundial — Dados USDA/WASDE</span>}
+              {page==="fundos"&&<span style={{color:"#374151",fontSize:11,marginLeft:8}}>Managed Money — CFTC Commitments of Traders</span>}
+              {page==="cambio"&&<span style={{color:"#374151",fontSize:11,marginLeft:8}}>Dólar futuro B3 — Projeção do mercado</span>}
+              {page==="paridade"&&<span style={{color:"#374151",fontSize:11,marginLeft:8}}>Preço máximo no porto — Como a trading calcula</span>}
+              {page==="carrego"&&<span style={{color:"#374151",fontSize:11,marginLeft:8}}>Vale a pena carregar ou vender agora?</span>}
+              {page==="ofertas"&&<span style={{color:"#374151",fontSize:11,marginLeft:8}}>Gere sua oferta e envie via WhatsApp</span>}
+              {page==="admin"&&<span style={{color:"#374151",fontSize:11,marginLeft:8}}>Painel do fundador — atualizar dados</span>}
             </div>
           </div>
-          <div style={{display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
-            <div style={{background:BZ.goldSoft,border:`1px solid ${BZ.goldBorder}`,borderRadius:8,padding:"6px 12px",display:"flex",alignItems:"center",gap:8}}>
-              <span style={{color:BZ.bronze,fontSize:9,fontWeight:500,textTransform:"uppercase",letterSpacing:"0.05em"}}>{headerDolLabel}</span>
-              <span style={{color:BZ.brownDeep,fontSize:14,fontWeight:700,fontFamily:"'JetBrains Mono',monospace"}}>R$ {headerDolStr}</span>
+          <div style={{display:"flex",alignItems:"center",gap:14}}>
+            <div style={{background:"rgba(69,123,157,0.1)",border:"1px solid rgba(69,123,157,0.2)",borderRadius:7,padding:"7px 14px",display:"flex",alignItems:"center",gap:10}}>
+              <span style={{color:"#457B9D",fontSize:10,fontWeight:500,textTransform:"uppercase",letterSpacing:"0.06em"}}>{headerDolLabel}</span>
+              <span style={{color:"#F1F5F9",fontSize:15,fontWeight:700,fontFamily:"'JetBrains Mono',monospace"}}>R$ {headerDolStr}</span>
             </div>
-            <div style={{width:7,height:7,borderRadius:"50%",background:isLive?BZ.up:BZ.gold}}/>
-            {!isMobile&&<span style={{color:BZ.textMute,fontSize:10}}>{loading?"Carregando…":isLive?"Dados ao vivo":"Dados offline"}</span>}
+            <div style={{width:7,height:7,borderRadius:"50%",background:isLive?"#22C55E":"#F59E0B",boxShadow:isLive?"0 0 6px #22C55E44":"0 0 6px #F59E0B44"}}/>
+            <span style={{color:"#6B7280",fontSize:10}}>{loading?"Carregando…":isLive?"Dados ao vivo":"Dados offline"}</span>
           </div>
         </div>
 
@@ -3550,8 +3516,8 @@ export default function ProSafraApp() {
         {page==="admin"&&<AdminPage/>}
         {!["dashboard","preco-justo","premios","analise","fundamentos","fundos","cambio","paridade","carrego","ofertas","admin"].includes(page)&&(
           <div style={{padding:"60px 28px",textAlign:"center"}}>
-            <div style={{fontSize:40,marginBottom:16,opacity:0.3,color:BZ.bronze}}>{NAV.find(n=>n.id===page)?.icon}</div>
-            <div style={{color:BZ.textMute,fontSize:14}}>{NAV.find(n=>n.id===page)?.label} — Em construção</div>
+            <div style={{fontSize:40,marginBottom:16,opacity:0.3}}>{NAV.find(n=>n.id===page)?.icon}</div>
+            <div style={{color:"#4B5563",fontSize:14}}>{NAV.find(n=>n.id===page)?.label} — Em construção</div>
           </div>
         )}
 
