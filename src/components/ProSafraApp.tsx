@@ -2007,10 +2007,13 @@ function ParidadePage({COTACOES}) {
               <span style={{ color: "#C2B7A6", fontSize: 10, marginLeft: 12 }}>= R$ {fmt(freteSaca)}/saca</span>
             </div>
           </div>
-          <div style={{ background: "rgba(69,123,157,0.08)", border: "1px solid rgba(69,123,157,0.2)", borderRadius: 8, padding: "12px 20px" }}>
-            <div style={{ color: "#8A7E6F", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>Preço na sua praça</div>
-            <span style={{ fontSize: 22, fontWeight: 800, color: "#4A2C16", fontFamily: "'JetBrains Mono',monospace" }}>R$ {fmt(precoPraca)}</span>
-            <span style={{ color: "#A89C8A", fontSize: 11, marginLeft: 6 }}>/saca</span>
+          <div style={{ background: "rgba(69,123,157,0.08)", border: "1px solid rgba(69,123,157,0.2)", borderRadius: 8, padding: "16px 22px" }}>
+            <div style={{ color: "#8A7E6F", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Preço na sua praça</div>
+            <div>
+              <span style={{ fontSize: 34, fontWeight: 800, color: "#4A2C16", fontFamily: "'JetBrains Mono',monospace" }}>R$ {fmt(precoPraca)}</span>
+              <span style={{ color: "#A89C8A", fontSize: 12, marginLeft: 6 }}>/saca</span>
+            </div>
+            <div style={{ color: "#6B6052", fontSize: 13, marginTop: 4, fontFamily: "'JetBrains Mono',monospace" }}>US$ {fmt(precoPraca / cambio)}<span style={{ fontFamily: "inherit", color: "#A89C8A", fontSize: 11 }}>/saca</span></div>
           </div>
         </div>
       </div>
