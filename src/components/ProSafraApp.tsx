@@ -185,18 +185,53 @@ function DashSection({title,sub,color,contracts,unit,isDol,defOpen=false}) {
   );
 }
 
-function bzPrecoJusto(praca, COTACOES, BASIS_DATA, DEFAULT_BASIS, eMi, eYr, pMi, pYr){
-  const mercado="Soja Exportação";
+// ===== Regra de vencimento (mês de entrega padrão) =====
+// Até o dia 19: mês corrente. Do dia 20 em diante: mês seguinte. Vale para todos os mercados.
+function bzDefEntrega(){
+  const d=new Date();
+  let mi=d.getMonth(), yr=d.getFullYear();
+  if(d.getDate()>=20){ mi=(mi+1)%12; if(mi===0) yr++; }
+  return {mi,yr};
+}
+// Pagamento = entrega + 30 dias (mês seguinte ao de entrega).
+function bzPagMY(mi,yr){
+  const pmi=(mi+1)%12; const pyr=(mi===11)?yr+1:yr;
+  return {mi:pmi,yr:pyr};
+}
+
+// ===== FONTE ÚNICA DA CONTA DE PREÇO JUSTO =====
+// Toda tela (Dashboard, Preço Justo, etc.) deve calcular por aqui, para nunca divergir.
+// Exportação (soja/milho): (Chicago + basis c/bu) × fator × dólar.
+// Milho B3 (interno): futuro CCM da B3 (R$/saca) + basis (R$/saca), sem dólar.
+function bzCalcPreco(mercado, praca, COTACOES, BASIS_DATA, DEFAULT_BASIS, eMi, eYr, pMi, pYr){
+  const isSoja=mercado==="Soja Exportação";
+  const isB3=mercado==="Milho B3";
   const bKey=praca?`${praca.cidade}-${praca.estado}-${mercado}`:"";
+  const hasBasis=!!BASIS_DATA[bKey];
   const bAll=BASIS_DATA[bKey]||DEFAULT_BASIS;
-  const bM=(bAll&&bAll[eMi])||{medio:-100};
+  const bM=(bAll&&bAll[eMi])||{basis_min:-100,basis_max:-100,medio:-100};
   const allK=Object.keys(COTACOES);
-  const dolKeys=allK.filter(k=>k.includes("DOL"));
-  const csym=findClosest(buildSoja(eMi,eYr),allK,COTACOES);
-  const chi=COTACOES[csym]?COTACOES[csym].lp:1150;
-  const dsym=findClosest(buildDol(pMi,pYr),dolKeys,COTACOES);
-  const dol=COTACOES[dsym]?COTACOES[dsym].lp/1000:5.05;
-  return {pj:calc(chi,bM.medio,dol), csym, chi};
+  const rawCS=isSoja?buildSoja(eMi,eYr):(isB3?buildMilhoB3(eMi,eYr):buildMilho(eMi,eYr));
+  const csym=findClosest(rawCS,isB3?allK.filter(k=>k.includes("CCM")):allK,COTACOES);
+  const ccot=COTACOES[csym];
+  const chi=ccot?ccot.lp:(isSoja?1165:(isB3?67:490));
+  const rawDS=buildDol(pMi,pYr);
+  const dsym=findClosest(rawDS,allK.filter(k=>k.includes("DOL")),COTACOES);
+  const dcot=COTACOES[dsym];
+  const dol=dcot?dcot.lp/1000:5.008;
+  const pMin=isB3?chi+bM.basis_min:calc(chi,bM.basis_min,dol);
+  const pJusto=isB3?chi+bM.medio:calc(chi,bM.medio,dol);
+  const pMax=isB3?chi+bM.basis_max:calc(chi,bM.basis_max,dol);
+  const pMinU=isB3?null:calcUSD(chi,bM.basis_min);
+  const pJustoU=isB3?null:calcUSD(chi,bM.medio);
+  const pMaxU=isB3?null:calcUSD(chi,bM.basis_max);
+  return {pj:pJusto,pMin,pMax,pMinU,pJustoU,pMaxU,chi,dol,csym,dsym,ccot,dcot,rawCS,rawDS,bM,bAll,isSoja,isB3,hasBasis};
+}
+
+// Atalho do Dashboard (soja) — usa a mesma fonte única acima.
+function bzPrecoJusto(praca, COTACOES, BASIS_DATA, DEFAULT_BASIS, eMi, eYr, pMi, pYr){
+  const r=bzCalcPreco("Soja Exportação", praca, COTACOES, BASIS_DATA, DEFAULT_BASIS, eMi, eYr, pMi, pYr);
+  return {pj:r.pj, csym:r.csym, chi:r.chi};
 }
 
 function bzScenarioSignals(eMi,eYr,csym,chi,premiosData,analiseData,fundosData){
@@ -245,10 +280,11 @@ function DashboardPage({goTo, PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, premi
   const addable=availPracas.filter(p=>!(pracaList||[]).includes(p.id));
 
   const now=new Date();
-  const pag30=new Date(now); pag30.setDate(pag30.getDate()+30);
-  const disp=bzPrecoJusto(praca,COTACOES,BASIS_DATA,DEFAULT_BASIS,now.getMonth(),now.getFullYear(),pag30.getMonth(),pag30.getFullYear());
+  const _de=bzDefEntrega();
+  const _dp=bzPagMY(_de.mi,_de.yr);
+  const disp=bzPrecoJusto(praca,COTACOES,BASIS_DATA,DEFAULT_BASIS,_de.mi,_de.yr,_dp.mi,_dp.yr);
   const fut=bzPrecoJusto(praca,COTACOES,BASIS_DATA,DEFAULT_BASIS,2,2027,3,2027);
-  const dispSig=bzScenarioSignals(now.getMonth(),now.getFullYear(),disp.csym,disp.chi,premiosData,analiseData,fundosData);
+  const dispSig=bzScenarioSignals(_de.mi,_de.yr,disp.csym,disp.chi,premiosData,analiseData,fundosData);
   const futSig=bzScenarioSignals(2,2027,fut.csym,fut.chi,premiosData,analiseData,fundosData);
 
   const pj=cenario==="disp"?disp.pj:fut.pj;
@@ -444,12 +480,14 @@ function MercadoPage({goTo, contractsDash}) {
 function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRef, selectPraca}) {
   const [mercado,setMercado]=useState("Soja Exportação");
   const pracaId=pracaRef; const setPracaId=selectPraca;
-  // Default to current month and next month for payment
+  // Mês de entrega padrão: regra do dia 20 (fonte única). Pagamento = entrega + 30 dias.
   const now = new Date();
-  const defMi = now.getMonth();
-  const defYr = now.getFullYear();
-  const defPagMi = (defMi + 1) % 12;
-  const defPagYr = defMi === 11 ? defYr + 1 : defYr;
+  const _de = bzDefEntrega();
+  const defMi = _de.mi;
+  const defYr = _de.yr;
+  const _dp = bzPagMY(defMi,defYr);
+  const defPagMi = _dp.mi;
+  const defPagYr = _dp.yr;
   const [entK,setEntK]=useState(`${defMi}-${defYr}`);
   const [pagK,setPagK]=useState(`${defPagMi}-${defPagYr}`);
   const [offer,setOffer]=useState(0);
@@ -471,32 +509,18 @@ function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRef, 
   const effPracaId=pracaOk?pracaId:(availPracas[0]?.id||pracaId);
   const praca=PRACAS.find(p=>p.id===effPracaId);
   const pLabel=praca?`${praca.cidade} - ${praca.estado}`:"";
-  const bKey=praca?`${praca.cidade}-${praca.estado}-${mercado}`:"";
-  const bAll=BASIS_DATA[bKey]||DEFAULT_BASIS;
-  const bM=bAll[eMi];
+  const _pc=bzCalcPreco(mercado,praca,COTACOES,BASIS_DATA,DEFAULT_BASIS,eMi,eYr,pMi,pYr);
+  const {pMin,pMax,pMinU,pJustoU,pMaxU,chi,dol,csym,dsym,ccot,dcot,bM,bAll}=_pc;
+  const pJusto=_pc.pj;
   const allK=Object.keys(COTACOES);
-  const rawCS=isSoja?buildSoja(eMi,eYr):(isB3?buildMilhoB3(eMi,eYr):buildMilho(eMi,eYr));
-  const csym=findClosest(rawCS,isB3?allK.filter(k=>k.includes("CCM")):allK,COTACOES);
-  const ccot=COTACOES[csym];
-  const chi=ccot?ccot.lp:(isSoja?1165:(isB3?67:490));
   const cCh=ccot?.ch||0; const cChp=ccot?.chp||0;
   const cShort=csym.replace("CBOT:","").replace("BMFBOVESPA:","");
   const cCode=isB3?cShort.charAt(3):cShort.charAt(2);
   const cLabel=`${CODE_NAME[cCode]}/${cShort.slice(-4)}`;
-  const cFB=csym!==rawCS;
-  const rawDS=buildDol(pMi,pYr);
-  const dsym=findClosest(rawDS,allK.filter(k=>k.includes("DOL")),COTACOES);
-  const dcot=COTACOES[dsym];
-  const dol=dcot?dcot.lp/1000:5.008;
+  const cFB=csym!==_pc.rawCS;
   const dCh=dcot?dcot.ch/1000:0; const dChp=dcot?.chp||0;
   const dShort=dsym.replace("BMFBOVESPA:","");
-  const dFB=dsym!==rawDS;
-  const pMin=isB3?chi+bM.basis_min:calc(chi,bM.basis_min,dol);
-  const pJusto=isB3?chi+bM.medio:calc(chi,bM.medio,dol);
-  const pMax=isB3?chi+bM.basis_max:calc(chi,bM.basis_max,dol);
-  const pMinU=isB3?null:calcUSD(chi,bM.basis_min);
-  const pJustoU=isB3?null:calcUSD(chi,bM.medio);
-  const pMaxU=isB3?null:calcUSD(chi,bM.basis_max);
+  const dFB=dsym!==_pc.rawDS;
 
   const dolKeys=allK.filter(k=>k.includes("DOL"));
   const ccmKeys=allK.filter(k=>k.includes("CCM"));
@@ -1845,8 +1869,10 @@ function CambioPage({COTACOES, ptax}) {
 // ═══════════════════════════════════════════════════════════════
 
 function ParidadePage({COTACOES}) {
-  const [entK, setEntK] = useState("4-2026");
-  const [pagK, setPagK] = useState("5-2026");
+  const _de = bzDefEntrega();
+  const _dp = bzPagMY(_de.mi,_de.yr);
+  const [entK, setEntK] = useState(`${_de.mi}-${_de.yr}`);
+  const [pagK, setPagK] = useState(`${_dp.mi}-${_dp.yr}`);
   const [freteRton, setFreteRton] = useState(380);
 
   const [eMi, eYr] = entK.split("-").map(Number);
@@ -2601,8 +2627,10 @@ function OfertasFirmesPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRe
   const [volQtd, setVolQtd] = useState(5000);
   const pracaId=(pracaRef!=null&&PRACAS.some(p=>p.id===pracaRef))?pracaRef:(PRACAS.find(p=>BASIS_DATA[`${p.cidade}-${p.estado}-${mercadoOf}`])?.id ?? PRACAS[0]?.id);
   const setPracaId=selectPraca;
-  const [entK, setEntK] = useState("4-2026");
-  const [pagK, setPagK] = useState("5-2026");
+  const _de = bzDefEntrega();
+  const _dp = bzPagMY(_de.mi,_de.yr);
+  const [entK, setEntK] = useState(`${_de.mi}-${_de.yr}`);
+  const [pagK, setPagK] = useState(`${_dp.mi}-${_dp.yr}`);
   const [modalidade, setModalidade] = useState("FOB");
   const [funrural, setFunrural] = useState("descontado");
   const [coordenadas, setCoordenadas] = useState(""); // lat,lng or Google Maps link
@@ -3699,16 +3727,12 @@ function ResultadoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
   const allK=Object.keys(COTACOES);
   const dolKeys=allK.filter(k=>k.includes("DOL"));
   function precoJusto(eMi,eYr,pMi,pYr){
-    const bM=bAll[eMi]||{medio:-100};
-    const csym=findClosest(buildSoja(eMi,eYr),allK,COTACOES);
-    const chi=COTACOES[csym]?COTACOES[csym].lp:1150;
-    const dsym=findClosest(buildDol(pMi,pYr),dolKeys,COTACOES);
-    const dol=COTACOES[dsym]?COTACOES[dsym].lp/1000:5.05;
-    return calc(chi,bM.medio,dol);
+    return bzCalcPreco(mercado,praca,COTACOES,BASIS_DATA,DEFAULT_BASIS,eMi,eYr,pMi,pYr).pj;
   }
   const now=new Date();
-  const pag30=new Date(now); pag30.setDate(pag30.getDate()+30);
-  const pjDisp=precoJusto(now.getMonth(),now.getFullYear(),pag30.getMonth(),pag30.getFullYear());
+  const _de=bzDefEntrega();
+  const _dp=bzPagMY(_de.mi,_de.yr);
+  const pjDisp=precoJusto(_de.mi,_de.yr,_dp.mi,_dp.yr);
   const pjFut=precoJusto(2,2027,3,2027);
   const pj=cenario==="disp"?pjDisp:pjFut;
 
