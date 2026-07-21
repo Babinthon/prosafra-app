@@ -1,5 +1,5 @@
-import ProSafraApp from "@/components/ProSafraApp";
+import AuthGate from "@/components/AuthGate";
 
 export default function Home() {
-  return <ProSafraApp />;
+  return <AuthGate />;
 }

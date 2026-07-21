@@ -3861,7 +3861,7 @@ function ResultadoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
   );
 }
 
-export default function ProSafraApp() {
+export default function ProSafraApp({ userProfile, onLogout }) {
   const [page,setPage]=useState("dashboard");
   const [sbOpen,setSbOpen]=useState(true);
   const [isMobile,setIsMobile]=useState(false);
@@ -3945,7 +3945,7 @@ export default function ProSafraApp() {
           </div>
         </div>
         <nav style={{flex:1,padding:"12px 8px",overflowY:"auto"}}>
-          {NAV.map(n=>{
+          {NAV.filter(n=>n.id!=="admin"||userProfile?.role==="admin").map(n=>{
             const active=page===n.id;
             const restBg=n.star?"#FCF6EA":"transparent";
             return (
@@ -3963,12 +3963,13 @@ export default function ProSafraApp() {
           );})}
         </nav>
         <div style={{padding:"12px 14px",borderTop:`1px solid ${BZ.borderSoft}`}}>
-          <div style={{display:"flex",alignItems:"center",gap:9}}>
-            <div style={{width:28,height:28,borderRadius:"50%",background:"#F3EADB",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:600,color:BZ.bronze}}>PR</div>
-            <div><div style={{fontSize:11,fontWeight:500,color:BZ.brownDeep}}>Produtor</div>
-              <div style={{fontSize:9,color:BZ.bronze,background:BZ.goldSoft,padding:"1px 6px",borderRadius:3,display:"inline-block",marginTop:1}}>Plano Básico</div>
+          <div style={{display:"flex",alignItems:"center",gap:9,marginBottom:10}}>
+            <div style={{width:28,height:28,borderRadius:"50%",background:"#F3EADB",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:600,color:BZ.bronze,flexShrink:0}}>{(userProfile?.nome||userProfile?.username||"?").slice(0,2).toUpperCase()}</div>
+            <div style={{minWidth:0}}><div style={{fontSize:11,fontWeight:500,color:BZ.brownDeep,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{userProfile?.nome||userProfile?.username||"—"}</div>
+              <div style={{fontSize:9,color:BZ.bronze,background:BZ.goldSoft,padding:"1px 6px",borderRadius:3,display:"inline-block",marginTop:1}}>{userProfile?.role==="admin"?"Administrador":"Produtor"}</div>
             </div>
           </div>
+          <button onClick={()=>{if(onLogout)onLogout();}} style={{width:"100%",padding:"7px 10px",borderRadius:7,border:`1px solid ${BZ.border}`,background:BZ.surfaceAlt,color:BZ.textMute,fontSize:11,fontWeight:600,cursor:"pointer"}}>Sair</button>
         </div>
       </div>
 
@@ -4014,7 +4015,7 @@ export default function ProSafraApp() {
         {page==="paridade"&&<ParidadePage COTACOES={cotacoes}/>}
         {page==="carrego"&&<CustoCarregoPage {...dataProps} {...regionProps}/>}
         {page==="ofertas"&&<OfertasFirmesPage {...dataProps} {...regionProps}/>}
-        {page==="admin"&&<AdminPage/>}
+        {page==="admin"&&userProfile?.role==="admin"&&<AdminPage/>}
         {!["dashboard","preco-justo","premios","analise","fundamentos","fundos","cambio","paridade","carrego","ofertas","mercado","admin"].includes(page)&&(
           <div style={{padding:"60px 28px",textAlign:"center"}}>
             <div style={{fontSize:40,marginBottom:16,opacity:0.3,color:BZ.bronze}}>{NAV.find(n=>n.id===page)?.icon}</div>
