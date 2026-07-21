@@ -19,6 +19,7 @@ const SOJA_MAP = {0:"F",1:"H",2:"H",3:"K",4:"K",5:"N",6:"N",7:"Q",8:"U",9:"X",10
 const MILHO_MAP = {0:"H",1:"H",2:"H",3:"K",4:"K",5:"N",6:"N",7:"U",8:"U",9:"Z",10:"Z",11:"Z"};
 const CODE_NAME = {F:"Jan",G:"Fev",H:"Mar",J:"Abr",K:"Mai",M:"Jun",N:"Jul",Q:"Ago",U:"Set",V:"Out",X:"Nov",Z:"Dez"};
 const DOL_CODE = {0:"F",1:"G",2:"H",3:"J",4:"K",5:"M",6:"N",7:"Q",8:"U",9:"V",10:"X",11:"Z"};
+const DOL_CODE_REV = {F:0,G:1,H:2,J:3,K:4,M:5,N:6,Q:7,U:8,V:9,X:10,Z:11};
 
 const buildSoja = (mi,yr) => { const c=SOJA_MAP[mi]; return `CBOT:ZS${c}${mi===11?yr+1:yr}`; };
 const buildMilho = (mi,yr) => `CBOT:ZC${MILHO_MAP[mi]}${yr}`;
@@ -1671,33 +1672,29 @@ function PosicaoFundosPage({fundosData}) {
 // CÂMBIO PROJETADO PAGE
 // ═══════════════════════════════════════════════════════════════
 
-const DOL_CONTRACTS = [
-  { sym: "BMFBOVESPA:DOLN2026", mo: "Jul/26", mes: "Julho 2026" },
-  { sym: "BMFBOVESPA:DOLQ2026", mo: "Ago/26", mes: "Agosto 2026" },
-  { sym: "BMFBOVESPA:DOLU2026", mo: "Set/26", mes: "Setembro 2026" },
-  { sym: "BMFBOVESPA:DOLV2026", mo: "Out/26", mes: "Outubro 2026" },
-  { sym: "BMFBOVESPA:DOLX2026", mo: "Nov/26", mes: "Novembro 2026" },
-  { sym: "BMFBOVESPA:DOLZ2026", mo: "Dez/26", mes: "Dezembro 2026" },
-  { sym: "BMFBOVESPA:DOLF2027", mo: "Jan/27", mes: "Janeiro 2027" },
-  { sym: "BMFBOVESPA:DOLG2027", mo: "Fev/27", mes: "Fevereiro 2027" },
-  { sym: "BMFBOVESPA:DOLH2027", mo: "Mar/27", mes: "Março 2027" },
-  { sym: "BMFBOVESPA:DOLJ2027", mo: "Abr/27", mes: "Abril 2027" },
-  { sym: "BMFBOVESPA:DOLK2027", mo: "Mai/27", mes: "Maio 2027" },
-  { sym: "BMFBOVESPA:DOLM2027", mo: "Jun/27", mes: "Junho 2027" },
-  { sym: "BMFBOVESPA:DOLN2027", mo: "Jul/27", mes: "Julho 2027" },
-  { sym: "BMFBOVESPA:DOLQ2027", mo: "Ago/27", mes: "Agosto 2027" },
-  { sym: "BMFBOVESPA:DOLV2027", mo: "Out/27", mes: "Outubro 2027" },
-  { sym: "BMFBOVESPA:DOLF2028", mo: "Jan/28", mes: "Janeiro 2028" },
-];
-
 function CambioPage({COTACOES, ptax}) {
-  const contracts = DOL_CONTRACTS.map(c => {
-    const cot = COTACOES[c.sym];
-    const rate = cot ? cot.lp / 1000 : null;
-    const ch = cot ? cot.ch / 1000 : 0;
-    const chp = cot?.chp || 0;
-    return { ...c, rate, ch, chp };
-  }).filter(c => c.rate !== null);
+  const nowD = new Date();
+  const curOrd = nowD.getFullYear() * 12 + nowD.getMonth();
+  const contracts = useMemo(() => {
+    // Lê os vencimentos direto do feed (COTACOES): mostra todos os disponíveis,
+    // descarta os vencidos/vencendo (contrato DOL da B3 expira no 1º dia útil do mês).
+    const arr = [];
+    Object.keys(COTACOES).forEach(sym => {
+      const m = sym.match(/^BMFBOVESPA:DOL([FGHJKMNQUVXZ])(\d{4})$/);
+      if (!m) return;
+      const mi = DOL_CODE_REV[m[1]];
+      const yr = parseInt(m[2], 10);
+      if (mi == null) return;
+      const ord = yr * 12 + mi;
+      if (ord <= curOrd) return;
+      const cot = COTACOES[sym];
+      const rate = cot ? cot.lp / 1000 : null;
+      if (rate == null) return;
+      arr.push({ sym, mi, yr, ord, mo: `${MESES_SHORT[mi]}/${String(yr).slice(-2)}`, mes: `${MESES[mi]} ${yr}`, rate, ch: cot ? cot.ch / 1000 : 0, chp: cot?.chp || 0 });
+    });
+    arr.sort((a, b) => a.ord - b.ord);
+    return arr;
+  }, [COTACOES, curOrd]);
 
   const rates = contracts.map(c => c.rate);
   const minR = Math.min(...rates);
@@ -1721,7 +1718,7 @@ function CambioPage({COTACOES, ptax}) {
   const pathD = contracts.map((c, i) => `${i === 0 ? "M" : "L"}${toX(i).toFixed(1)},${toY(c.rate).toFixed(1)}`).join(" ");
   const areaD = pathD + ` L${toX(contracts.length - 1).toFixed(1)},${(padT + plotH).toFixed(1)} L${toX(0).toFixed(1)},${(padT + plotH).toFixed(1)} Z`;
 
-  const isUp = contracts[contracts.length - 1].rate > contracts[0].rate;
+  const isUp = contracts.length > 1 ? contracts[contracts.length - 1].rate > contracts[0].rate : false;
   const curveColor = isUp ? "#B0503F" : "#4E7C5A";
 
   return (
