@@ -1659,10 +1659,10 @@ function PosicaoFundosPage({fundosData}) {
       <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "18px 22px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
           <div style={{ color: "#4A2C16", fontSize: 13, fontWeight: 600 }}>Leitura do posicionamento</div>
-          <span style={{ color: "#C2B7A6", fontSize: 9 }}>Atualizado {FUNDOS_DATA.leituraDate}</span>
+          <span style={{ color: "#C2B7A6", fontSize: 9 }}>Atualizado {(fundosData && fundosData.leituraDate) || FUNDOS_DATA.leituraDate}</span>
         </div>
-        <div style={{ color: "#6B6052", fontSize: 12, lineHeight: 1.7 }}>{FUNDOS_DATA.leitura}</div>
-        <div style={{ color: "#C2B7A6", fontSize: 9, marginTop: 10 }}>Fonte: {FUNDOS_DATA.fonte}</div>
+        <div style={{ color: "#6B6052", fontSize: 12, lineHeight: 1.7 }}>{(fundosData && fundosData.leitura) || FUNDOS_DATA.leitura}</div>
+        <div style={{ color: "#C2B7A6", fontSize: 9, marginTop: 10 }}>Fonte: {(fundosData && fundosData.fonte) || FUNDOS_DATA.fonte}</div>
       </div>
     </div>
   );
@@ -3047,6 +3047,10 @@ function AdminPage() {
   const [fHist, setFHist] = useState([]);
   const [fMsg, setFMsg] = useState("");
   const [fLoading, setFLoading] = useState(false);
+  const [fLeitura, setFLeitura] = useState("");
+  const [fLeituraDate, setFLeituraDate] = useState("");
+  const [flMsg, setFlMsg] = useState("");
+  const [flLoading, setFlLoading] = useState(false);
 
   // Premios state
   const [pItems, setPItems] = useState([]);
@@ -3095,7 +3099,7 @@ function AdminPage() {
         body: JSON.stringify({ password: pw, action: "auth_check" }),
       });
       const j = await res.json();
-      if (j.success) { setAuthed(true); loadFundos(); loadPremios(); loadAnalise(); loadFundamentos(); }
+      if (j.success) { setAuthed(true); loadFundos(); loadFundosLeitura(); loadPremios(); loadAnalise(); loadFundamentos(); }
       else setAuthErr(j.error || "Senha incorreta");
     } catch { setAuthErr("Erro de conexão"); }
   };
@@ -3106,6 +3110,27 @@ function AdminPage() {
       const j = await res.json();
       if (j.data) setFHist(j.data);
     } catch {}
+  };
+
+  const loadFundosLeitura = async () => {
+    try {
+      const res = await fetch("/api/admin?type=fundos_leitura");
+      const j = await res.json();
+      if (j.data) { setFLeitura(j.data.leitura || ""); setFLeituraDate(j.data.leitura_date || ""); }
+    } catch {}
+  };
+
+  const saveFundosLeitura = async () => {
+    setFlLoading(true); setFlMsg("");
+    try {
+      const res = await fetch("/api/admin", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: pw, action: "fundos_leitura_upsert", data: { leitura: fLeitura, leitura_date: fLeituraDate } }),
+      });
+      const j = await res.json();
+      if (j.success) setFlMsg("✓ Leitura salva"); else setFlMsg(`Erro: ${j.error}`);
+    } catch { setFlMsg("Erro de conexão"); }
+    setFlLoading(false);
   };
 
   const saveFundos = async () => {
@@ -3342,6 +3367,22 @@ function AdminPage() {
             <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
               <button onClick={saveFundos} disabled={fLoading} style={{ ...btnStyle, opacity: fLoading ? 0.6 : 1 }}>{fLoading ? "Salvando..." : "Salvar"}</button>
               {fMsg && <span style={{ fontSize: 12, color: fMsg.startsWith("✓") ? "#4E7C5A" : "#B0503F" }}>{fMsg}</span>}
+            </div>
+          </div>
+          <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 12, padding: 24, marginBottom: 20 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>Leitura do posicionamento</div>
+            <div style={{ color: "#8A7E6F", fontSize: 11, marginBottom: 16 }}>Texto que aparece na aba Posição Fundos. Fonte: CFTC Commitments of Traders — Managed Money.</div>
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ color: "#8A7E6F", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Leitura</label>
+              <textarea value={fLeitura} onChange={e => setFLeitura(e.target.value)} rows={5} placeholder="Fundos seguem ampliando posição comprada..." style={{ ...inputStyle, width: "100%", resize: "vertical", fontFamily: "inherit", lineHeight: 1.6 }} />
+            </div>
+            <div style={{ marginBottom: 14, maxWidth: 220 }}>
+              <label style={{ color: "#8A7E6F", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Atualizado em</label>
+              <input value={fLeituraDate} onChange={e => setFLeituraDate(e.target.value)} placeholder="22/04/2026" style={inputStyle} />
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <button onClick={saveFundosLeitura} disabled={flLoading} style={{ ...btnStyle, opacity: flLoading ? 0.6 : 1 }}>{flLoading ? "Salvando..." : "Salvar leitura"}</button>
+              {flMsg && <span style={{ fontSize: 12, color: flMsg.startsWith("✓") ? "#4E7C5A" : "#B0503F" }}>{flMsg}</span>}
             </div>
           </div>
           <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 12, padding: 24 }}>

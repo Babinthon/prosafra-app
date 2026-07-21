@@ -43,6 +43,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true });
     }
 
+    if (action === "fundos_leitura_upsert") {
+      const { error } = await supabase.from("fundos_leitura").upsert(
+        { id: 1, leitura: data.leitura || "", leitura_date: data.leitura_date || "", fonte: data.fonte || "CFTC Commitments of Traders — Managed Money", updated_at: new Date().toISOString() },
+        { onConflict: "id" }
+      );
+      if (error) return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+      return NextResponse.json({ success: true });
+    }
+
     // ─── PRÊMIOS PORTO ───
     if (action === "premios_upsert") {
       const today = data.data_ref || new Date().toISOString().slice(0, 10);
@@ -179,6 +188,16 @@ export async function GET(request: Request) {
       .order("data_ref", { ascending: false })
       .limit(100);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ data });
+  }
+
+  if (type === "fundos_leitura") {
+    const { data, error } = await supabase
+      .from("fundos_leitura")
+      .select("leitura, leitura_date, fonte")
+      .eq("id", 1)
+      .single();
+    if (error) return NextResponse.json({ data: null });
     return NextResponse.json({ data });
   }
 

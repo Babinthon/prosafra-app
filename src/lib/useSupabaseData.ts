@@ -548,7 +548,21 @@ export function useSupabaseData(): SupabaseData {
 
       if (!fundosErr && fundosRows && fundosRows.length > 0) {
         const built = buildFundosData(fundosRows as FundosPosRow[]);
-        if (built) setFundosData(built);
+        if (built) {
+          try {
+            const { data: flRow } = await supabase
+              .from("fundos_leitura")
+              .select("leitura, leitura_date, fonte")
+              .eq("id", 1)
+              .single();
+            if (flRow) {
+              (built as any).leitura = flRow.leitura || "";
+              (built as any).leituraDate = flRow.leitura_date || "";
+              (built as any).fonte = flRow.fonte || "";
+            }
+          } catch (e) { /* tabela pode não existir ainda: cai no texto padrão */ }
+          setFundosData(built);
+        }
       }
 
       // ─── 6. PRÊMIOS PORTO ───
