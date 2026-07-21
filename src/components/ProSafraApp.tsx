@@ -2004,7 +2004,6 @@ function ParidadePage({COTACOES}) {
               <input type="number" value={freteRton} onChange={e => setFreteRton(parseFloat(e.target.value) || 0)}
                 style={{ background: "#F6F3ED", border: "1px solid #E4DECF", borderRadius: "0 7px 7px 0", color: "#4A2C16", padding: "9px 10px", fontSize: 15, fontFamily: "'JetBrains Mono',monospace", fontWeight: 600, outline: "none", width: 100 }} />
               <span style={{ color: "#A89C8A", fontSize: 11, marginLeft: 6 }}>/ton</span>
-              <span style={{ color: "#C2B7A6", fontSize: 10, marginLeft: 12 }}>= R$ {fmt(freteSaca)}/saca</span>
             </div>
           </div>
           <div style={{ background: "rgba(69,123,157,0.08)", border: "1px solid rgba(69,123,157,0.2)", borderRadius: 8, padding: "16px 22px" }}>
