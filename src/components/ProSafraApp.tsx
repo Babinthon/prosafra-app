@@ -2658,9 +2658,9 @@ function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRef
 // OFERTAS FIRMES PAGE
 // ═══════════════════════════════════════════════════════════════
 
-function OfertasFirmesPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRef, selectPraca}) {
-  const [nome, setNome] = useState("");
-  const [fazenda, setFazenda] = useState("");
+function OfertasFirmesPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRef, selectPraca, userProfile}) {
+  const [nome, setNome] = useState(userProfile?.nome || "");
+  const [fazenda, setFazenda] = useState(userProfile?.fazenda || "");
   const [mercadoOf, setMercadoOf] = useState("Soja Exportação");
   const [volUnit, setVolUnit] = useState("sacas");
   const [volQtd, setVolQtd] = useState(5000);
@@ -4170,7 +4170,7 @@ export default function ProSafraApp({ userProfile, onLogout }) {
         {page==="cambio"&&<CambioPage COTACOES={cotacoes} ptax={ptax}/>}
         {page==="paridade"&&<ParidadePage COTACOES={cotacoes} premiosData={premiosData}/>}
         {page==="carrego"&&<CustoCarregoPage {...dataProps} {...regionProps}/>}
-        {page==="ofertas"&&<OfertasFirmesPage {...dataProps} {...regionProps}/>}
+        {page==="ofertas"&&<OfertasFirmesPage {...dataProps} {...regionProps} userProfile={userProfile}/>}
         {page==="admin"&&userProfile?.role==="admin"&&<AdminPage/>}
         {!["dashboard","preco-justo","premios","analise","fundamentos","fundos","cambio","paridade","carrego","ofertas","mercado","admin"].includes(page)&&(
           <div style={{padding:"60px 28px",textAlign:"center"}}>

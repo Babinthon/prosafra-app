@@ -111,7 +111,7 @@ export default function AuthGate() {
     (async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("username, nome, role, ativo, regiao")
+        .select("username, nome, role, ativo, regiao, fazenda, municipio, estado")
         .eq("id", userId)
         .single();
       if (cancel) return;
