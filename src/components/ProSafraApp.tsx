@@ -2179,10 +2179,16 @@ function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRef
   // Ponto 0x0: preço que precisa vender no futuro para empatar
   const precoViab = preco + custoTotal;
 
-  // Tabela de ganho: R$1 a R$10 acima do 0x0
+  // Moeda de exibição: em US$, converte os valores (que estão em R$) pelo dólar de hoje (Opção A).
+  const isUsd = moeda === "USD";
+  const moedaSym = isUsd ? "US$" : "R$";
+  const toCur = (brl) => isUsd ? brl / cambioAtual : brl;
+  const precoViabDisp = toCur(precoViab);
+
+  // Tabela de ganho: +1 a +10 (na moeda escolhida) acima do 0x0
   const ganhoTable = [];
   for (let i = 0; i <= 10; i++) {
-    const precoVenda = precoViab + i;
+    const precoVenda = precoViabDisp + i;
     const ganhaSc = i;
     const ganhaTotal = i * volume;
     ganhoTable.push({ acima: i, precoVenda, ganhaSc, ganhaTotal });
@@ -2373,15 +2379,15 @@ function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRef
       <div style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: 10, padding: "18px 22px", marginBottom: 14, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
           <div style={{ color: "#D5A246", fontSize: 13, fontWeight: 700 }}>Ponto de equilíbrio (0×0)</div>
-          <div style={{ color: "#D5A246", fontSize: 10, opacity: 0.7, marginTop: 2 }}>Preço atual (R$ {fmt(preco)}) + custos de carrego (R$ {fmt(custoTotal)}) = preço mínimo para não perder</div>
+          <div style={{ color: "#D5A246", fontSize: 10, opacity: 0.7, marginTop: 2 }}>Preço atual ({moedaSym} {fmt(toCur(preco))}) + custos de carrego ({moedaSym} {fmt(toCur(custoTotal))}) = preço mínimo para não perder</div>
         </div>
-        <div style={{ fontSize: 30, fontWeight: 800, color: "#D5A246", fontFamily: "'JetBrains Mono',monospace" }}>R$ {fmt(precoViab)}/sc</div>
+        <div style={{ fontSize: 30, fontWeight: 800, color: "#D5A246", fontFamily: "'JetBrains Mono',monospace" }}>{moedaSym} {fmt(precoViabDisp)}/sc</div>
       </div>
 
       {/* Tabela de ganho */}
       <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "18px 22px", marginBottom: 14 }}>
         <div style={{ color: "#4A2C16", fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Se vender acima do equilíbrio</div>
-        <div style={{ color: "#8A7E6F", fontSize: 10, marginBottom: 12 }}>Quanto rende cada real acima do 0×0 ({volume.toLocaleString("pt-BR")} sacas)</div>
+        <div style={{ color: "#8A7E6F", fontSize: 10, marginBottom: 12 }}>Quanto rende cada {isUsd ? "dólar" : "real"} acima do 0×0 ({volume.toLocaleString("pt-BR")} sacas)</div>
 
         <div style={{ display: "grid", gridTemplateColumns: "80px 1fr 120px 1fr", gap: 0, fontSize: 12 }}>
           {["Acima", "Preço venda", "Ganho/sc", "Ganho total"].map(h => (
@@ -2390,16 +2396,16 @@ function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRef
           {ganhoTable.map((g, i) => (
             <React.Fragment key={i}>
               <div style={{ padding: "7px 10px", borderBottom: "1px solid #F2EEE6", color: i === 0 ? "#D5A246" : "#6B6052", fontWeight: i === 0 ? 600 : 400 }}>
-                {i === 0 ? "0×0" : `+R$ ${i}`}
+                {i === 0 ? "0×0" : `+${moedaSym} ${i}`}
               </div>
               <div style={{ padding: "7px 10px", borderBottom: "1px solid #F2EEE6", fontFamily: "'JetBrains Mono',monospace", fontWeight: 600, color: i === 0 ? "#D5A246" : "#4A2C16" }}>
-                R$ {fmt(g.precoVenda)}
+                {moedaSym} {fmt(g.precoVenda)}
               </div>
               <div style={{ padding: "7px 10px", borderBottom: "1px solid #F2EEE6", fontFamily: "'JetBrains Mono',monospace", color: i === 0 ? "#D5A246" : "#4E7C5A" }}>
-                {i === 0 ? "—" : `+R$ ${fmt(g.ganhaSc)}`}
+                {i === 0 ? "—" : `+${moedaSym} ${fmt(g.ganhaSc)}`}
               </div>
               <div style={{ padding: "7px 10px", borderBottom: "1px solid #F2EEE6", fontFamily: "'JetBrains Mono',monospace", color: i === 0 ? "#D5A246" : "#4E7C5A" }}>
-                {i === 0 ? "—" : `+R$ ${g.ganhaTotal.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}`}
+                {i === 0 ? "—" : `+${moedaSym} ${g.ganhaTotal.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}`}
               </div>
             </React.Fragment>
           ))}
