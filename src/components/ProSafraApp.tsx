@@ -1865,7 +1865,7 @@ function CambioPage({COTACOES, ptax}) {
 // PARIDADE DE EXPORTAÇÃO PAGE
 // ═══════════════════════════════════════════════════════════════
 
-function ParidadePage({COTACOES}) {
+function ParidadePage({COTACOES, premiosData}) {
   const _de = bzDefEntrega();
   const _dp = bzPagMY(_de.mi,_de.yr);
   const [entK, setEntK] = useState(`${_de.mi}-${_de.yr}`);
@@ -1894,14 +1894,14 @@ function ParidadePage({COTACOES}) {
   const cambio = dcot ? dcot.lp / 1000 : 5.008;
   const dShort = dsym.replace("BMFBOVESPA:", "");
 
-  // Prêmio Brasil — fundador lança por mês de embarque (admin)
-  // In production: query Supabase premios_porto where mes_embarque = eMi, ano = eYr
-  const PREMIOS_POR_MES = {
-    "4-2026": 32.7, "5-2026": 30.0, "6-2026": 50.7,
-    "7-2026": 75.0, "8-2026": 100.0,
-    "1-2027": 22.0, "2-2027": -7.3, "3-2027": -6.0, "4-2027": 10.0,
-  };
-  const premioBrasil = PREMIOS_POR_MES[entK] ?? 30.0;
+  // Prêmio Brasil — vem do que o fundador lança na aba Prêmios Porto (banco), casando o mês de embarque.
+  const _premList = (premiosData && premiosData.atual) ? premiosData.atual : [];
+  const _premExato = _premList.find(p => p.mes_idx === eMi && p.ano === eYr);
+  const _premProx = (!_premExato && _premList.length)
+    ? _premList.slice().sort((a, b) => Math.abs((a.ano * 12 + a.mes_idx) - (eYr * 12 + eMi)) - Math.abs((b.ano * 12 + b.mes_idx) - (eYr * 12 + eMi)))[0]
+    : null;
+  const premioBrasil = _premExato ? _premExato.venda : (_premProx ? _premProx.venda : 30.0);
+  const premioAprox = !_premExato && !!_premProx; // usou o mês mais próximo, não o exato
 
   // Constants
   const FATOR_CBU_USD_TON = 0.367437;
@@ -1963,7 +1963,7 @@ function ParidadePage({COTACOES}) {
         <div style={{ display: "flex", gap: 16, marginLeft: "auto", alignItems: "center", fontSize: 10, color: "#A89C8A" }}>
           <span>Chicago: {cLabel} ({fmt(chicagoCbu, 0)} c/bu)</span>
           <span>Dólar: {dShort} (R$ {fmt(cambio, 4)})</span>
-          <span>Prêmio: {fmt(premioBrasil, 1)} c/bu</span>
+          <span>Prêmio: {fmt(premioBrasil, 1)} c/bu{premioAprox ? " (mês próximo)" : ""}</span>
         </div>
       </div>
 
@@ -3971,6 +3971,14 @@ function ResultadoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS}) {
 
 export default function ProSafraApp({ userProfile, onLogout }) {
   const [page,setPage]=useState("dashboard");
+  // Lembrar a última aba: ao recarregar (troca de app no celular, F5), volta pra onde estava.
+  useEffect(()=>{
+    try{
+      const saved=localStorage.getItem("bz_page");
+      if(saved && NAV.some(n=>n.id===saved && (n.id!=="admin"||userProfile?.role==="admin"))){ setPage(saved); }
+    }catch(e){}
+  },[]);
+  useEffect(()=>{ try{ localStorage.setItem("bz_page",page); }catch(e){} },[page]);
   const [sbOpen,setSbOpen]=useState(true);
   const [isMobile,setIsMobile]=useState(false);
   useEffect(()=>{
@@ -4120,7 +4128,7 @@ export default function ProSafraApp({ userProfile, onLogout }) {
         {page==="fundamentos"&&<FundamentosPage fundamentosData={fundamentosData}/>}
         {page==="fundos"&&<PosicaoFundosPage fundosData={fundosData}/>}
         {page==="cambio"&&<CambioPage COTACOES={cotacoes} ptax={ptax}/>}
-        {page==="paridade"&&<ParidadePage COTACOES={cotacoes}/>}
+        {page==="paridade"&&<ParidadePage COTACOES={cotacoes} premiosData={premiosData}/>}
         {page==="carrego"&&<CustoCarregoPage {...dataProps} {...regionProps}/>}
         {page==="ofertas"&&<OfertasFirmesPage {...dataProps} {...regionProps}/>}
         {page==="admin"&&userProfile?.role==="admin"&&<AdminPage/>}
