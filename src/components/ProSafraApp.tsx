@@ -3108,6 +3108,12 @@ function AdminPage() {
   const [prodList, setProdList] = useState([]);
   const [prodMsg, setProdMsg] = useState("");
   const [prodLoading, setProdLoading] = useState(false);
+  // Praças & Basis
+  const [bpPracas, setBpPracas] = useState([]);
+  const [bpCidade, setBpCidade] = useState("");
+  const [bpRows, setBpRows] = useState([]);
+  const [bpMsg, setBpMsg] = useState("");
+  const [bpLoading, setBpLoading] = useState(false);
 
   // Premios state
   const [pItems, setPItems] = useState([]);
@@ -3156,7 +3162,7 @@ function AdminPage() {
         body: JSON.stringify({ password: pw, action: "auth_check" }),
       });
       const j = await res.json();
-      if (j.success) { setAuthed(true); loadFundos(); loadFundosLeitura(); loadPremios(); loadAnalise(); loadFundamentos(); loadProdutores(); }
+      if (j.success) { setAuthed(true); loadFundos(); loadFundosLeitura(); loadPremios(); loadAnalise(); loadFundamentos(); loadProdutores(); loadPracasList(); }
       else setAuthErr(j.error || "Senha incorreta");
     } catch { setAuthErr("Erro de conexão"); }
   };
@@ -3218,6 +3224,35 @@ function AdminPage() {
     const nova = typeof window !== "undefined" ? window.prompt("Nova senha para este produtor:") : null;
     if (!nova) return;
     try { const res = await fetch("/api/admin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: pw, action: "produtor_reset_senha", data: { id, senha: nova } }) }); const j = await res.json(); window.alert(j.success ? "Senha alterada." : `Erro: ${j.error}`); } catch { window.alert("Erro de conexão"); }
+  };
+
+  const loadPracasList = async () => {
+    try { const res = await fetch("/api/admin?type=pracas_list"); const j = await res.json(); if (j.data) setBpPracas(j.data); } catch {}
+  };
+  const loadBasisPraca = async (cidade) => {
+    setBpCidade(cidade); setBpRows([]); setBpMsg("");
+    if (!cidade) return;
+    setBpLoading(true);
+    try {
+      const res = await fetch(`/api/admin?type=basis_praca&cidade=${encodeURIComponent(cidade)}`);
+      const j = await res.json();
+      const rows = (j.data || []).map(r => ({ id: r.id, mercado: r.mercado, mes_referencia: r.mes_referencia, basis_min: String(r.basis_min), basis_max: String(r.basis_max), medio: String(r.medio) }));
+      setBpRows(rows);
+    } catch { setBpMsg("Erro ao carregar"); }
+    setBpLoading(false);
+  };
+  const setBpCell = (id, field, value) => {
+    setBpRows(rows => rows.map(r => r.id === id ? { ...r, [field]: value } : r));
+  };
+  const saveBasis = async () => {
+    setBpLoading(true); setBpMsg("");
+    try {
+      const payload = bpRows.map(r => ({ id: r.id, basis_min: parseFloat(r.basis_min) || 0, basis_max: parseFloat(r.basis_max) || 0, medio: parseFloat(r.medio) || 0 }));
+      const res = await fetch("/api/admin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: pw, action: "basis_update", data: { rows: payload } }) });
+      const j = await res.json();
+      if (j.success) setBpMsg(`✓ Salvo (${j.updated} linhas)`); else setBpMsg(`Erro: ${j.error}`);
+    } catch { setBpMsg("Erro de conexão"); }
+    setBpLoading(false);
   };
 
   const saveFundos = async () => {
@@ -3424,7 +3459,7 @@ function AdminPage() {
 
       {/* Tabs */}
       <div style={{ display: "flex", gap: 6, marginBottom: 24 }}>
-        {[{ id: "fundos", label: "Posição Fundos" }, { id: "premios", label: "Prêmios Porto" }, { id: "analise", label: "Análise Técnica" }, { id: "usda", label: "Fundamentos USDA" }, { id: "acessos", label: "Acessos" }].map(t => (
+        {[{ id: "fundos", label: "Posição Fundos" }, { id: "premios", label: "Prêmios Porto" }, { id: "analise", label: "Análise Técnica" }, { id: "usda", label: "Fundamentos USDA" }, { id: "acessos", label: "Acessos" }, { id: "basis", label: "Praças & Basis" }].map(t => (
           <div key={t.id} onClick={() => setTab(t.id)} style={{
             padding: "8px 20px", borderRadius: 7, cursor: "pointer", fontSize: 12, fontWeight: 600,
             background: tab === t.id ? "rgba(230,57,70,0.1)" : "#F5F1EA",
@@ -3433,6 +3468,66 @@ function AdminPage() {
           }}>{t.label}</div>
         ))}
       </div>
+
+      {/* ═══ PRAÇAS & BASIS TAB ═══ */}
+      {tab === "basis" && (
+        <div>
+          <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 12, padding: 24, marginBottom: 20 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>Praças & Basis</div>
+            <div style={{ color: "#8A7E6F", fontSize: 11, marginBottom: 16 }}>Escolha a praça, ajuste os valores de basis (mín / máx / médio) e salve. Linhas em vermelho têm mín maior que máx ou médio fora da faixa — possível erro (ex.: 20 que deveria ser -20).</div>
+            <div style={{ maxWidth: 340 }}>
+              <label style={admLbl}>Praça</label>
+              <select value={bpCidade} onChange={e => loadBasisPraca(e.target.value)} style={inputStyle}>
+                <option value="">— selecione uma praça —</option>
+                {bpPracas.map((p, i) => <option key={i} value={p.cidade}>{p.cidade_estado || `${p.cidade} - ${p.estado}`}</option>)}
+              </select>
+            </div>
+          </div>
+
+          {bpLoading && bpRows.length === 0 && <div style={{ color: "#8A7E6F", fontSize: 12, padding: 12 }}>Carregando...</div>}
+
+          {bpCidade && bpRows.length > 0 && (() => {
+            const MES_ORD = { jan: 0, fev: 1, mar: 2, abr: 3, mai: 4, jun: 5, jul: 6, ago: 7, set: 8, out: 9, nov: 10, dez: 11 };
+            const mesOrd = (ref) => { const k = (ref || "").slice(0, 3).toLowerCase(); return MES_ORD[k] != null ? MES_ORD[k] : 99; };
+            const MERC_NOME = { soja_export: "Soja Exportação", milho_export: "Milho Exportação", milho_interno: "Milho B3" };
+            const mercados = Array.from(new Set(bpRows.map(r => r.mercado)));
+            return (
+              <div>
+                {mercados.map(merc => {
+                  const rows = bpRows.filter(r => r.mercado === merc).slice().sort((a, b) => mesOrd(a.mes_referencia) - mesOrd(b.mes_referencia));
+                  return (
+                    <div key={merc} style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 12, padding: 20, marginBottom: 16 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "#B67A33", marginBottom: 12 }}>{MERC_NOME[merc] || merc}</div>
+                      <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr 1fr", gap: 8, fontSize: 9, color: "#8A7E6F", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>
+                        <div>Mês</div><div style={{ textAlign: "center" }}>Mín</div><div style={{ textAlign: "center" }}>Máx</div><div style={{ textAlign: "center" }}>Médio</div>
+                      </div>
+                      {rows.map(r => {
+                        const mn = parseFloat(r.basis_min), mx = parseFloat(r.basis_max), md = parseFloat(r.medio);
+                        const suspeito = (!isNaN(mn) && !isNaN(mx) && mn > mx) || (!isNaN(md) && !isNaN(mn) && !isNaN(mx) && (md < mn || md > mx));
+                        const inp = { width: "100%", boxSizing: "border-box", textAlign: "center", background: suspeito ? "#FBF0EE" : "#F6F3ED", border: `1px solid ${suspeito ? "#E2B8AE" : "#E4DECF"}`, borderRadius: 6, padding: "6px 4px", fontSize: 13, fontFamily: "'JetBrains Mono',monospace", color: "#4A2C16", outline: "none" };
+                        return (
+                          <div key={r.id} style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr 1fr", gap: 8, alignItems: "center", padding: "3px 0" }}>
+                            <div style={{ fontSize: 12, color: suspeito ? "#B0503F" : "#4A2C16", fontWeight: suspeito ? 600 : 400 }}>{r.mes_referencia}{suspeito ? " ⚠" : ""}</div>
+                            <input type="number" step="0.5" value={r.basis_min} onChange={e => setBpCell(r.id, "basis_min", e.target.value)} style={inp} />
+                            <input type="number" step="0.5" value={r.basis_max} onChange={e => setBpCell(r.id, "basis_max", e.target.value)} style={inp} />
+                            <input type="number" step="0.5" value={r.medio} onChange={e => setBpCell(r.id, "medio", e.target.value)} style={inp} />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+                <div style={{ display: "flex", alignItems: "center", gap: 14, position: "sticky", bottom: 0, background: "#F7F7F5", padding: "12px 0", borderTop: "1px solid #ECE7DD" }}>
+                  <button onClick={saveBasis} disabled={bpLoading} style={{ ...btnStyle, opacity: bpLoading ? 0.6 : 1 }}>{bpLoading ? "Salvando..." : "Salvar alterações"}</button>
+                  {bpMsg && <span style={{ fontSize: 12, color: bpMsg.startsWith("✓") ? "#4E7C5A" : "#B0503F" }}>{bpMsg}</span>}
+                </div>
+              </div>
+            );
+          })()}
+
+          {bpCidade && !bpLoading && bpRows.length === 0 && <div style={{ color: "#A89C8A", fontSize: 12, padding: 12 }}>Sem basis cadastrado para esta praça.</div>}
+        </div>
+      )}
 
       {/* ═══ ACESSOS TAB ═══ */}
       {tab === "acessos" && (

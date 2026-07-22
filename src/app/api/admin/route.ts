@@ -205,6 +205,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true });
     }
 
+    if (action === "basis_update") {
+      const rows = Array.isArray(data.rows) ? data.rows : [];
+      let n = 0;
+      for (const r of rows) {
+        if (r.id == null) continue;
+        const { error } = await supabase
+          .from("basis_historico")
+          .update({ basis_min: Number(r.basis_min), basis_max: Number(r.basis_max), medio: Number(r.medio) })
+          .eq("id", r.id);
+        if (error) return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+        n++;
+      }
+      return NextResponse.json({ success: true, updated: n });
+    }
+
     return NextResponse.json({ error: "Ação desconhecida" }, { status: 400 });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
@@ -214,6 +229,26 @@ export async function POST(request: Request) {
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const type = url.searchParams.get("type");
+
+  if (type === "pracas_list") {
+    const { data, error } = await supabase
+      .from("pracas")
+      .select("cidade, estado, cidade_estado")
+      .order("cidade", { ascending: true });
+    if (error) return NextResponse.json({ data: [] });
+    return NextResponse.json({ data });
+  }
+
+  if (type === "basis_praca") {
+    const cidade = url.searchParams.get("cidade");
+    if (!cidade) return NextResponse.json({ data: [] });
+    const { data, error } = await supabase
+      .from("basis_historico")
+      .select("id, mercado, mes_referencia, basis_min, basis_max, medio")
+      .eq("cidade", cidade);
+    if (error) return NextResponse.json({ data: [] });
+    return NextResponse.json({ data });
+  }
 
   if (type === "produtores") {
     const { data, error } = await supabase
