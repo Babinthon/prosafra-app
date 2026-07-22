@@ -1879,7 +1879,8 @@ function ParidadePage({COTACOES, premiosData}) {
   const _dp = bzPagMY(_de.mi,_de.yr);
   const [entK, setEntK] = useState(`${_de.mi}-${_de.yr}`);
   const [pagK, setPagK] = useState(`${_dp.mi}-${_dp.yr}`);
-  const [freteRton, setFreteRton] = useState(380);
+  const [freteRtonStr, setFreteRtonStr] = useState("380");
+  const freteRton = parseFloat(freteRtonStr) || 0;
 
   const [eMi, eYr] = entK.split("-").map(Number);
   const [pMi, pYr] = pagK.split("-").map(Number);
@@ -2007,7 +2008,7 @@ function ParidadePage({COTACOES, premiosData}) {
             <label style={{ fontSize: 9, color: "#8A7E6F", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 3 }}>Frete até o porto</label>
             <div style={{ display: "flex", alignItems: "center" }}>
               <span style={{ background: "#EFE8DB", border: "1px solid #E4DECF", borderRight: "none", borderRadius: "7px 0 0 7px", padding: "9px 10px", color: "#8A7E6F", fontSize: 12 }}>R$</span>
-              <input type="number" value={freteRton} onChange={e => setFreteRton(parseFloat(e.target.value) || 0)}
+              <input type="number" value={freteRtonStr} onChange={e => setFreteRtonStr(e.target.value)}
                 style={{ background: "#F6F3ED", border: "1px solid #E4DECF", borderRadius: "0 7px 7px 0", color: "#4A2C16", padding: "9px 10px", fontSize: 15, fontFamily: "'JetBrains Mono',monospace", fontWeight: 600, outline: "none", width: 100 }} />
               <span style={{ color: "#A89C8A", fontSize: 11, marginLeft: 6 }}>/ton</span>
             </div>
@@ -2094,8 +2095,10 @@ function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRef
   const [dtPagto, setDtPagto] = useState(_pagtoPadrao);
   const [dtEntregaFut, setDtEntregaFut] = useState(_entregaFutPadrao);
   const [dtPagtoFut, setDtPagtoFut] = useState(_pagtoFutPadrao);
-  const [volume, setVolume] = useState(10000);
-  const [precoInput, setPrecoInput] = useState(110);
+  const [volumeStr, setVolumeStr] = useState("10000");
+  const volume = parseFloat(volumeStr) || 0;
+  const [precoInputStr, setPrecoInputStr] = useState("110");
+  const precoInput = parseFloat(precoInputStr) || 0;
   const [moeda, setMoeda] = useState("BRL");
   const [armMes, setArmMes] = useState(0.35);
   const [quebraAm, setQuebraAm] = useState(0.30);
@@ -2264,7 +2267,13 @@ function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRef
               <div style={{ color: "#A89C8A", fontSize: 8, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>Meses de carrego</div>
               <div style={{ fontSize: 20, fontWeight: 700, color: "#4A2C16", fontFamily: "'JetBrains Mono',monospace" }}>{fmt(meses, 1)}</div>
             </div>
-            <Inp label="Volume (sacas)" value={volume} onChange={setVolume} step="500" />
+            <div>
+              <label style={{ fontSize: 9, color: "#8A7E6F", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 3 }}>Volume (sacas)</label>
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <input type="number" step="500" value={volumeStr} onChange={e => setVolumeStr(e.target.value)}
+                  style={{ background: "#F6F3ED", border: "1px solid #E4DECF", borderRadius: 7, color: "#4A2C16", padding: "8px 10px", fontSize: 13, fontFamily: "'JetBrains Mono',monospace", outline: "none", width: "100%" }} />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -2275,7 +2284,7 @@ function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRef
             <div style={{ flex: 1 }}>
               <label style={{ fontSize: 9, color: "#8A7E6F", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 3 }}>Preço informado</label>
               <div style={{ display: "flex", alignItems: "center" }}>
-                <input type="number" step="0.5" value={precoInput} onChange={e => setPrecoInput(parseFloat(e.target.value) || 0)}
+                <input type="number" step="0.5" value={precoInputStr} onChange={e => setPrecoInputStr(e.target.value)}
                   style={{ background: "#F6F3ED", border: "1px solid #E4DECF", borderRadius: "7px 0 0 7px", color: "#4A2C16", padding: "8px 10px", fontSize: 16, fontFamily: "'JetBrains Mono',monospace", fontWeight: 700, outline: "none", width: 120 }} />
                 <div style={{ display: "flex" }}>
                   {["BRL", "USD"].map(m => (
