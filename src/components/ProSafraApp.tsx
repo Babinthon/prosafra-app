@@ -3051,6 +3051,23 @@ function AdminPage() {
   const [fLeituraDate, setFLeituraDate] = useState("");
   const [flMsg, setFlMsg] = useState("");
   const [flLoading, setFlLoading] = useState(false);
+  // Acessos (produtores)
+  const [pUser, setPUser] = useState("");
+  const [pSenha, setPSenha] = useState("");
+  const [pNome, setPNome] = useState("");
+  const [pRegiao, setPRegiao] = useState("");
+  const [pCpf, setPCpf] = useState("");
+  const [pTel, setPTel] = useState("");
+  const [pEmail, setPEmail] = useState("");
+  const [pFazenda, setPFazenda] = useState("");
+  const [pMunicipio, setPMunicipio] = useState("");
+  const [pEstado, setPEstado] = useState("");
+  const [pArea, setPArea] = useState("");
+  const [pCulturas, setPCulturas] = useState("");
+  const [pObs, setPObs] = useState("");
+  const [prodList, setProdList] = useState([]);
+  const [prodMsg, setProdMsg] = useState("");
+  const [prodLoading, setProdLoading] = useState(false);
 
   // Premios state
   const [pItems, setPItems] = useState([]);
@@ -3099,7 +3116,7 @@ function AdminPage() {
         body: JSON.stringify({ password: pw, action: "auth_check" }),
       });
       const j = await res.json();
-      if (j.success) { setAuthed(true); loadFundos(); loadFundosLeitura(); loadPremios(); loadAnalise(); loadFundamentos(); }
+      if (j.success) { setAuthed(true); loadFundos(); loadFundosLeitura(); loadPremios(); loadAnalise(); loadFundamentos(); loadProdutores(); }
       else setAuthErr(j.error || "Senha incorreta");
     } catch { setAuthErr("Erro de conexão"); }
   };
@@ -3131,6 +3148,36 @@ function AdminPage() {
       if (j.success) setFlMsg("✓ Leitura salva"); else setFlMsg(`Erro: ${j.error}`);
     } catch { setFlMsg("Erro de conexão"); }
     setFlLoading(false);
+  };
+
+  const loadProdutores = async () => {
+    try { const res = await fetch("/api/admin?type=produtores"); const j = await res.json(); if (j.data) setProdList(j.data); } catch {}
+  };
+  const createProdutor = async () => {
+    if (!pNome.trim() || !pUser.trim() || !pSenha || !pRegiao.trim()) { setProdMsg("Preencha nome, usuário, senha e região."); return; }
+    setProdLoading(true); setProdMsg("");
+    try {
+      const res = await fetch("/api/admin", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: pw, action: "produtor_create", data: {
+          username: pUser, senha: pSenha, nome_completo: pNome, regiao: pRegiao,
+          cpf_cnpj: pCpf, telefone: pTel, email_contato: pEmail, fazenda: pFazenda,
+          municipio: pMunicipio, estado: pEstado, area_ha: pArea, culturas: pCulturas, observacoes: pObs,
+        } }),
+      });
+      const j = await res.json();
+      if (j.success) { setProdMsg("✓ Produtor criado"); setPUser(""); setPSenha(""); setPNome(""); setPRegiao(""); setPCpf(""); setPTel(""); setPEmail(""); setPFazenda(""); setPMunicipio(""); setPEstado(""); setPArea(""); setPCulturas(""); setPObs(""); loadProdutores(); }
+      else setProdMsg(`Erro: ${j.error}`);
+    } catch { setProdMsg("Erro de conexão"); }
+    setProdLoading(false);
+  };
+  const toggleProdutor = async (id, ativo) => {
+    try { await fetch("/api/admin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: pw, action: "produtor_toggle", data: { id, ativo } }) }); loadProdutores(); } catch {}
+  };
+  const resetSenhaProdutor = async (id) => {
+    const nova = typeof window !== "undefined" ? window.prompt("Nova senha para este produtor:") : null;
+    if (!nova) return;
+    try { const res = await fetch("/api/admin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: pw, action: "produtor_reset_senha", data: { id, senha: nova } }) }); const j = await res.json(); window.alert(j.success ? "Senha alterada." : `Erro: ${j.error}`); } catch { window.alert("Erro de conexão"); }
   };
 
   const saveFundos = async () => {
@@ -3302,6 +3349,8 @@ function AdminPage() {
 
   const inputStyle = { background: "#FFFFFF", border: "1px solid #DED8CC", borderRadius: 6, padding: "8px 12px", color: "#4A2C16", fontSize: 13, outline: "none", width: "100%" };
   const btnStyle = { background: "#D5A246", border: "none", borderRadius: 7, padding: "10px 24px", color: "#4A2C16", fontSize: 13, fontWeight: 600, cursor: "pointer" };
+  const admLbl = { color: "#8A7E6F", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 };
+  const admMiniBtn = { background: "#F5F1EA", border: "1px solid #ECE7DD", borderRadius: 6, padding: "5px 10px", color: "#6B6052", fontSize: 11, fontWeight: 600, cursor: "pointer" };
 
   if (!authed) {
     return (
@@ -3335,7 +3384,7 @@ function AdminPage() {
 
       {/* Tabs */}
       <div style={{ display: "flex", gap: 6, marginBottom: 24 }}>
-        {[{ id: "fundos", label: "Posição Fundos" }, { id: "premios", label: "Prêmios Porto" }, { id: "analise", label: "Análise Técnica" }, { id: "usda", label: "Fundamentos USDA" }].map(t => (
+        {[{ id: "fundos", label: "Posição Fundos" }, { id: "premios", label: "Prêmios Porto" }, { id: "analise", label: "Análise Técnica" }, { id: "usda", label: "Fundamentos USDA" }, { id: "acessos", label: "Acessos" }].map(t => (
           <div key={t.id} onClick={() => setTab(t.id)} style={{
             padding: "8px 20px", borderRadius: 7, cursor: "pointer", fontSize: 12, fontWeight: 600,
             background: tab === t.id ? "rgba(230,57,70,0.1)" : "#F5F1EA",
@@ -3344,6 +3393,65 @@ function AdminPage() {
           }}>{t.label}</div>
         ))}
       </div>
+
+      {/* ═══ ACESSOS TAB ═══ */}
+      {tab === "acessos" && (
+        <div>
+          <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 12, padding: 24, marginBottom: 20 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>Cadastrar produtor</div>
+            <div style={{ color: "#8A7E6F", fontSize: 11, marginBottom: 16 }}>Obrigatórios: nome, usuário, senha e região. O resto é opcional (pode completar depois).</div>
+
+            <div style={{ color: "#B67A33", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>Acesso</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+              <div><label style={admLbl}>Nome completo *</label><input value={pNome} onChange={e => setPNome(e.target.value)} style={inputStyle} placeholder="João da Silva" /></div>
+              <div><label style={admLbl}>Região / praça de referência *</label><input value={pRegiao} onChange={e => setPRegiao(e.target.value)} style={inputStyle} placeholder="Porto Nacional - TO" /></div>
+              <div><label style={admLbl}>Usuário (login) *</label><input value={pUser} onChange={e => setPUser(e.target.value)} style={inputStyle} placeholder="joaosilva" /></div>
+              <div><label style={admLbl}>Senha *</label><input value={pSenha} onChange={e => setPSenha(e.target.value)} style={inputStyle} placeholder="senha inicial" /></div>
+            </div>
+
+            <div style={{ color: "#B67A33", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>Contato</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 16 }}>
+              <div><label style={admLbl}>CPF / CNPJ</label><input value={pCpf} onChange={e => setPCpf(e.target.value)} style={inputStyle} /></div>
+              <div><label style={admLbl}>Telefone / WhatsApp</label><input value={pTel} onChange={e => setPTel(e.target.value)} style={inputStyle} /></div>
+              <div><label style={admLbl}>E-mail de contato</label><input value={pEmail} onChange={e => setPEmail(e.target.value)} style={inputStyle} /></div>
+            </div>
+
+            <div style={{ color: "#B67A33", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>Propriedade</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 16 }}>
+              <div><label style={admLbl}>Fazenda</label><input value={pFazenda} onChange={e => setPFazenda(e.target.value)} style={inputStyle} /></div>
+              <div><label style={admLbl}>Município</label><input value={pMunicipio} onChange={e => setPMunicipio(e.target.value)} style={inputStyle} /></div>
+              <div><label style={admLbl}>Estado</label><input value={pEstado} onChange={e => setPEstado(e.target.value)} style={inputStyle} placeholder="TO" /></div>
+              <div><label style={admLbl}>Área plantada (ha)</label><input type="number" value={pArea} onChange={e => setPArea(e.target.value)} style={inputStyle} /></div>
+              <div style={{ gridColumn: "span 2" }}><label style={admLbl}>Culturas</label><input value={pCulturas} onChange={e => setPCulturas(e.target.value)} style={inputStyle} placeholder="Soja, Milho" /></div>
+            </div>
+
+            <div style={{ marginBottom: 16 }}><label style={admLbl}>Observações</label><textarea value={pObs} onChange={e => setPObs(e.target.value)} rows={2} style={{ ...inputStyle, resize: "vertical", fontFamily: "inherit" }} /></div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <button onClick={createProdutor} disabled={prodLoading} style={{ ...btnStyle, opacity: prodLoading ? 0.6 : 1 }}>{prodLoading ? "Criando..." : "Criar produtor"}</button>
+              {prodMsg && <span style={{ fontSize: 12, color: prodMsg.startsWith("✓") ? "#4E7C5A" : "#B0503F" }}>{prodMsg}</span>}
+            </div>
+          </div>
+
+          <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 12, padding: 24 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 16 }}>Produtores cadastrados ({prodList.length})</div>
+            {prodList.length === 0 && <div style={{ color: "#A89C8A", fontSize: 12 }}>Nenhum produtor cadastrado ainda.</div>}
+            {prodList.map(p => (
+              <div key={p.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "12px 0", borderBottom: "1px solid #F2EEE6", flexWrap: "wrap" }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "#4A2C16" }}>{p.nome || p.username} <span style={{ color: "#A89C8A", fontWeight: 400 }}>· {p.username}</span></div>
+                  <div style={{ fontSize: 11, color: "#8A7E6F", marginTop: 2 }}>{[p.regiao, p.municipio && p.estado ? `${p.municipio}/${p.estado}` : (p.estado || ""), p.telefone].filter(Boolean).join("  ·  ")}</div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: p.ativo ? "rgba(78,124,90,0.12)" : "rgba(176,80,63,0.12)", color: p.ativo ? "#4E7C5A" : "#B0503F" }}>{p.ativo ? "Ativo" : "Inativo"}</span>
+                  <button onClick={() => toggleProdutor(p.id, !p.ativo)} style={admMiniBtn}>{p.ativo ? "Desativar" : "Ativar"}</button>
+                  <button onClick={() => resetSenhaProdutor(p.id)} style={admMiniBtn}>Resetar senha</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ═══ FUNDOS TAB ═══ */}
       {tab === "fundos" && (

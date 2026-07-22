@@ -171,6 +171,40 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true });
     }
 
+    if (action === "produtor_create") {
+      const username = (data.username || "").trim().toLowerCase();
+      if (!username || !data.senha) return NextResponse.json({ success: false, error: "Usuário e senha são obrigatórios" }, { status: 400 });
+      if (!/^[a-z0-9._-]+$/.test(username)) return NextResponse.json({ success: false, error: "Usuário só pode ter letras minúsculas, números, ponto, hífen ou underline (sem espaços)" }, { status: 400 });
+      const email = `${username}@bazamagro.com.br`;
+      const { data: created, error: cErr } = await supabase.auth.admin.createUser({ email, password: data.senha, email_confirm: true });
+      if (cErr || !created?.user) return NextResponse.json({ success: false, error: cErr?.message || "Falha ao criar usuário (o nome de usuário já existe?)" }, { status: 500 });
+      const { error: pErr } = await supabase.from("profiles").upsert({
+        id: created.user.id, username, role: "cliente", ativo: true,
+        nome: data.nome_completo || username, regiao: data.regiao || null,
+        cpf_cnpj: data.cpf_cnpj || null, telefone: data.telefone || null, email_contato: data.email_contato || null,
+        fazenda: data.fazenda || null, municipio: data.municipio || null, estado: data.estado || null,
+        area_ha: data.area_ha ? Number(data.area_ha) : null, culturas: data.culturas || null, observacoes: data.observacoes || null,
+      }, { onConflict: "id" });
+      if (pErr) {
+        await supabase.auth.admin.deleteUser(created.user.id);
+        return NextResponse.json({ success: false, error: pErr.message }, { status: 500 });
+      }
+      return NextResponse.json({ success: true });
+    }
+
+    if (action === "produtor_toggle") {
+      const { error } = await supabase.from("profiles").update({ ativo: data.ativo }).eq("id", data.id);
+      if (error) return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+      return NextResponse.json({ success: true });
+    }
+
+    if (action === "produtor_reset_senha") {
+      if (!data.senha) return NextResponse.json({ success: false, error: "Informe a nova senha" }, { status: 400 });
+      const { error } = await supabase.auth.admin.updateUserById(data.id, { password: data.senha });
+      if (error) return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+      return NextResponse.json({ success: true });
+    }
+
     return NextResponse.json({ error: "Ação desconhecida" }, { status: 400 });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
@@ -180,6 +214,16 @@ export async function POST(request: Request) {
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const type = url.searchParams.get("type");
+
+  if (type === "produtores") {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, username, nome, regiao, ativo, municipio, estado, fazenda, telefone, cpf_cnpj, created_at")
+      .eq("role", "cliente")
+      .order("created_at", { ascending: false });
+    if (error) return NextResponse.json({ data: [] });
+    return NextResponse.json({ data });
+  }
 
   if (type === "fundos") {
     const { data, error } = await supabase
