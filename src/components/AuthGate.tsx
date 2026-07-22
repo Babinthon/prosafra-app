@@ -100,22 +100,26 @@ export default function AuthGate() {
     return () => { sub.subscription.unsubscribe(); };
   }, []);
 
+  const userId = session?.user?.id ?? null;
+
   useEffect(() => {
-    if (!session) { setProfile(null); setProfileState("idle"); return; }
+    if (!userId) { setProfile(null); setProfileState("idle"); return; }
     let cancel = false;
-    setProfileState("loading");
+    // Só mostra "Carregando perfil..." na primeira vez. Revalidação de sessão (voltar pra aba,
+    // refresh de token) mantém o mesmo userId → o efeito não re-roda e o app NÃO remonta.
+    setProfileState((prev) => (prev === "ok" ? "ok" : "loading"));
     (async () => {
       const { data, error } = await supabase
         .from("profiles")
         .select("username, nome, role, ativo, regiao")
-        .eq("id", session.user.id)
+        .eq("id", userId)
         .single();
       if (cancel) return;
       if (error || !data) { setProfile(null); setProfileState("missing"); }
       else { setProfile(data); setProfileState("ok"); }
     })();
     return () => { cancel = true; };
-  }, [session]);
+  }, [userId]);
 
   const logout = () => supabase.auth.signOut();
 

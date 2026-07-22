@@ -491,6 +491,15 @@ function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRef, 
   const defPagYr = _dp.yr;
   const [entK,setEntK]=useState(`${defMi}-${defYr}`);
   const [pagK,setPagK]=useState(`${defPagMi}-${defPagYr}`);
+  // Lembrar a seleção de mês: não perder o estudo se a página recarregar.
+  useEffect(()=>{
+    try{
+      const se=localStorage.getItem("bz_pj_ent"); if(se) setEntK(se);
+      const sp=localStorage.getItem("bz_pj_pag"); if(sp) setPagK(sp);
+    }catch(e){}
+  },[]);
+  useEffect(()=>{ try{ localStorage.setItem("bz_pj_ent",entK); }catch(e){} },[entK]);
+  useEffect(()=>{ try{ localStorage.setItem("bz_pj_pag",pagK); }catch(e){} },[pagK]);
   const [offer,setOffer]=useState(0);
 
   const [eMi,eYr]=entK.split("-").map(Number);
