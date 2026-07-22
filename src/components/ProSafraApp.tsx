@@ -2103,6 +2103,7 @@ function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRef
   const [armMes, setArmMes] = useState(0.35);
   const [quebraAm, setQuebraAm] = useState(0.30);
   const [finAm, setFinAm] = useState(1);
+  const [finAmUsd, setFinAmUsd] = useState(0.25);
   const [subTab, setSubTab] = useState("calc");
   const [posicoes, setPosicoes] = useState([]);
 
@@ -2179,11 +2180,21 @@ function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRef
   // Ponto 0x0: preço que precisa vender no futuro para empatar
   const precoViab = preco + custoTotal;
 
-  // Moeda de exibição: em US$, converte os valores (que estão em R$) pelo dólar de hoje (Opção A).
+  // Moeda de exibição.
   const isUsd = moeda === "USD";
   const moedaSym = isUsd ? "US$" : "R$";
-  const toCur = (brl) => isUsd ? brl / cambioAtual : brl;
-  const precoViabDisp = toCur(precoViab);
+  const toCur = (brl) => isUsd ? brl / cambioAtual : brl;   // converte R$ → moeda (câmbio spot)
+
+  // Custos na moeda de exibição. Só o FINANCEIRO troca de taxa conforme a moeda
+  // (juros dependem do país: real ~1%/mês, dólar ~0,25%/mês). Armazenagem (custo real em R$)
+  // e quebra (% física do preço) convertem pelo câmbio spot.
+  const finRate = isUsd ? finAmUsd : finAm;
+  const precoDisp = toCur(preco);
+  const custoArmDisp = toCur(custoArm);
+  const custoQuebraDisp = toCur(custoQuebra);
+  const custoFinDisp = precoDisp * (finRate / 100) * meses;
+  const custoTotalDisp = custoArmDisp + custoQuebraDisp + custoFinDisp;
+  const precoViabDisp = precoDisp + custoTotalDisp;
 
   // Tabela de ganho: +1 a +10 (na moeda escolhida) acima do 0x0
   const ganhoTable = [];
@@ -2335,7 +2346,7 @@ function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRef
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 10 }}>
             <Inp label="Armazenagem (R$/sc/mês)" value={armMes} onChange={setArmMes} step="0.05" />
             <Inp label="Quebra (% a.m.)" value={quebraAm} onChange={setQuebraAm} step="0.05" />
-            <Inp label="Financeiro (% a.m.)" value={finAm} onChange={setFinAm} step="0.05" />
+            <Inp label={isUsd ? "Financeiro US$ (% a.m.)" : "Financeiro (% a.m.)"} value={isUsd ? finAmUsd : finAm} onChange={isUsd ? setFinAmUsd : setFinAm} step="0.05" />
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 6 }}>
             {[
@@ -2379,7 +2390,7 @@ function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRef
       <div style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: 10, padding: "18px 22px", marginBottom: 14, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
           <div style={{ color: "#D5A246", fontSize: 13, fontWeight: 700 }}>Ponto de equilíbrio (0×0)</div>
-          <div style={{ color: "#D5A246", fontSize: 10, opacity: 0.7, marginTop: 2 }}>Preço atual ({moedaSym} {fmt(toCur(preco))}) + custos de carrego ({moedaSym} {fmt(toCur(custoTotal))}) = preço mínimo para não perder</div>
+          <div style={{ color: "#D5A246", fontSize: 10, opacity: 0.7, marginTop: 2 }}>Preço atual ({moedaSym} {fmt(precoDisp)}) + custos de carrego ({moedaSym} {fmt(custoTotalDisp)}) = preço mínimo para não perder</div>
         </div>
         <div style={{ fontSize: 30, fontWeight: 800, color: "#D5A246", fontFamily: "'JetBrains Mono',monospace" }}>{moedaSym} {fmt(precoViabDisp)}/sc</div>
       </div>
@@ -2419,22 +2430,27 @@ function CustoCarregoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRef
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 14 }}>
           {[
-            { label: "Pior cenário", sub: `Basis mín: ${fmt(basisMinFut, 0)} c/bu`, valor: precoFutPior, viavel: piorViavel, color: "#B0503F" },
-            { label: "Cenário médio", sub: `Basis médio: ${fmt(basisMedFut, 0)} c/bu`, valor: precoFutMedio, viavel: medioViavel, color: "#D5A246" },
-            { label: "Melhor cenário", sub: `Basis máx: ${fmt(basisMaxFut, 0)} c/bu`, valor: precoFutMelhor, viavel: melhorViavel, color: "#4E7C5A" },
-          ].map((c, i) => (
-            <div key={i} style={{ background: `${c.viavel ? "rgba(34,197,94,0.06)" : "rgba(239,68,68,0.06)"}`, border: `1px solid ${c.viavel ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)"}`, borderRadius: 8, padding: "14px 16px" }}>
+            { label: "Pior cenário", sub: `Basis mín: ${fmt(basisMinFut, 0)} c/bu`, valor: precoFutPior, color: "#B0503F" },
+            { label: "Cenário médio", sub: `Basis médio: ${fmt(basisMedFut, 0)} c/bu`, valor: precoFutMedio, color: "#D5A246" },
+            { label: "Melhor cenário", sub: `Basis máx: ${fmt(basisMaxFut, 0)} c/bu`, valor: precoFutMelhor, color: "#4E7C5A" },
+          ].map((c, i) => {
+            // Tudo na moeda de exibição: preço futuro pelo câmbio futuro, comparado ao mesmo 0×0.
+            const valorDisp = isUsd ? c.valor / cambioFut : c.valor;
+            const viavel = valorDisp >= precoViabDisp;
+            const diff = Math.abs(valorDisp - precoViabDisp);
+            return (
+            <div key={i} style={{ background: `${viavel ? "rgba(34,197,94,0.06)" : "rgba(239,68,68,0.06)"}`, border: `1px solid ${viavel ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)"}`, borderRadius: 8, padding: "14px 16px" }}>
               <div style={{ color: c.color, fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>{c.label}</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: "#4A2C16", fontFamily: "'JetBrains Mono',monospace", marginBottom: 4 }}>R$ {fmt(c.valor)}</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "#4A2C16", fontFamily: "'JetBrains Mono',monospace", marginBottom: 4 }}>{moedaSym} {fmt(valorDisp)}</div>
               <div style={{ color: "#8A7E6F", fontSize: 9, marginBottom: 6 }}>{c.sub}</div>
               <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <div style={{ width: 6, height: 6, borderRadius: "50%", background: c.viavel ? "#4E7C5A" : "#B0503F" }} />
-                <span style={{ color: c.viavel ? "#4E7C5A" : "#B0503F", fontSize: 10, fontWeight: 600 }}>
-                  {c.viavel ? `Cobre o 0×0 (+R$ ${fmt(c.valor - precoViab)})` : `Não cobre (falta R$ ${fmt(precoViab - c.valor)})`}
+                <div style={{ width: 6, height: 6, borderRadius: "50%", background: viavel ? "#4E7C5A" : "#B0503F" }} />
+                <span style={{ color: viavel ? "#4E7C5A" : "#B0503F", fontSize: 10, fontWeight: 600 }}>
+                  {viavel ? `Cobre o 0×0 (+${moedaSym} ${fmt(diff)})` : `Não cobre (falta ${moedaSym} ${fmt(diff)})`}
                 </span>
               </div>
             </div>
-          ))}
+          );})}
         </div>
 
         {/* Linha de referência visual */}
