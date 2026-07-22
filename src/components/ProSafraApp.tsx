@@ -83,14 +83,13 @@ const NAV = [
 ];
 
 function buildOpts() {
-  const now = new Date();
-  const curMonth = now.getMonth(); // 0-11
-  const curYear = now.getFullYear();
+  // Começa no mês de entrega padrão (aplica a regra do dia 20): o mês vencido sai sozinho da lista.
+  const de = bzDefEntrega();
   const o=[];
-  // Generate 18 months forward from current month
+  // 18 meses para frente a partir do mês de entrega válido
   for(let n=0;n<18;n++){
-    const mi=(curMonth+n)%12;
-    const yr=curYear+Math.floor((curMonth+n)/12);
+    const mi=(de.mi+n)%12;
+    const yr=de.yr+Math.floor((de.mi+n)/12);
     o.push({mi,yr,label:`${MESES[mi]} ${yr}`});
   }
   return o;
@@ -494,8 +493,9 @@ function PrecoJustoPage({PRACAS, COTACOES, BASIS_DATA, DEFAULT_BASIS, pracaRef, 
   // Lembrar a seleção de mês: não perder o estudo se a página recarregar.
   useEffect(()=>{
     try{
-      const se=localStorage.getItem("bz_pj_ent"); if(se) setEntK(se);
-      const sp=localStorage.getItem("bz_pj_pag"); if(sp) setPagK(sp);
+      const se=localStorage.getItem("bz_pj_ent");
+      const sp=localStorage.getItem("bz_pj_pag");
+      if(se && OPTS.some(o=>`${o.mi}-${o.yr}`===se)){ setEntK(se); if(sp) setPagK(sp); }
     }catch(e){}
   },[]);
   useEffect(()=>{ try{ localStorage.setItem("bz_pj_ent",entK); }catch(e){} },[entK]);
