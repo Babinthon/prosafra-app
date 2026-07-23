@@ -3576,6 +3576,18 @@ function AdminPage() {
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: "#4A2C16" }}>{p.nome || p.username} <span style={{ color: "#A89C8A", fontWeight: 400 }}>· {p.username}</span></div>
                   <div style={{ fontSize: 11, color: "#8A7E6F", marginTop: 2 }}>{[p.regiao, p.municipio && p.estado ? `${p.municipio}/${p.estado}` : (p.estado || ""), p.telefone].filter(Boolean).join("  ·  ")}</div>
+                  <div style={{ fontSize: 10, color: "#A89C8A", marginTop: 3, fontFamily: "'JetBrains Mono',monospace" }}>
+                    {(() => {
+                      const fmtDT = (s, comHora) => { if (!s) return null; const d = new Date(s); const dd = String(d.getDate()).padStart(2, "0"), mm = String(d.getMonth() + 1).padStart(2, "0"), yy = String(d.getFullYear()).slice(-2); const hh = String(d.getHours()).padStart(2, "0"), mi = String(d.getMinutes()).padStart(2, "0"); return comHora ? `${dd}/${mm}/${yy} ${hh}:${mi}` : `${dd}/${mm}/${yy}`; };
+                      const ua = fmtDT(p.ultimo_acesso, true);
+                      const cad = fmtDT(p.created_at, false);
+                      const partes = [];
+                      partes.push(ua ? `Último acesso: ${ua}` : "Nunca acessou");
+                      partes.push(`${p.acessos_total || 0} acesso${(p.acessos_total || 0) === 1 ? "" : "s"}`);
+                      if (cad) partes.push(`Cadastrado em ${cad}`);
+                      return partes.join("  ·  ");
+                    })()}
+                  </div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: p.ativo ? "rgba(78,124,90,0.12)" : "rgba(176,80,63,0.12)", color: p.ativo ? "#4E7C5A" : "#B0503F" }}>{p.ativo ? "Ativo" : "Inativo"}</span>

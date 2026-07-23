@@ -116,7 +116,18 @@ export default function AuthGate() {
         .single();
       if (cancel) return;
       if (error || !data) { setProfile(null); setProfileState("missing"); }
-      else { setProfile(data); setProfileState("ok"); }
+      else {
+        setProfile(data);
+        setProfileState("ok");
+        // Registra o acesso (o servidor confirma pelo token e ignora recarregamentos).
+        try {
+          const { data: sess } = await supabase.auth.getSession();
+          const token = sess?.session?.access_token;
+          if (token) {
+            fetch("/api/acesso", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token }) }).catch(() => {});
+          }
+        } catch (e) {}
+      }
     })();
     return () => { cancel = true; };
   }, [userId]);
