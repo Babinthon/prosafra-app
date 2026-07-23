@@ -1983,7 +1983,7 @@ function ParidadePage({COTACOES, premiosData}) {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
             <div style={{ color: "#8A7E6F", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
-              Preço no porto — Paranaguá — {MESES[eMi]} {eYr}
+              Preço no porto — {MESES[eMi]} {eYr}
             </div>
             <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
               <span style={{ fontSize: 36, fontWeight: 800, color: "#4E7C5A", fontFamily: "'JetBrains Mono',monospace" }}>R$ {fmt(custoPortoBRL)}</span>
