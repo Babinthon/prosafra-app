@@ -253,7 +253,7 @@ export async function GET(request: Request) {
   if (type === "produtores") {
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, username, nome, regiao, ativo, municipio, estado, fazenda, telefone, cpf_cnpj, created_at, ultimo_acesso, acessos_total")
+      .select("id, username, nome, regiao, ativo, municipio, estado, fazenda, telefone, cpf_cnpj, created_at, ultimo_acesso, acessos_total, telas_uso, telas_total")
       .eq("role", "cliente")
       .order("created_at", { ascending: false });
     if (error) return NextResponse.json({ data: [] });

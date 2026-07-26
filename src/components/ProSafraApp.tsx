@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useSupabaseData } from "../lib/useSupabaseData";
+import { supabase } from "../lib/supabase";
 import type { CotacaoRow, PracaRow, BasisMonth, ContractDash } from "../lib/useSupabaseData";
 
 // ═══════════════════════════════════════════════════════════════
@@ -3588,6 +3589,13 @@ function AdminPage() {
                       return partes.join("  ·  ");
                     })()}
                   </div>
+                  {(() => {
+                    const uso = (p.telas_uso && typeof p.telas_uso === "object") ? p.telas_uso : {};
+                    const total = p.telas_total || 0;
+                    if (total === 0) return null;
+                    const top = Object.entries(uso).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([id]) => (NAV.find(n => n.id === id)?.label) || id);
+                    return <div style={{ fontSize: 10, color: "#8A7E6F", marginTop: 3, fontFamily: "'JetBrains Mono',monospace" }}>{total} telas abertas{top.length ? ` · usa mais: ${top.join(", ")}` : ""}</div>;
+                  })()}
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: p.ativo ? "rgba(78,124,90,0.12)" : "rgba(176,80,63,0.12)", color: p.ativo ? "#4E7C5A" : "#B0503F" }}>{p.ativo ? "Ativo" : "Inativo"}</span>
@@ -4126,6 +4134,20 @@ export default function ProSafraApp({ userProfile, onLogout }) {
     }catch(e){}
   },[]);
   useEffect(()=>{ try{ localStorage.setItem("bz_page",page); }catch(e){} },[page]);
+  // Monitoramento de uso: registra a abertura de cada tela (servidor confirma pelo token).
+  useEffect(()=>{
+    let cancel=false;
+    (async()=>{
+      try{
+        const { data:sess }=await supabase.auth.getSession();
+        const token=sess?.session?.access_token;
+        if(token && !cancel){
+          fetch("/api/acesso",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token,tela:page})}).catch(()=>{});
+        }
+      }catch(e){}
+    })();
+    return ()=>{cancel=true;};
+  },[page]);
   const [sbOpen,setSbOpen]=useState(true);
   const [isMobile,setIsMobile]=useState(false);
   useEffect(()=>{

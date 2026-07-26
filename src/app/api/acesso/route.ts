@@ -11,13 +11,29 @@ const JANELA_MIN = 30;
 
 export async function POST(request: Request) {
   try {
-    const { token } = await request.json();
+    const { token, tela } = await request.json();
     if (!token) return NextResponse.json({ success: false }, { status: 400 });
 
     // Confirma de quem é a sessão pelo próprio token: ninguém registra acesso por outro.
     const { data: userData, error: userErr } = await supabase.auth.getUser(token);
     if (userErr || !userData?.user) return NextResponse.json({ success: false }, { status: 401 });
     const uid = userData.user.id;
+
+    // Registro de uso: abertura de uma tela (aba).
+    if (tela) {
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("telas_uso, telas_total")
+        .eq("id", uid)
+        .single();
+      const uso = (prof?.telas_uso && typeof prof.telas_uso === "object") ? prof.telas_uso : {};
+      uso[tela] = (uso[tela] || 0) + 1;
+      await supabase
+        .from("profiles")
+        .update({ telas_uso: uso, telas_total: (prof?.telas_total || 0) + 1 })
+        .eq("id", uid);
+      return NextResponse.json({ success: true });
+    }
 
     const { data: prof } = await supabase
       .from("profiles")
