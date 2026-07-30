@@ -1682,8 +1682,14 @@ function PosicaoFundosPage({fundosData}) {
 // CÂMBIO PROJETADO PAGE
 // ═══════════════════════════════════════════════════════════════
 
-function CambioPage({COTACOES, ptax}) {
+function CambioPage({COTACOES, ptax, ptaxPrev}) {
   const nowD = new Date();
+  // PTAX: separar "fechamento de hoje" (só aparece quando existe) do "dia anterior".
+  const _pad = (n) => String(n).padStart(2, "0");
+  const hojeStr = `${nowD.getFullYear()}-${_pad(nowD.getMonth() + 1)}-${_pad(nowD.getDate())}`;
+  const hojeFechado = !!(ptax && ptax.data_ref === hojeStr);
+  const ptaxHoje = hojeFechado ? ptax : null;
+  const ptaxAnterior = hojeFechado ? ptaxPrev : ptax;
   const curOrd = nowD.getFullYear() * 12 + nowD.getMonth();
   const contracts = useMemo(() => {
     // Lê os vencimentos direto do feed (COTACOES): mostra todos os disponíveis,
@@ -1744,20 +1750,47 @@ function CambioPage({COTACOES, ptax}) {
       {/* Ptax + Dólar comercial */}
       <div style={{ display: "flex", gap: 14, marginBottom: 14, flexWrap: "wrap" }}>
         <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "16px 20px", flex: "1 1 240px", minWidth: 200, position: "relative", overflow: "hidden" }}>
+          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: ptaxHoje ? "#4E7C5A" : "#D9CFBE" }} />
+          <div style={{ color: "#8A7E6F", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Ptax de hoje ({hojeStr.split("-").reverse().join("/")})</div>
+          {ptaxHoje ? (
+            <>
+              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                <div>
+                  <div style={{ color: "#6B6052", fontSize: 9, marginBottom: 2 }}>Compra</div>
+                  <span style={{ fontSize: 20, fontWeight: 700, color: "#4A2C16", fontFamily: "'JetBrains Mono',monospace" }}>R$ {fmt(ptaxHoje.compra, 4)}</span>
+                </div>
+                <div style={{ width: 1, height: 30, background: "#ECE7DD" }} />
+                <div>
+                  <div style={{ color: "#6B6052", fontSize: 9, marginBottom: 2 }}>Venda</div>
+                  <span style={{ fontSize: 20, fontWeight: 700, color: "#4A2C16", fontFamily: "'JetBrains Mono',monospace" }}>R$ {fmt(ptaxHoje.venda, 4)}</span>
+                </div>
+              </div>
+              <div style={{ color: "#8A7E6F", fontSize: 9, marginTop: 6 }}>Venda é o valor usado pelo produtor para pagar contas em dólar.</div>
+            </>
+          ) : (
+            <div style={{ padding: "10px 0 6px" }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#B67A33" }}>Aguardando fechamento</div>
+              <div style={{ color: "#A89C8A", fontSize: 10, marginTop: 4 }}>A PTAX de hoje é publicada pelo Banco Central à tarde. O valor aparece aqui quando o dia fechar.</div>
+            </div>
+          )}
+        </div>
+
+        <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "16px 20px", flex: "1 1 240px", minWidth: 200, position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: "#D5A246" }} />
           <div style={{ color: "#8A7E6F", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Ptax — dia anterior (BCB)</div>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             <div>
               <div style={{ color: "#6B6052", fontSize: 9, marginBottom: 2 }}>Compra</div>
-              <span style={{ fontSize: 20, fontWeight: 700, color: "#4A2C16", fontFamily: "'JetBrains Mono',monospace" }}>R$ {ptax ? fmt(ptax.compra, 4) : "—"}</span>
+              <span style={{ fontSize: 20, fontWeight: 700, color: "#4A2C16", fontFamily: "'JetBrains Mono',monospace" }}>R$ {ptaxAnterior ? fmt(ptaxAnterior.compra, 4) : "—"}</span>
             </div>
             <div style={{ width: 1, height: 30, background: "#ECE7DD" }} />
             <div>
               <div style={{ color: "#6B6052", fontSize: 9, marginBottom: 2 }}>Venda</div>
-              <span style={{ fontSize: 20, fontWeight: 700, color: "#4A2C16", fontFamily: "'JetBrains Mono',monospace" }}>R$ {ptax ? fmt(ptax.venda, 4) : "—"}</span>
+              <span style={{ fontSize: 20, fontWeight: 700, color: "#4A2C16", fontFamily: "'JetBrains Mono',monospace" }}>R$ {ptaxAnterior ? fmt(ptaxAnterior.venda, 4) : "—"}</span>
             </div>
           </div>
-          <div style={{ color: "#C2B7A6", fontSize: 9, marginTop: 6 }}>{ptax ? `Ref: ${ptax.data_ref.split("-").reverse().join("/")}` : "Sem dados"} — Fonte: Banco Central do Brasil</div>
+          <div style={{ color: "#8A7E6F", fontSize: 9, marginTop: 6 }}>Venda é o valor usado pelo produtor para pagar contas em dólar.</div>
+          <div style={{ color: "#C2B7A6", fontSize: 9, marginTop: 3 }}>{ptaxAnterior ? `Ref: ${ptaxAnterior.data_ref.split("-").reverse().join("/")}` : "Sem dados"} — Fonte: Banco Central do Brasil</div>
         </div>
 
         <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "16px 20px", flex: "1 1 240px", minWidth: 200, position: "relative", overflow: "hidden" }}>
@@ -4161,7 +4194,7 @@ export default function ProSafraApp({ userProfile, onLogout }) {
   const dateStr=time.toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
 
   // ─── SUPABASE DATA HOOK ───
-  const { cotacoes, contractsDash, pracas, basisData, defaultBasis, ptax, fundosData, premiosData, analiseData, fundamentosData, loading, lastUpdate, isLive } = useSupabaseData();
+  const { cotacoes, contractsDash, pracas, basisData, defaultBasis, ptax, ptaxPrev, fundosData, premiosData, analiseData, fundamentosData, loading, lastUpdate, isLive } = useSupabaseData();
 
   // Dólar header — prioridade: PTAX BCB > FX spot > DOL futuro
   const dolFirst = contractsDash.dolarB3[0];
@@ -4296,7 +4329,7 @@ export default function ProSafraApp({ userProfile, onLogout }) {
         {page==="analise"&&<AnaliseTecnicaPage COTACOES={cotacoes} analiseData={analiseData}/>}
         {page==="fundamentos"&&<FundamentosPage fundamentosData={fundamentosData}/>}
         {page==="fundos"&&<PosicaoFundosPage fundosData={fundosData}/>}
-        {page==="cambio"&&<CambioPage COTACOES={cotacoes} ptax={ptax}/>}
+        {page==="cambio"&&<CambioPage COTACOES={cotacoes} ptax={ptax} ptaxPrev={ptaxPrev}/>}
         {page==="paridade"&&<ParidadePage COTACOES={cotacoes} premiosData={premiosData}/>}
         {page==="carrego"&&<CustoCarregoPage {...dataProps} {...regionProps}/>}
         {page==="ofertas"&&<OfertasFirmesPage {...dataProps} {...regionProps} userProfile={userProfile}/>}

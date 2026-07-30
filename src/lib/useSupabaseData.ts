@@ -440,6 +440,7 @@ export interface SupabaseData {
   basisData: Record<string, BasisMonth[]>;
   defaultBasis: BasisMonth[];
   ptax: PtaxRow | null;
+  ptaxPrev: PtaxRow | null;
   fundosData: FundosData | null;
   premiosData: PremiosData | null;
   analiseData: AnaliseRow[];
@@ -455,6 +456,7 @@ export function useSupabaseData(): SupabaseData {
   const [pracas, setPracas] = useState<PracaRow[]>(PRACAS_FALLBACK);
   const [basisData, setBasisData] = useState<Record<string, BasisMonth[]>>({});
   const [ptax, setPtax] = useState<PtaxRow | null>(null);
+  const [ptaxPrev, setPtaxPrev] = useState<PtaxRow | null>(null);
   const [fundosData, setFundosData] = useState<FundosData | null>(null);
   const [premiosData, setPremiosData] = useState<PremiosData | null>(null);
   const [analiseData, setAnaliseData] = useState<AnaliseRow[]>([]);
@@ -529,15 +531,16 @@ export function useSupabaseData(): SupabaseData {
         setBasisData(built);
       }
 
-      // ─── 4. PTAX ───
+      // ─── 4. PTAX (duas mais recentes: fechamento de hoje, se houver, e anterior) ───
       const { data: ptaxData, error: ptaxErr } = await supabase
         .from("ptax_diaria")
         .select("data_ref, compra, venda")
         .order("data_ref", { ascending: false })
-        .limit(1);
+        .limit(2);
 
       if (!ptaxErr && ptaxData && ptaxData.length > 0) {
         setPtax(ptaxData[0] as PtaxRow);
+        setPtaxPrev((ptaxData[1] as PtaxRow) || null);
       }
 
       // ─── 5. FUNDOS POSIÇÃO ───
@@ -627,6 +630,7 @@ export function useSupabaseData(): SupabaseData {
     basisData,
     defaultBasis: DEFAULT_BASIS,
     ptax,
+    ptaxPrev,
     fundosData,
     premiosData,
     analiseData,
