@@ -3203,7 +3203,7 @@ function AdminPage() {
 
   const loadFundos = async () => {
     try {
-      const res = await fetch("/api/admin?type=fundos");
+      const res = await fetch("/api/admin?type=fundos", { headers: { "x-admin-password": pw } });
       const j = await res.json();
       if (j.data) setFHist(j.data);
     } catch {}
@@ -3211,7 +3211,7 @@ function AdminPage() {
 
   const loadFundosLeitura = async () => {
     try {
-      const res = await fetch("/api/admin?type=fundos_leitura");
+      const res = await fetch("/api/admin?type=fundos_leitura", { headers: { "x-admin-password": pw } });
       const j = await res.json();
       if (j.data) { setFLeitura(j.data.leitura || ""); setFLeituraDate(j.data.leitura_date || ""); }
     } catch {}
@@ -3231,7 +3231,7 @@ function AdminPage() {
   };
 
   const loadProdutores = async () => {
-    try { const res = await fetch("/api/admin?type=produtores"); const j = await res.json(); if (j.data) setProdList(j.data); } catch {}
+    try { const res = await fetch("/api/admin?type=produtores", { headers: { "x-admin-password": pw } }); const j = await res.json(); if (j.data) setProdList(j.data); } catch {}
   };
   const createProdutor = async () => {
     if (!pNome.trim() || !pUser.trim() || !pSenha || !pRegiao.trim()) { setProdMsg("Preencha nome, usuário, senha e região."); return; }
@@ -3261,14 +3261,14 @@ function AdminPage() {
   };
 
   const loadPracasList = async () => {
-    try { const res = await fetch("/api/admin?type=pracas_list"); const j = await res.json(); if (j.data) setBpPracas(j.data); } catch {}
+    try { const res = await fetch("/api/admin?type=pracas_list", { headers: { "x-admin-password": pw } }); const j = await res.json(); if (j.data) setBpPracas(j.data); } catch {}
   };
   const loadBasisPraca = async (cidade) => {
     setBpCidade(cidade); setBpRows([]); setBpMsg("");
     if (!cidade) return;
     setBpLoading(true);
     try {
-      const res = await fetch(`/api/admin?type=basis_praca&cidade=${encodeURIComponent(cidade)}`);
+      const res = await fetch(`/api/admin?type=basis_praca&cidade=${encodeURIComponent(cidade)}`, { headers: { "x-admin-password": pw } });
       const j = await res.json();
       const rows = (j.data || []).map(r => ({ id: r.id, mercado: r.mercado, mes_referencia: r.mes_referencia, basis_min: String(r.basis_min), basis_max: String(r.basis_max), medio: String(r.medio) }));
       setBpRows(rows);
@@ -3317,7 +3317,7 @@ function AdminPage() {
   // ─── Premios functions ───
   const loadPremios = async () => {
     try {
-      const res = await fetch("/api/admin?type=premios");
+      const res = await fetch("/api/admin?type=premios", { headers: { "x-admin-password": pw } });
       const j = await res.json();
       if (j.atual) setPItems(j.atual);
       if (j.historico) setPHist(j.historico);
@@ -3370,7 +3370,7 @@ function AdminPage() {
   // ─── Analise functions ───
   const loadAnalise = async () => {
     try {
-      const res = await fetch("/api/admin?type=analise");
+      const res = await fetch("/api/admin?type=analise", { headers: { "x-admin-password": pw } });
       const j = await res.json();
       if (j.data) setAItems(j.data);
     } catch {}
@@ -3419,7 +3419,7 @@ function AdminPage() {
   // ─── Fundamentos functions ───
   const loadFundamentos = async () => {
     try {
-      const res = await fetch("/api/admin?type=fundamentos");
+      const res = await fetch("/api/admin?type=fundamentos", { headers: { "x-admin-password": pw } });
       const j = await res.json();
       if (j.data) {
         const row = j.data.find(r => r.produto === uProduto);

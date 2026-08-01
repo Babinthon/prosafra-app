@@ -174,6 +174,7 @@ export async function POST(request: Request) {
     if (action === "produtor_create") {
       const username = (data.username || "").trim().toLowerCase();
       if (!username || !data.senha) return NextResponse.json({ success: false, error: "Usuário e senha são obrigatórios" }, { status: 400 });
+      if (String(data.senha).length < 6) return NextResponse.json({ success: false, error: "A senha deve ter pelo menos 6 caracteres" }, { status: 400 });
       if (!/^[a-z0-9._-]+$/.test(username)) return NextResponse.json({ success: false, error: "Usuário só pode ter letras minúsculas, números, ponto, hífen ou underline (sem espaços)" }, { status: 400 });
       const email = `${username}@bazamagro.com.br`;
       const { data: created, error: cErr } = await supabase.auth.admin.createUser({ email, password: data.senha, email_confirm: true });
@@ -200,6 +201,7 @@ export async function POST(request: Request) {
 
     if (action === "produtor_reset_senha") {
       if (!data.senha) return NextResponse.json({ success: false, error: "Informe a nova senha" }, { status: 400 });
+      if (String(data.senha).length < 6) return NextResponse.json({ success: false, error: "A senha deve ter pelo menos 6 caracteres" }, { status: 400 });
       const { error } = await supabase.auth.admin.updateUserById(data.id, { password: data.senha });
       if (error) return NextResponse.json({ success: false, error: error.message }, { status: 500 });
       return NextResponse.json({ success: true });
@@ -227,6 +229,11 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: Request) {
+  const adminPw = process.env.ADMIN_PASSWORD;
+  const provided = request.headers.get("x-admin-password");
+  if (!adminPw || provided !== adminPw) {
+    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+  }
   const url = new URL(request.url);
   const type = url.searchParams.get("type");
 
