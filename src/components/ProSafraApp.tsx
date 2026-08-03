@@ -238,7 +238,9 @@ function bzPrecoJusto(praca, COTACOES, BASIS_DATA, DEFAULT_BASIS, eMi, eYr, pMi,
 function bzScenarioSignals(eMi,eYr,csym,chi,premiosData,analiseData,fundosData){
   let premio={tag:"Neutro",txt:"Sem leitura"};
   if(premiosData&&premiosData.atual&&premiosData.atual.length){
-    const pr=premiosData.atual.slice().sort((a,b)=>Math.abs(a.mes_idx-eMi)-Math.abs(b.mes_idx-eMi))[0];
+    const arr=premiosData.atual;
+    const exato=arr.find(p=>p.mes_idx===eMi&&p.ano===eYr);
+    const pr=exato||arr.slice().sort((a,b)=>Math.abs((a.ano*12+a.mes_idx)-(eYr*12+eMi))-Math.abs((b.ano*12+b.mes_idx)-(eYr*12+eMi)))[0];
     if(pr){const up=(pr.var_dia||0)>=0; premio={tag:up?"Favorável":"Neutro",txt:`${pr.venda>=0?"+":""}${fmt(pr.venda,0)} c/bu`};}
   }
   let tec={tag:"Neutro",txt:"Sem leitura"};
