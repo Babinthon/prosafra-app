@@ -3141,6 +3141,7 @@ function AdminPage() {
   const [pArea, setPArea] = useState("");
   const [pCulturas, setPCulturas] = useState("");
   const [pObs, setPObs] = useState("");
+  const [pVenc, setPVenc] = useState("");
   const [prodList, setProdList] = useState([]);
   const [prodMsg, setProdMsg] = useState("");
   const [prodLoading, setProdLoading] = useState(false);
@@ -3243,12 +3244,13 @@ function AdminPage() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password: pw, action: "produtor_create", data: {
           username: pUser, senha: pSenha, nome_completo: pNome, regiao: pRegiao,
+          vencimento: pVenc || null,
           cpf_cnpj: pCpf, telefone: pTel, email_contato: pEmail, fazenda: pFazenda,
           municipio: pMunicipio, estado: pEstado, area_ha: pArea, culturas: pCulturas, observacoes: pObs,
         } }),
       });
       const j = await res.json();
-      if (j.success) { setProdMsg("✓ Produtor criado"); setPUser(""); setPSenha(""); setPNome(""); setPRegiao(""); setPCpf(""); setPTel(""); setPEmail(""); setPFazenda(""); setPMunicipio(""); setPEstado(""); setPArea(""); setPCulturas(""); setPObs(""); loadProdutores(); }
+      if (j.success) { setProdMsg("✓ Produtor criado"); setPUser(""); setPSenha(""); setPNome(""); setPRegiao(""); setPCpf(""); setPTel(""); setPEmail(""); setPFazenda(""); setPMunicipio(""); setPEstado(""); setPArea(""); setPCulturas(""); setPObs(""); setPVenc(""); loadProdutores(); }
       else setProdMsg(`Erro: ${j.error}`);
     } catch { setProdMsg("Erro de conexão"); }
     setProdLoading(false);
@@ -3260,6 +3262,13 @@ function AdminPage() {
     const nova = typeof window !== "undefined" ? window.prompt("Nova senha para este produtor:") : null;
     if (!nova) return;
     try { const res = await fetch("/api/admin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: pw, action: "produtor_reset_senha", data: { id, senha: nova } }) }); const j = await res.json(); window.alert(j.success ? "Senha alterada." : `Erro: ${j.error}`); } catch { window.alert("Erro de conexão"); }
+  };
+
+  const setVencimentoProdutor = async (id, vencimento) => {
+    try {
+      await fetch("/api/admin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: pw, action: "produtor_vencimento", data: { id, vencimento: vencimento || null } }) });
+      setProdList(list => list.map(p => p.id === id ? { ...p, vencimento: vencimento || null } : p));
+    } catch {}
   };
 
   const loadPracasList = async () => {
@@ -3495,7 +3504,7 @@ function AdminPage() {
 
       {/* Tabs */}
       <div style={{ display: "flex", gap: 6, marginBottom: 24 }}>
-        {[{ id: "fundos", label: "Posição Fundos" }, { id: "premios", label: "Prêmios Porto" }, { id: "analise", label: "Análise Técnica" }, { id: "usda", label: "Fundamentos USDA" }, { id: "acessos", label: "Acessos" }, { id: "basis", label: "Praças & Basis" }].map(t => (
+        {[{ id: "gestao", label: "Gestão" }, { id: "fundos", label: "Posição Fundos" }, { id: "premios", label: "Prêmios Porto" }, { id: "analise", label: "Análise Técnica" }, { id: "usda", label: "Fundamentos USDA" }, { id: "acessos", label: "Acessos" }, { id: "basis", label: "Praças & Basis" }].map(t => (
           <div key={t.id} onClick={() => setTab(t.id)} style={{
             padding: "8px 20px", borderRadius: 7, cursor: "pointer", fontSize: 12, fontWeight: 600,
             background: tab === t.id ? "rgba(230,57,70,0.1)" : "#F5F1EA",
@@ -3504,6 +3513,63 @@ function AdminPage() {
           }}>{t.label}</div>
         ))}
       </div>
+
+      {/* ═══ GESTÃO TAB ═══ */}
+      {tab === "gestao" && (() => {
+        const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+        const statusVenc = (v) => {
+          if (!v) return { key: "sem", ord: 999999, label: "Sem vencimento", cor: "#8A7E6F", bg: "#F0EDE6" };
+          const d = new Date(v + "T00:00:00");
+          const dias = Math.round((d.getTime() - hoje.getTime()) / 86400000);
+          if (dias < 0) return { key: "vencido", ord: dias, label: `Vencida há ${Math.abs(dias)} dia${Math.abs(dias) === 1 ? "" : "s"}`, cor: "#B0503F", bg: "rgba(176,80,63,0.10)" };
+          if (dias === 0) return { key: "hoje", ord: 0, label: "Vence hoje", cor: "#B0503F", bg: "rgba(176,80,63,0.10)" };
+          if (dias <= 7) return { key: "d7", ord: dias, label: `Vence em ${dias} dias`, cor: "#B0503F", bg: "rgba(182,122,51,0.14)" };
+          if (dias <= 15) return { key: "d15", ord: dias, label: `Vence em ${dias} dias`, cor: "#B67A33", bg: "rgba(213,162,70,0.14)" };
+          if (dias <= 30) return { key: "d30", ord: dias, label: `Vence em ${dias} dias`, cor: "#A8862E", bg: "rgba(213,162,70,0.08)" };
+          return { key: "emdia", ord: dias, label: `Em dia`, cor: "#4E7C5A", bg: "rgba(78,124,90,0.10)" };
+        };
+        const rows = prodList.map(p => ({ ...p, st: statusVenc(p.vencimento) })).sort((a, b) => a.st.ord - b.st.ord);
+        const nVencidas = rows.filter(r => r.st.key === "vencido" || r.st.key === "hoje").length;
+        const nProx = rows.filter(r => ["d7", "d15", "d30"].includes(r.st.key)).length;
+        const nEmDia = rows.filter(r => r.st.key === "emdia").length;
+        const nSem = rows.filter(r => r.st.key === "sem").length;
+        const fmtBR = (v) => v ? v.split("-").reverse().join("/") : "—";
+        const Card = ({ n, label, cor }) => (
+          <div style={{ flex: "1 1 120px", background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "14px 16px" }}>
+            <div style={{ fontSize: 26, fontWeight: 800, color: cor, fontFamily: "'JetBrains Mono',monospace" }}>{n}</div>
+            <div style={{ fontSize: 10, color: "#8A7E6F", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 2 }}>{label}</div>
+          </div>
+        );
+        return (
+          <div>
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 20 }}>
+              <Card n={nVencidas} label="Vencidas / hoje" cor="#B0503F" />
+              <Card n={nProx} label="Vencem em 30 dias" cor="#B67A33" />
+              <Card n={nEmDia} label="Em dia" cor="#4E7C5A" />
+              <Card n={nSem} label="Sem vencimento" cor="#8A7E6F" />
+            </div>
+
+            <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 12, padding: 20 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>Assinaturas ({rows.length})</div>
+              <div style={{ color: "#8A7E6F", fontSize: 11, marginBottom: 16 }}>Ordenadas por urgência. Para renovar, defina a nova data de vencimento na linha do cliente. Nada é bloqueado automaticamente — quem desativa o acesso é você.</div>
+              {rows.length === 0 && <div style={{ color: "#A89C8A", fontSize: 12 }}>Nenhum cliente cadastrado ainda.</div>}
+              {rows.map(p => (
+                <div key={p.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "11px 0", borderBottom: "1px solid #F2EEE6", flexWrap: "wrap" }}>
+                  <div style={{ minWidth: 180, flex: "1 1 200px" }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "#4A2C16" }}>{p.nome || p.username} <span style={{ color: "#A89C8A", fontWeight: 400 }}>· {p.username}</span>{!p.ativo && <span style={{ fontSize: 10, color: "#B0503F", marginLeft: 6 }}>(inativo)</span>}</div>
+                    <div style={{ fontSize: 11, color: "#8A7E6F", marginTop: 2 }}>{p.regiao || ""}</div>
+                  </div>
+                  <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 5, background: p.st.bg, color: p.st.cor, whiteSpace: "nowrap" }}>{p.st.label}</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ fontSize: 10, color: "#A89C8A" }}>Vence:</span>
+                    <input type="date" value={p.vencimento || ""} onChange={e => setVencimentoProdutor(p.id, e.target.value)} style={{ background: "#F6F3ED", border: "1px solid #E4DECF", borderRadius: 6, padding: "5px 8px", fontSize: 12, color: "#4A2C16", fontFamily: "'JetBrains Mono',monospace", outline: "none" }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ═══ PRAÇAS & BASIS TAB ═══ */}
       {tab === "basis" && (
@@ -3578,6 +3644,7 @@ function AdminPage() {
               <div><label style={admLbl}>Região / praça de referência *</label><input value={pRegiao} onChange={e => setPRegiao(e.target.value)} style={inputStyle} placeholder="Porto Nacional - TO" /></div>
               <div><label style={admLbl}>Usuário (login) *</label><input value={pUser} onChange={e => setPUser(e.target.value)} style={inputStyle} placeholder="joaosilva" /></div>
               <div><label style={admLbl}>Senha *</label><input value={pSenha} onChange={e => setPSenha(e.target.value)} style={inputStyle} placeholder="senha inicial" /></div>
+              <div><label style={admLbl}>Vencimento da assinatura</label><input type="date" value={pVenc} onChange={e => setPVenc(e.target.value)} style={inputStyle} /></div>
             </div>
 
             <div style={{ color: "#B67A33", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>Contato</div>

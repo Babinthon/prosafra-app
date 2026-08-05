@@ -185,6 +185,7 @@ export async function POST(request: Request) {
         cpf_cnpj: data.cpf_cnpj || null, telefone: data.telefone || null, email_contato: data.email_contato || null,
         fazenda: data.fazenda || null, municipio: data.municipio || null, estado: data.estado || null,
         area_ha: data.area_ha ? Number(data.area_ha) : null, culturas: data.culturas || null, observacoes: data.observacoes || null,
+        vencimento: data.vencimento || null,
       }, { onConflict: "id" });
       if (pErr) {
         await supabase.auth.admin.deleteUser(created.user.id);
@@ -195,6 +196,12 @@ export async function POST(request: Request) {
 
     if (action === "produtor_toggle") {
       const { error } = await supabase.from("profiles").update({ ativo: data.ativo }).eq("id", data.id);
+      if (error) return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+      return NextResponse.json({ success: true });
+    }
+
+    if (action === "produtor_vencimento") {
+      const { error } = await supabase.from("profiles").update({ vencimento: data.vencimento || null }).eq("id", data.id);
       if (error) return NextResponse.json({ success: false, error: error.message }, { status: 500 });
       return NextResponse.json({ success: true });
     }
@@ -260,7 +267,7 @@ export async function GET(request: Request) {
   if (type === "produtores") {
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, username, nome, regiao, ativo, municipio, estado, fazenda, telefone, cpf_cnpj, created_at, ultimo_acesso, acessos_total, telas_uso, telas_total")
+      .select("id, username, nome, regiao, ativo, municipio, estado, fazenda, telefone, cpf_cnpj, created_at, ultimo_acesso, acessos_total, telas_uso, telas_total, vencimento")
       .eq("role", "cliente")
       .order("created_at", { ascending: false });
     if (error) return NextResponse.json({ data: [] });
