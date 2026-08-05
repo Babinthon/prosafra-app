@@ -615,10 +615,27 @@ export function useSupabaseData(): SupabaseData {
   }, []);
 
   useEffect(() => {
-    fetchAll();
-    // Refresh every 10 minutes (matches cron)
-    const interval = setInterval(fetchAll, 10 * 60 * 1000);
-    return () => clearInterval(interval);
+    // Marca a hora de cada busca para evitar buscas repetidas em excesso.
+    const lastFetch = { t: 0 };
+    const run = () => { lastFetch.t = Date.now(); fetchAll(); };
+    run();
+    // Atualização periódica (enquanto a aba está ativa).
+    const interval = setInterval(run, 10 * 60 * 1000);
+    // Atualização ao voltar a olhar a tela (aba volta ao foco / janela reativada).
+    // Resolve o caso da aba que ficou parada em segundo plano com o timer congelado —
+    // e é econômico: só busca quando alguém realmente volta, e no máximo 1x por minuto.
+    const onVisible = () => {
+      if (typeof document !== "undefined" && document.visibilityState === "visible" && Date.now() - lastFetch.t > 60 * 1000) {
+        run();
+      }
+    };
+    if (typeof document !== "undefined") document.addEventListener("visibilitychange", onVisible);
+    if (typeof window !== "undefined") window.addEventListener("focus", onVisible);
+    return () => {
+      clearInterval(interval);
+      if (typeof document !== "undefined") document.removeEventListener("visibilitychange", onVisible);
+      if (typeof window !== "undefined") window.removeEventListener("focus", onVisible);
+    };
   }, [fetchAll]);
 
   const contractsDash = useMemo(() => buildContractsDash(cotacoes), [cotacoes]);
