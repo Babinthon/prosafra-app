@@ -25,6 +25,27 @@ const DOL_CODE_REV = {F:0,G:1,H:2,J:3,K:4,M:5,N:6,Q:7,U:8,V:9,X:10,Z:11};
 const buildSoja = (mi,yr) => { const c=SOJA_MAP[mi]; return `CBOT:ZS${c}${mi===11?yr+1:yr}`; };
 const buildMilho = (mi,yr) => `CBOT:ZC${MILHO_MAP[mi]}${yr}`;
 const buildMilhoB3 = (mi,yr) => `BMFBOVESPA:CCM${DOL_CODE[mi]}${yr}`;
+
+// ─── Análise Técnica: status por região de preço (fonte ÚNICA para todas as telas) ───
+const MES_COD_REV = {F:0,G:1,H:2,J:3,K:4,M:5,N:6,Q:7,U:8,V:9,X:10,Z:11};
+// Regra do especialista: Z1 > Z2 > Z3. Compara o preço ao vivo com as zonas.
+function getStatusTecnico(preco, z1, z2, z3){
+  if(typeof preco!=="number"||!isFinite(preco)||preco<=0) return null;
+  if(z1==null||z2==null||z3==null) return null;
+  if(preco>=z1) return {key:"intensificar",label:"Intensificar negócios",cor:"#2F6A45"};
+  if(preco>=z2) return {key:"buscar",label:"Buscar negócios",cor:"#4E7C5A"};
+  if(preco>=z3) return {key:"aguardar",label:"Aguardar oscilação",cor:"#B67A33"};
+  return {key:"segurar",label:"Segurar",cor:"#B0503F"};
+}
+// Deriva produto e nome de exibição a partir do símbolo (ex.: CBOT:ZSX2026 → Soja Nov/26).
+function parseContrato(sym){
+  const m=(sym||"").match(/^CBOT:(ZS|ZC)([FGHJKMNQUVXZ])(\d{4})$/);
+  if(!m) return {produto:"", label:(sym||"").replace("CBOT:","")};
+  const produto=m[1]==="ZS"?"Soja":"Milho";
+  const mi=MES_COD_REV[m[2]];
+  const label=`${produto} ${MESES_SHORT[mi]}/${m[3].slice(-2)} (${sym.replace("CBOT:","")})`;
+  return {produto, label};
+}
 const buildDol = (mi,yr) => `BMFBOVESPA:DOL${DOL_CODE[mi]}${yr}`;
 
 function findClosest(sym, keys, cotacoes) {
@@ -3110,7 +3131,7 @@ _Gerado via BZ Grãos_`;
 // ADMIN PAGE
 // ═══════════════════════════════════════════════════════════════
 
-function AdminPage() {
+function AdminPage({cotacoes}) {
   const [pw, setPw] = useState("");
   const [authed, setAuthed] = useState(false);
   const [authErr, setAuthErr] = useState("");
@@ -3399,6 +3420,9 @@ function AdminPage() {
 
   const saveAnalise = async () => {
     if (!aSym || !aZ1 || !aZ2 || !aZ3) { setAMsg("Preencha contrato e as 3 zonas"); return; }
+    const n1 = parseFloat(aZ1), n2 = parseFloat(aZ2), n3 = parseFloat(aZ3);
+    if (isNaN(n1) || isNaN(n2) || isNaN(n3)) { setAMsg("As zonas devem ser números"); return; }
+    if (!(n1 > n2 && n2 > n3)) { setAMsg("As zonas devem ser decrescentes: Zona 1 > Zona 2 > Zona 3"); return; }
     setALoading(true); setAMsg("");
     try {
       const res = await fetch("/api/admin", {
@@ -3900,8 +3924,23 @@ function AdminPage() {
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 14 }}>
               <div>
-                <label style={{ color: "#8A7E6F", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Contrato (símbolo)</label>
-                <input value={aSym} onChange={e => setASym(e.target.value)} placeholder="CBOT:ZSN2026" style={inputStyle} />
+                <label style={{ color: "#8A7E6F", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Contrato</label>
+                <select value={aSym} onChange={e => { const s = e.target.value; setASym(s); const p = parseContrato(s); if (p.label) setALabel(p.label); if (p.produto) setAProduto(p.produto); }} style={inputStyle}>
+                  <option value="">— selecione o contrato —</option>
+                  {(() => {
+                    const now = new Date(); const curOrd = now.getFullYear() * 12 + now.getMonth();
+                    const opts = Object.keys(cotacoes || {}).map(sym => {
+                      const m = sym.match(/^CBOT:(ZS|ZC)([FGHJKMNQUVXZ])(\d{4})$/);
+                      if (!m) return null;
+                      const mi = MES_COD_REV[m[2]], yr = parseInt(m[3], 10);
+                      const ord = yr * 12 + mi;
+                      if (ord <= curOrd) return null;
+                      return { sym, ord, ...parseContrato(sym) };
+                    }).filter(Boolean).sort((a, b) => a.ord - b.ord);
+                    if (aSym && !opts.find(o => o.sym === aSym)) opts.unshift({ sym: aSym, ...parseContrato(aSym) });
+                    return opts.map(o => <option key={o.sym} value={o.sym}>{o.label}</option>);
+                  })()}
+                </select>
               </div>
               <div>
                 <label style={{ color: "#8A7E6F", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Nome para exibição</label>
@@ -3956,6 +3995,7 @@ function AdminPage() {
                     <th style={{ textAlign: "right", padding: "8px 12px", color: "#2F6A45", fontWeight: 500 }}>Intensificar</th>
                     <th style={{ textAlign: "right", padding: "8px 12px", color: "#4E7C5A", fontWeight: 500 }}>Buscar</th>
                     <th style={{ textAlign: "right", padding: "8px 12px", color: "#D5A246", fontWeight: 500 }}>Segurar</th>
+                    <th style={{ textAlign: "center", padding: "8px 12px", color: "#8A7E6F", fontWeight: 500 }}>Preço / Status</th>
                     <th style={{ textAlign: "center", padding: "8px 12px", color: "#8A7E6F", fontWeight: 500 }}>Ações</th>
                   </tr>
                 </thead>
@@ -3966,6 +4006,15 @@ function AdminPage() {
                       <td style={{ padding: "8px 12px", textAlign: "right", fontFamily: "'JetBrains Mono',monospace", color: "#2F6A45" }}>{a.zona1_valor}</td>
                       <td style={{ padding: "8px 12px", textAlign: "right", fontFamily: "'JetBrains Mono',monospace", color: "#4E7C5A" }}>{a.zona2_valor}</td>
                       <td style={{ padding: "8px 12px", textAlign: "right", fontFamily: "'JetBrains Mono',monospace", color: "#D5A246" }}>{a.zona3_valor}</td>
+                      <td style={{ padding: "8px 12px", textAlign: "center" }}>
+                        {(() => {
+                          const cot = (cotacoes || {})[a.sym];
+                          const preco = cot ? cot.lp : null;
+                          if (preco == null) return <span style={{ color: "#A89C8A", fontSize: 10 }}>sem cotação</span>;
+                          const st = getStatusTecnico(preco, a.zona1_valor, a.zona2_valor, a.zona3_valor);
+                          return <span><span style={{ fontFamily: "'JetBrains Mono',monospace", color: "#4A2C16" }}>{fmt(preco, 0)}</span>{st && <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 600, padding: "2px 6px", borderRadius: 4, background: `${st.cor}1A`, color: st.cor }}>{st.label}</span>}</span>;
+                        })()}
+                      </td>
                       <td style={{ padding: "8px 12px", textAlign: "center" }}>
                         <span onClick={() => editAnalise(a)} style={{ color: "#B67A33", cursor: "pointer", fontSize: 10, marginRight: 10 }}>✎ editar</span>
                         <span onClick={() => deleteAnalise(a.sym)} style={{ color: "#B0503F", cursor: "pointer", fontSize: 10 }}>✕ excluir</span>
@@ -4402,7 +4451,7 @@ export default function ProSafraApp({ userProfile, onLogout }) {
         {page==="paridade"&&<ParidadePage COTACOES={cotacoes} premiosData={premiosData}/>}
         {page==="carrego"&&<CustoCarregoPage {...dataProps} {...regionProps}/>}
         {page==="ofertas"&&<OfertasFirmesPage {...dataProps} {...regionProps} userProfile={userProfile}/>}
-        {page==="admin"&&userProfile?.role==="admin"&&<AdminPage/>}
+        {page==="admin"&&userProfile?.role==="admin"&&<AdminPage cotacoes={cotacoes}/>}
         {!["dashboard","preco-justo","premios","analise","fundamentos","fundos","cambio","paridade","carrego","ofertas","mercado","admin"].includes(page)&&(
           <div style={{padding:"60px 28px",textAlign:"center"}}>
             <div style={{fontSize:40,marginBottom:16,opacity:0.3,color:BZ.bronze}}>{NAV.find(n=>n.id===page)?.icon}</div>
