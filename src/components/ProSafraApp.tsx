@@ -16,6 +16,8 @@ import type { CotacaoRow, PracaRow, BasisMonth, ContractDash } from "../lib/useS
 
 const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 const MESES_SHORT = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+// Maior importador mundial por produto (Fundamentos).
+const IMPORTADOR = { soja: "China", milho: "México" };
 const SOJA_MAP = {0:"F",1:"H",2:"H",3:"K",4:"K",5:"N",6:"N",7:"Q",8:"U",9:"X",10:"X",11:"F"};
 const MILHO_MAP = {0:"H",1:"H",2:"H",3:"K",4:"K",5:"N",6:"N",7:"U",8:"U",9:"Z",10:"Z",11:"Z"};
 const CODE_NAME = {F:"Jan",G:"Fev",H:"Mar",J:"Abr",K:"Mai",M:"Jun",N:"Jul",Q:"Ago",U:"Set",V:"Out",X:"Nov",Z:"Dez"};
@@ -1200,7 +1202,7 @@ function FundamentosPage({fundamentosData}) {
       { nome: "Brasil", prod: liveRow.brasil_prod, prodAnt: liveRow.brasil_prod_ant, exp: liveRow.brasil_exp, expAnt: liveRow.brasil_exp_ant },
       { nome: "EUA", prod: liveRow.eua_prod, prodAnt: liveRow.eua_prod_ant, exp: liveRow.eua_exp, expAnt: liveRow.eua_exp_ant },
       { nome: "Argentina", prod: liveRow.argentina_prod, prodAnt: liveRow.argentina_prod_ant, exp: liveRow.argentina_exp, expAnt: liveRow.argentina_exp_ant },
-      { nome: "China", prod: 0, prodAnt: 0, exp: 0, expAnt: 0, consumo: liveRow.china_consumo, consumoAnt: liveRow.china_consumo_ant, importacao: liveRow.china_import, impAnt: liveRow.china_import_ant },
+      { nome: IMPORTADOR[produto], prod: liveRow.importador_prod, prodAnt: liveRow.importador_prod_ant, exp: 0, expAnt: 0, consumo: liveRow.china_consumo, consumoAnt: liveRow.china_consumo_ant, importacao: liveRow.china_import, impAnt: liveRow.china_import_ant },
     ],
     relEstoqueUso: liveRow.rel_estoque_uso,
     relEstoqueUsoAnt: liveRow.rel_estoque_uso_ant,
@@ -1337,12 +1339,12 @@ function FundamentosPage({fundamentosData}) {
         <div style={{ padding: "8px 16px", color: "#C2B7A6", fontSize: 9 }}>Valores em milhões de toneladas</div>
       </div>
 
-      {/* China destaque */}
-      {d.paises.find(p => p.nome === "China") && (() => {
-        const cn = d.paises.find(p => p.nome === "China");
+      {/* Importador destaque */}
+      {d.paises.find(p => p.importacao != null) && (() => {
+        const cn = d.paises.find(p => p.importacao != null);
         return (
           <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "16px 18px", marginBottom: 24 }}>
-            <div style={{ color: "#4A2C16", fontSize: 13, fontWeight: 600, marginBottom: 10 }}>China — maior importador mundial</div>
+            <div style={{ color: "#4A2C16", fontSize: 13, fontWeight: 600, marginBottom: 10 }}>{IMPORTADOR[produto]} — maior importador mundial</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12 }}>
               {cn.importacao != null && <StatCard label="Importação" valor={cn.importacao} anterior={cn.impAnt} unit="mi ton" />}
               {cn.consumo != null && <StatCard label="Consumo interno" valor={cn.consumo} anterior={cn.consumoAnt} unit="mi ton" />}
@@ -3084,6 +3086,7 @@ function AdminPage({cotacoes}) {
     eua_prod:"", eua_exp:"", eua_prod_ant:"", eua_exp_ant:"",
     argentina_prod:"", argentina_exp:"", argentina_prod_ant:"", argentina_exp_ant:"",
     china_consumo:"", china_import:"", china_consumo_ant:"", china_import_ant:"",
+    importador_prod:"", importador_prod_ant:"",
     leitura:"", leitura_date:"",
   });
   const [uMsg, setUMsg] = useState("");
@@ -3353,7 +3356,8 @@ function AdminPage({cotacoes}) {
         "brasil_prod","brasil_exp","brasil_prod_ant","brasil_exp_ant",
         "eua_prod","eua_exp","eua_prod_ant","eua_exp_ant",
         "argentina_prod","argentina_exp","argentina_prod_ant","argentina_exp_ant",
-        "china_consumo","china_import","china_consumo_ant","china_import_ant"];
+        "china_consumo","china_import","china_consumo_ant","china_import_ant",
+        "importador_prod","importador_prod_ant"];
       const payload = { produto: uProduto };
       for (const [k, v] of Object.entries(uData)) {
         payload[k] = numFields.includes(k) ? (v ? parseFloat(v) : null) : v;
@@ -3979,12 +3983,21 @@ function AdminPage({cotacoes}) {
             <div style={{ display: "grid", gridTemplateColumns: "80px repeat(4,1fr)", gap: 8, marginBottom: 16, fontSize: 9, color: "#A89C8A" }}>
               <div></div><div>Consumo atual</div><div>Consumo ant.</div><div>Import. atual</div><div>Import. ant.</div>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "80px repeat(4,1fr)", gap: 8, marginBottom: 16 }}>
-              <div style={{ color: "#6B6052", fontSize: 11, paddingTop: 6 }}>China</div>
+            <div style={{ display: "grid", gridTemplateColumns: "80px repeat(4,1fr)", gap: 8, marginBottom: 10 }}>
+              <div style={{ color: "#6B6052", fontSize: 11, paddingTop: 6 }}>{IMPORTADOR[uProduto]}</div>
               <input type="number" value={uData.china_consumo} onChange={e => setUData(d => ({...d, china_consumo: e.target.value}))} style={{ ...inputStyle, fontSize: 12, fontFamily: "'JetBrains Mono',monospace", padding: "6px 8px" }} />
               <input type="number" value={uData.china_consumo_ant} onChange={e => setUData(d => ({...d, china_consumo_ant: e.target.value}))} style={{ ...inputStyle, fontSize: 12, fontFamily: "'JetBrains Mono',monospace", padding: "6px 8px" }} />
               <input type="number" value={uData.china_import} onChange={e => setUData(d => ({...d, china_import: e.target.value}))} style={{ ...inputStyle, fontSize: 12, fontFamily: "'JetBrains Mono',monospace", padding: "6px 8px" }} />
               <input type="number" value={uData.china_import_ant} onChange={e => setUData(d => ({...d, china_import_ant: e.target.value}))} style={{ ...inputStyle, fontSize: 12, fontFamily: "'JetBrains Mono',monospace", padding: "6px 8px" }} />
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "80px repeat(4,1fr)", gap: 8, marginBottom: 16, fontSize: 9, color: "#A89C8A" }}>
+              <div></div><div>Produção atual</div><div>Produção ant.</div><div></div><div></div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "80px repeat(4,1fr)", gap: 8, marginBottom: 16 }}>
+              <div style={{ color: "#6B6052", fontSize: 11, paddingTop: 6 }}>Produção</div>
+              <input type="number" value={uData.importador_prod} onChange={e => setUData(d => ({...d, importador_prod: e.target.value}))} style={{ ...inputStyle, fontSize: 12, fontFamily: "'JetBrains Mono',monospace", padding: "6px 8px" }} />
+              <input type="number" value={uData.importador_prod_ant} onChange={e => setUData(d => ({...d, importador_prod_ant: e.target.value}))} style={{ ...inputStyle, fontSize: 12, fontFamily: "'JetBrains Mono',monospace", padding: "6px 8px" }} />
+              <div></div><div></div>
             </div>
 
             {/* Leitura */}
