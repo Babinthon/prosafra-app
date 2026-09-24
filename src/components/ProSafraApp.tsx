@@ -982,272 +982,140 @@ function PremiosPortoPage({premiosData}) {
 // ANÁLISE TÉCNICA PAGE
 // ═══════════════════════════════════════════════════════════════
 
-const ANALISE_CONTRATOS = [
-  { sym: "CBOT:ZSK2026", label: "Soja Mai/26 (ZSK2026)", produto: "Soja" },
-  { sym: "CBOT:ZSN2026", label: "Soja Jul/26 (ZSN2026)", produto: "Soja" },
-  { sym: "CBOT:ZSX2026", label: "Soja Nov/26 (ZSX2026)", produto: "Soja" },
-  { sym: "CBOT:ZSF2027", label: "Soja Jan/27 (ZSF2027)", produto: "Soja" },
-  { sym: "CBOT:ZSH2027", label: "Soja Mar/27 (ZSH2027)", produto: "Soja" },
-  { sym: "CBOT:ZSK2027", label: "Soja Mai/27 (ZSK2027)", produto: "Soja" },
-  { sym: "CBOT:ZCK2026", label: "Milho Mai/26 (ZCK2026)", produto: "Milho" },
-  { sym: "CBOT:ZCN2026", label: "Milho Jul/26 (ZCN2026)", produto: "Milho" },
-  { sym: "CBOT:ZCU2026", label: "Milho Set/26 (ZCU2026)", produto: "Milho" },
-  { sym: "CBOT:ZCZ2026", label: "Milho Dez/26 (ZCZ2026)", produto: "Milho" },
-  { sym: "CBOT:ZCH2027", label: "Milho Mar/27 (ZCH2027)", produto: "Milho" },
-  { sym: "CBOT:ZCK2027", label: "Milho Mai/27 (ZCK2027)", produto: "Milho" },
-  { sym: "CBOT:ZCN2027", label: "Milho Jul/27 (ZCN2027)", produto: "Milho" },
-];
-
-// Sample data — in production: from Supabase table analise_tecnica
-const ANALISE_DATA = {
-  "CBOT:ZSK2026": {
-    updatedAt: "11/04/2026",
-    leitura: "Mercado testou resistência em 1176 e recuou. Seguimos em tendência de alta dentro do canal ascendente. Suporte imediato em 1146. Se romper 1207 com volume, abre caminho para testar 1239. RSI em 43 — espaço para subir antes de sobrecompra.",
-    faixas: [
-      { valor: 1239, tipo: "intensificar", label: "Intensificar negócios", color: "#2F6A45", desc: "Topo do canal — oportunidade rara" },
-      { valor: 1207, tipo: "forte", label: "Zona forte", color: "#4E7C5A", desc: "Resistência importante — bom momento para negociar" },
-      { valor: 1176, tipo: "buscar", label: "Buscar negócios", color: "#CFE3D2", desc: "Início da região de interesse — começar a olhar" },
-      { valor: 1146, tipo: "segurar", label: "Segurar", color: "#D5A246", desc: "Suporte — abaixo disso, preço está ruim" },
-    ],
-    imageUrl: null, // fundador faz upload via admin
-  },
-  "CBOT:ZSN2026": {
-    updatedAt: "11/04/2026",
-    leitura: "Contrato de julho segue correlacionado ao K. Spread K/N estável. Mesmas referências de canal se aplicam com ajuste de +16 c/bu em média.",
-    faixas: [
-      { valor: 1255, tipo: "intensificar", label: "Intensificar negócios", color: "#2F6A45", desc: "Topo do canal" },
-      { valor: 1223, tipo: "forte", label: "Zona forte", color: "#4E7C5A", desc: "Resistência forte" },
-      { valor: 1192, tipo: "buscar", label: "Buscar negócios", color: "#CFE3D2", desc: "Início região de interesse" },
-      { valor: 1162, tipo: "segurar", label: "Segurar", color: "#D5A246", desc: "Suporte principal" },
-    ],
-    imageUrl: null,
-  },
-};
-
 function AnaliseTecnicaPage({COTACOES, analiseData}) {
-  // Use Supabase data if available, otherwise fallback to hardcoded
-  const hasLive = analiseData && analiseData.length > 0;
-  const contratos = hasLive
-    ? analiseData.map(a => ({ sym: a.sym, label: a.label, produto: a.produto }))
-    : ANALISE_CONTRATOS;
-
-  const [selSym, setSelSym] = useState(contratos[0]?.sym || "CBOT:ZSK2026");
-
-  // Auto-select first available contract when data changes
+  const rows = Array.isArray(analiseData) ? analiseData : [];
+  const contratos = rows.map(a => ({ sym: a.sym, label: a.label, produto: a.produto }));
+  const [selSym, setSelSym] = useState(contratos[0]?.sym || "");
   useEffect(() => {
-    if (hasLive && !analiseData.find(a => a.sym === selSym)) {
-      setSelSym(analiseData[0].sym);
-    }
-  }, [analiseData, hasLive]);
+    if (rows.length && !rows.find(a => a.sym === selSym)) setSelSym(rows[0].sym);
+  }, [analiseData]);
 
-  const contrato = contratos.find(c => c.sym === selSym);
-  const cotacao = COTACOES[selSym];
-  const preco = cotacao ? cotacao.lp : 0;
+  // Sem nenhuma análise publicada → estado "em atualização" (sem dados de exemplo em produção).
+  if (!rows.length) {
+    return (
+      <div style={{ maxWidth: 1060, margin: "0 auto", padding: "20px 28px 48px" }}>
+        <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "48px", textAlign: "center" }}>
+          <div style={{ color: "#4A2C16", fontSize: 16, fontWeight: 600, marginBottom: 6 }}>Análise em atualização</div>
+          <div style={{ color: "#A89C8A", fontSize: 12 }}>Nossa equipe está preparando as leituras técnicas. Volte em breve.</div>
+        </div>
+      </div>
+    );
+  }
+
+  const row = rows.find(a => a.sym === selSym) || rows[0];
+  const contrato = contratos.find(c => c.sym === row.sym);
+  const cotacao = COTACOES[row.sym];
+  const preco = cotacao ? cotacao.lp : null;
   const ch = cotacao?.ch || 0;
   const chp = cotacao?.chp || 0;
 
-  // Build analise from Supabase row or fallback
-  const liveRow = hasLive ? analiseData.find(a => a.sym === selSym) : null;
-  const analise = liveRow ? {
-    updatedAt: new Date(liveRow.updated_at).toLocaleDateString("pt-BR"),
-    leitura: liveRow.leitura || "",
-    faixas: [
-      { valor: liveRow.zona1_valor, tipo: "intensificar", label: liveRow.zona1_label, color: "#2F6A45", desc: "Topo do canal" },
-      { valor: liveRow.zona2_valor, tipo: "buscar", label: liveRow.zona2_label, color: "#4E7C5A", desc: "Início região de interesse" },
-      { valor: liveRow.zona3_valor, tipo: "segurar", label: liveRow.zona3_label, color: "#D5A246", desc: "Suporte principal" },
-    ],
-  } : ANALISE_DATA[selSym];
+  const z1 = row.zona1_valor, z2 = row.zona2_valor, z3 = row.zona3_valor;
+  const status = (preco != null) ? getStatusTecnico(preco, z1, z2, z3) : null;
+  const updatedAt = row.updated_at ? new Date(row.updated_at).toLocaleDateString("pt-BR") : "";
 
-  // Determine which zone the current price is in
-  let zonaAtual = null;
-  let zonaColor = "#8A7E6F";
-  let zonaLabel = "Fora das regiões mapeadas";
-  if (analise) {
-    const sorted = [...analise.faixas].sort((a, b) => a.valor - b.valor);
-    if (preco < sorted[0].valor) {
-      zonaAtual = "abaixo";
-      zonaColor = "#B0503F";
-      zonaLabel = "Abaixo do suporte — preço desfavorável";
-    } else {
-      for (let i = sorted.length - 1; i >= 0; i--) {
-        if (preco >= sorted[i].valor) {
-          zonaAtual = sorted[i].tipo;
-          zonaColor = sorted[i].color;
-          zonaLabel = sorted[i].label;
-          break;
-        }
-      }
-    }
+  const zonas = [
+    { valor: z1, label: "Intensificar negócios", cor: "#2F6A45", min: row.zona1_min, max: row.zona1_max },
+    { valor: z2, label: "Buscar negócios", cor: "#4E7C5A", min: row.zona2_min, max: row.zona2_max },
+    { valor: z3, label: "Segurar", cor: "#B67A33", min: row.zona3_min, max: row.zona3_max },
+  ].filter(z => typeof z.valor === "number");
+
+  // Distância até a próxima zona acima e a zona logo abaixo do preço.
+  let distAcima = null, zonaAcima = null, distAbaixo = null, zonaAbaixo = null;
+  if (preco != null && zonas.length) {
+    const asc = [...zonas].sort((a, b) => a.valor - b.valor);
+    for (const z of asc) { if (z.valor > preco) { distAcima = z.valor - preco; zonaAcima = z; break; } }
+    for (let i = asc.length - 1; i >= 0; i--) { if (asc[i].valor <= preco) { distAbaixo = preco - asc[i].valor; zonaAbaixo = asc[i]; break; } }
   }
 
-  // Visual gauge: position of current price relative to faixas
-  const faixaMin = analise ? Math.min(...analise.faixas.map(f => f.valor)) - 50 : 1000;
-  const faixaMax = analise ? Math.max(...analise.faixas.map(f => f.valor)) + 50 : 1300;
-  const faixaRange = faixaMax - faixaMin || 1;
-  const precoPct = Math.max(0, Math.min(100, ((preco - faixaMin) / faixaRange) * 100));
+  // Régua vertical.
+  const valores = zonas.map(z => z.valor);
+  const base = preco != null ? [...valores, preco] : valores;
+  const rMin = Math.min(...base) - 30;
+  const rMax = Math.max(...base) + 30;
+  const rRange = (rMax - rMin) || 1;
+  const pct = (v) => Math.max(0, Math.min(100, ((v - rMin) / rRange) * 100));
 
   return (
     <div style={{ maxWidth: 1060, margin: "0 auto", padding: "20px 28px 48px" }}>
-
-      {/* Seletor de contrato */}
-      <div style={{ display: "flex", gap: 12, alignItems: "flex-end", marginBottom: 20 }}>
+      {/* Seletor de contrato (só publicados) */}
+      <div style={{ display: "flex", gap: 12, alignItems: "flex-end", marginBottom: 20, flexWrap: "wrap" }}>
         <Sel label="Contrato" value={selSym} onChange={setSelSym} w={280}>
-          <optgroup label="Soja CBOT">
-            {contratos.filter(c => c.produto === "Soja").map(c => <option key={c.sym} value={c.sym}>{c.label}</option>)}
-          </optgroup>
-          <optgroup label="Milho CBOT">
-            {contratos.filter(c => c.produto === "Milho").map(c => <option key={c.sym} value={c.sym}>{c.label}</option>)}
-          </optgroup>
+          {["Soja", "Milho"].map(prod => {
+            const list = contratos.filter(c => c.produto === prod);
+            if (!list.length) return null;
+            return <optgroup key={prod} label={`${prod} CBOT`}>{list.map(c => <option key={c.sym} value={c.sym}>{c.label}</option>)}</optgroup>;
+          })}
         </Sel>
-        {analise && <span style={{ color: "#C2B7A6", fontSize: 10, paddingBottom: 10 }}>Atualizado em {analise.updatedAt}</span>}
+        {updatedAt && <span style={{ color: "#C2B7A6", fontSize: 10, paddingBottom: 10 }}>Atualizado em {updatedAt}</span>}
       </div>
 
-      {!analise ? (
-        <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "40px", textAlign: "center" }}>
-          <div style={{ color: "#A89C8A", fontSize: 14 }}>Análise técnica ainda não publicada para este contrato</div>
-          <div style={{ color: "#C2B7A6", fontSize: 11, marginTop: 4 }}>O fundador publica semanalmente via painel admin</div>
+      {/* Card de status em destaque */}
+      <div style={{ background: status ? `${status.cor}0D` : "#FFFFFF", border: `1px solid ${status ? status.cor + "33" : "#ECE7DD"}`, borderRadius: 12, padding: "22px 26px", marginBottom: 18 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16 }}>
+          <div>
+            <div style={{ color: "#8A7E6F", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>{contrato?.label}</div>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+              <span style={{ fontSize: 34, fontWeight: 800, color: "#4A2C16", fontFamily: "'JetBrains Mono',monospace" }}>{preco != null ? fmt(preco, 2) : "—"}</span>
+              <span style={{ color: "#A89C8A", fontSize: 12 }}>c/bu</span>
+            </div>
+            <div style={{ marginTop: 4 }}><Chg ch={ch} chp={chp} /></div>
+          </div>
+          <div style={{ textAlign: "right" }}>
+            <div style={{ color: "#8A7E6F", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Situação agora</div>
+            {status
+              ? <div style={{ display: "inline-block", background: status.cor, color: "#fff", fontSize: 16, fontWeight: 700, padding: "6px 16px", borderRadius: 8 }}>{status.label}</div>
+              : <div style={{ color: "#A89C8A", fontSize: 13 }}>Sem cotação no momento</div>}
+          </div>
         </div>
-      ) : (
-        <>
-          {/* Cotação atual + zona */}
-          <div style={{ display: "flex", gap: 14, marginBottom: 20 }}>
-            {/* Preço atual */}
-            <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "18px 22px", flex: 1, position: "relative", overflow: "hidden" }}>
-              <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: zonaColor }} />
-              <div style={{ color: "#8A7E6F", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>
-                {contrato?.label}
-              </div>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 6 }}>
-                <span style={{ fontSize: 32, fontWeight: 800, color: "#4A2C16", fontFamily: "'JetBrains Mono',monospace" }}>{fmt(preco, 2)}</span>
-                <span style={{ color: "#A89C8A", fontSize: 12 }}>c/bu</span>
-              </div>
-              <Chg ch={ch} chp={chp} />
-            </div>
-
-            {/* Zona atual */}
-            <div style={{ background: `${zonaColor}0D`, border: `1px solid ${zonaColor}33`, borderRadius: 10, padding: "18px 22px", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-              <div style={{ color: "#8A7E6F", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Zona atual do preço</div>
-              <div style={{ color: zonaColor, fontSize: 18, fontWeight: 700, marginBottom: 4 }}>{zonaLabel}</div>
-              <div style={{ color: "#8A7E6F", fontSize: 11 }}>
-                {zonaAtual === "segurar" && "Não é momento — aguardar melhora"}
-                {zonaAtual === "buscar" && "Começar a olhar oportunidades"}
-                {zonaAtual === "forte" && "Bom momento para negociar"}
-                {zonaAtual === "intensificar" && "Oportunidade rara — agir com urgência"}
-                {zonaAtual === "abaixo" && "Preço abaixo do suporte — segurar posição"}
-              </div>
-            </div>
+        {(distAcima != null || distAbaixo != null) && (
+          <div style={{ display: "flex", gap: 20, marginTop: 16, flexWrap: "wrap" }}>
+            {distAcima != null && zonaAcima && (
+              <div style={{ fontSize: 11, color: "#6B6052" }}>Faltam <b style={{ fontFamily: "'JetBrains Mono',monospace", color: zonaAcima.cor }}>{fmt(distAcima, 0)} c/bu</b> para <b style={{ color: zonaAcima.cor }}>{zonaAcima.label}</b> ({fmt(zonaAcima.valor, 0)})</div>
+            )}
+            {distAbaixo != null && zonaAbaixo && (
+              <div style={{ fontSize: 11, color: "#6B6052" }}><b style={{ fontFamily: "'JetBrains Mono',monospace", color: zonaAbaixo.cor }}>{fmt(distAbaixo, 0)} c/bu</b> acima de <b style={{ color: zonaAbaixo.cor }}>{zonaAbaixo.label}</b> ({fmt(zonaAbaixo.valor, 0)})</div>
+            )}
           </div>
+        )}
+      </div>
 
-          {/* Gauge visual — preço na régua das faixas */}
-          <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "18px 22px", marginBottom: 20 }}>
-            <div style={{ color: "#8A7E6F", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 14 }}>Mapa de regiões de preço</div>
-
-            <div style={{ position: "relative", height: 60, marginBottom: 8 }}>
-              {/* Background bar */}
-              <div style={{ position: "absolute", left: 0, right: 0, top: 24, height: 12, background: "#F5F1EA", borderRadius: 6 }} />
-
-              {/* Zone segments */}
-              {(() => {
-                const sorted = [...analise.faixas].sort((a, b) => a.valor - b.valor);
-                const segments = [];
-                // Below first faixa
-                const firstPct = ((sorted[0].valor - faixaMin) / faixaRange) * 100;
-                segments.push(<div key="below" style={{ position: "absolute", left: 0, top: 24, height: 12, width: `${firstPct}%`, background: "#B0503F22", borderRadius: "6px 0 0 6px" }} />);
-                // Between faixas
-                for (let i = 0; i < sorted.length; i++) {
-                  const left = ((sorted[i].valor - faixaMin) / faixaRange) * 100;
-                  const right = i < sorted.length - 1 ? ((sorted[i + 1].valor - faixaMin) / faixaRange) * 100 : 100;
-                  segments.push(<div key={i} style={{ position: "absolute", left: `${left}%`, top: 24, height: 12, width: `${right - left}%`, background: `${sorted[i].color}22` }} />);
-                }
-                return segments;
-              })()}
-
-              {/* Faixa markers */}
-              {analise.faixas.map((f, i) => {
-                const pct = ((f.valor - faixaMin) / faixaRange) * 100;
-                return (
-                  <div key={i} style={{ position: "absolute", left: `${pct}%`, top: 18, transform: "translateX(-50%)" }}>
-                    <div style={{ width: 2, height: 24, background: f.color, borderRadius: 1, margin: "0 auto" }} />
-                    <div style={{ fontSize: 8, color: f.color, fontFamily: "'JetBrains Mono',monospace", fontWeight: 600, marginTop: 2, whiteSpace: "nowrap", textAlign: "center" }}>
-                      {fmt(f.valor, 0)}
-                    </div>
-                  </div>
-                );
-              })}
-
-              {/* Current price marker */}
-              <div style={{ position: "absolute", left: `${precoPct}%`, top: 4, transform: "translateX(-50%)", zIndex: 2 }}>
-                <div style={{ background: "#4A2C16", color: "#F7F7F5", fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 3, whiteSpace: "nowrap", fontFamily: "'JetBrains Mono',monospace", textAlign: "center" }}>
-                  {fmt(preco, 0)}
+      {/* Régua vertical das regiões de preço */}
+      <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 12, padding: "22px 26px", marginBottom: 18 }}>
+        <div style={{ color: "#8A7E6F", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 16 }}>Regiões de preço (c/bu)</div>
+        <div style={{ position: "relative", height: 280 }}>
+          <div style={{ position: "absolute", left: 148, top: 4, bottom: 4, width: 10, background: "#F5F1EA", borderRadius: 5 }} />
+          {zonas.map((z, i) => (
+            <div key={i} style={{ position: "absolute", left: 0, right: 0, bottom: `calc(${pct(z.valor)}% - 8px)` }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ width: 138, textAlign: "right", fontSize: 11 }}>
+                  <span style={{ color: z.cor, fontWeight: 600 }}>{z.label}</span>
+                  <span style={{ color: "#8A7E6F", fontFamily: "'JetBrains Mono',monospace", marginLeft: 6 }}>{fmt(z.valor, 0)}</span>
+                  {typeof z.min === "number" && typeof z.max === "number" && <div style={{ color: "#C2B7A6", fontSize: 9, fontFamily: "'JetBrains Mono',monospace" }}>faixa {fmt(z.min, 0)}–{fmt(z.max, 0)}</div>}
                 </div>
-                <div style={{ width: 2, height: 16, background: "#4A2C16", margin: "2px auto 0", borderRadius: 1 }} />
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#4A2C16", margin: "-1px auto 0", boxShadow: "0 0 8px #A89C8A" }} />
+                <div style={{ width: 30, height: 2, background: z.cor }} />
               </div>
             </div>
-
-            {/* Faixas legend */}
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 16 }}>
-              {[...analise.faixas].sort((a, b) => b.valor - a.valor).map((f, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, background: `${f.color}0D`, border: `1px solid ${f.color}22`, borderRadius: 6, padding: "6px 12px" }}>
-                  <div style={{ width: 8, height: 8, borderRadius: 2, background: f.color }} />
-                  <span style={{ color: f.color, fontSize: 10, fontWeight: 600 }}>{fmt(f.valor, 0)}</span>
-                  <span style={{ color: "#6B6052", fontSize: 10 }}>{f.label}</span>
-                </div>
-              ))}
-              <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.15)", borderRadius: 6, padding: "6px 12px" }}>
-                <div style={{ width: 8, height: 8, borderRadius: 2, background: "#B0503F" }} />
-                <span style={{ color: "#B0503F", fontSize: 10, fontWeight: 600 }}>{"<"}{fmt(analise.faixas.find(f => f.tipo === "segurar")?.valor || 0, 0)}</span>
-                <span style={{ color: "#6B6052", fontSize: 10 }}>Preço desfavorável</span>
+          ))}
+          {preco != null && (
+            <div style={{ position: "absolute", left: 152, right: 0, bottom: `calc(${pct(preco)}% - 8px)`, zIndex: 2 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#4A2C16", marginLeft: -1, boxShadow: "0 0 0 3px #F7F7F5" }} />
+                <div style={{ background: "#4A2C16", color: "#F7F7F5", fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 4, fontFamily: "'JetBrains Mono',monospace" }}>Preço agora {fmt(preco, 0)}</div>
               </div>
             </div>
-          </div>
+          )}
+        </div>
+      </div>
 
-          {/* Leitura do fundador */}
-          <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "18px 22px", marginBottom: 20 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-              <div style={{ color: "#4A2C16", fontSize: 13, fontWeight: 600 }}>Leitura do mercado</div>
-              <span style={{ color: "#C2B7A6", fontSize: 9 }}>Atualizado {analise.updatedAt}</span>
-            </div>
-            <div style={{ color: "#6B6052", fontSize: 12, lineHeight: 1.7 }}>{analise.leitura}</div>
+      {/* Leitura da Bazam */}
+      {row.leitura && (
+        <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 12, padding: "20px 24px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+            <div style={{ color: "#4A2C16", fontSize: 13, fontWeight: 600 }}>Leitura da Bazam</div>
+            {updatedAt && <span style={{ color: "#C2B7A6", fontSize: 9 }}>Atualizado {updatedAt}</span>}
           </div>
-
-          {/* Tabela de pontos */}
-          <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, overflowX: "auto", marginTop: 20 }}>
-            <div style={{ padding: "14px 18px", borderBottom: "1px solid #ECE7DD" }}>
-              <span style={{ color: "#4A2C16", fontSize: 13, fontWeight: 600 }}>Pontos de referência — {contrato?.label}</span>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "100px 1fr 160px 80px", minWidth: 520, padding: "8px 18px", borderBottom: "1px solid #ECE7DD" }}>
-              {["Preço (c/bu)", "Região", "Ação", "Distância"].map(h => (
-                <span key={h} style={{ color: "#A89C8A", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>{h}</span>
-              ))}
-            </div>
-            {[...analise.faixas].sort((a, b) => b.valor - a.valor).map((f, i) => {
-              const dist = preco - f.valor;
-              const isAtOrAbove = preco >= f.valor;
-              return (
-                <div key={i} style={{ display: "grid", gridTemplateColumns: "100px 1fr 160px 80px", minWidth: 520, padding: "12px 18px", borderBottom: "1px solid #F2EEE6", alignItems: "center" }}>
-                  <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 14, fontWeight: 700, color: f.color }}>{fmt(f.valor, 0)}</span>
-                  <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <div style={{ width: 8, height: 8, borderRadius: 2, background: f.color }} />
-                      <span style={{ color: "#4A2C16", fontSize: 12, fontWeight: 500 }}>{f.label}</span>
-                    </div>
-                    <span style={{ color: "#A89C8A", fontSize: 10, marginLeft: 14 }}>{f.desc}</span>
-                  </div>
-                  <span style={{ color: "#8A7E6F", fontSize: 11 }}>
-                    {f.tipo === "segurar" && "Segurar posição"}
-                    {f.tipo === "buscar" && "Começar a buscar"}
-                    {f.tipo === "forte" && "Negociar ativamente"}
-                    {f.tipo === "intensificar" && "Intensificar — raro"}
-                  </span>
-                  <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: isAtOrAbove ? "#4E7C5A" : "#B0503F" }}>
-                    {dist >= 0 ? "+" : ""}{fmt(dist, 0)}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </>
+          <div style={{ color: "#6B6052", fontSize: 12, lineHeight: 1.7 }}>{row.leitura}</div>
+        </div>
       )}
     </div>
   );
@@ -3186,8 +3054,8 @@ function AdminPage({cotacoes}) {
 
   // Analise state
   const [aItems, setAItems] = useState([]);
-  const [aSym, setASym] = useState("CBOT:ZSN2026");
-  const [aLabel, setALabel] = useState("Soja Jul/26 (ZSN2026)");
+  const [aSym, setASym] = useState("");
+  const [aLabel, setALabel] = useState("");
   const [aProduto, setAProduto] = useState("Soja");
   const [aZ1, setAZ1] = useState("");
   const [aZ2, setAZ2] = useState("");
