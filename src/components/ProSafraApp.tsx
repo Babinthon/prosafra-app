@@ -1079,32 +1079,42 @@ function AnaliseTecnicaPage({COTACOES, analiseData}) {
         )}
       </div>
 
-      {/* Régua vertical das regiões de preço */}
+      {/* Régua horizontal das regiões de preço */}
       <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 12, padding: "22px 26px", marginBottom: 18 }}>
-        <div style={{ color: "#8A7E6F", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 16 }}>Regiões de preço (c/bu)</div>
-        <div style={{ position: "relative", height: 280 }}>
-          <div style={{ position: "absolute", left: 148, top: 4, bottom: 4, width: 10, background: "#F5F1EA", borderRadius: 5 }} />
-          {zonas.map((z, i) => (
-            <div key={i} style={{ position: "absolute", left: 0, right: 0, bottom: `calc(${pct(z.valor)}% - 8px)` }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div style={{ width: 138, textAlign: "right", fontSize: 11 }}>
-                  <span style={{ color: z.cor, fontWeight: 600 }}>{z.label}</span>
-                  <span style={{ color: "#8A7E6F", fontFamily: "'JetBrains Mono',monospace", marginLeft: 6 }}>{fmt(z.valor, 0)}</span>
-                  {typeof z.min === "number" && typeof z.max === "number" && <div style={{ color: "#C2B7A6", fontSize: 9, fontFamily: "'JetBrains Mono',monospace" }}>faixa {fmt(z.min, 0)}–{fmt(z.max, 0)}</div>}
+        <div style={{ color: "#8A7E6F", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 20 }}>Régua de preço — onde o mercado está agora</div>
+        {(() => {
+          const p3 = pct(z3), p2 = pct(z2), p1 = pct(z1);
+          const bands = [
+            { left: 0, right: p3, cor: "#B0503F", label: "Segurar" },
+            { left: p3, right: p2, cor: "#B67A33", label: "Aguardar" },
+            { left: p2, right: p1, cor: "#4E7C5A", label: "Buscar negócios" },
+            { left: p1, right: 100, cor: "#2F6A45", label: "Intensificar" },
+          ];
+          return (
+            <div style={{ position: "relative", paddingTop: 36, paddingBottom: 30 }}>
+              {preco != null && (
+                <div style={{ position: "absolute", top: 0, left: `${pct(preco)}%`, transform: "translateX(-50%)", zIndex: 3, textAlign: "center" }}>
+                  <div style={{ background: "#4A2C16", color: "#F7F7F5", fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 5, fontFamily: "'JetBrains Mono',monospace", whiteSpace: "nowrap" }}>Preço agora {fmt(preco, 0)}</div>
+                  <div style={{ width: 0, height: 0, borderLeft: "5px solid transparent", borderRight: "5px solid transparent", borderTop: "6px solid #4A2C16", margin: "0 auto" }} />
                 </div>
-                <div style={{ width: 30, height: 2, background: z.cor }} />
+              )}
+              <div style={{ position: "relative", height: 46, borderRadius: 8, overflow: "hidden" }}>
+                {bands.map((b, i) => (
+                  <div key={i} style={{ position: "absolute", left: `${b.left}%`, width: `${Math.max(0, b.right - b.left)}%`, top: 0, bottom: 0, background: `${b.cor}26`, borderRight: i < bands.length - 1 ? "2px solid #FFFFFF" : "none", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <span style={{ color: b.cor, fontSize: 10, fontWeight: 700, whiteSpace: "nowrap", padding: "0 6px", overflow: "hidden", textOverflow: "ellipsis" }}>{b.label}</span>
+                  </div>
+                ))}
+                {preco != null && <div style={{ position: "absolute", left: `${pct(preco)}%`, top: 0, bottom: 0, width: 2, background: "#4A2C16", transform: "translateX(-1px)", zIndex: 2 }} />}
               </div>
+              {[{ v: z3, x: p3 }, { v: z2, x: p2 }, { v: z1, x: p1 }].map((t, i) => (
+                <div key={i} style={{ position: "absolute", bottom: 0, left: `${t.x}%`, transform: "translateX(-50%)", textAlign: "center" }}>
+                  <div style={{ width: 1, height: 8, background: "#D9CFBE", margin: "0 auto 3px" }} />
+                  <span style={{ fontSize: 10, color: "#8A7E6F", fontFamily: "'JetBrains Mono',monospace" }}>{fmt(t.v, 0)}</span>
+                </div>
+              ))}
             </div>
-          ))}
-          {preco != null && (
-            <div style={{ position: "absolute", left: 152, right: 0, bottom: `calc(${pct(preco)}% - 8px)`, zIndex: 2 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#4A2C16", marginLeft: -1, boxShadow: "0 0 0 3px #F7F7F5" }} />
-                <div style={{ background: "#4A2C16", color: "#F7F7F5", fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 4, fontFamily: "'JetBrains Mono',monospace" }}>Preço agora {fmt(preco, 0)}</div>
-              </div>
-            </div>
-          )}
-        </div>
+          );
+        })()}
       </div>
 
       {/* Leitura da Bazam */}
