@@ -3397,7 +3397,9 @@ function AdminPage({cotacoes}) {
       const venda = Number(p.venda);
       const orig = pOrig.find(o => o.mes_idx === p.mes_idx && o.ano === p.ano);
       const mudou = !orig || Number(orig.venda) !== venda;
-      if (mudou && Math.abs(Number(p.var_dia) || 0) > LIM_ALERTA) {
+      // Só avisa o que foi lançado/alterado agora ("Salvar todos" reenvia também os meses sem mudança).
+      if (!mudou) continue;
+      if (Math.abs(Number(p.var_dia) || 0) > LIM_ALERTA) {
         avisos.push(`${nome}: var. dia informada de ${p.var_dia} c/bu`);
       }
       const ant = pHist

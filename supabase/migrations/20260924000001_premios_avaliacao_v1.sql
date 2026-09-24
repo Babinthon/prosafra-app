@@ -603,6 +603,11 @@ left join public.premios_historico h
 grant select on public.vw_premios_avaliacao, public.vw_premios_atual_avaliacao,
                 public.vw_premios_atual_avaliacao_combinada to anon, authenticated, service_role;
 
+-- Funções de trigger não ficam expostas via /rest/v1/rpc (linter 0028/0029).
+-- Os triggers continuam disparando (EXECUTE só é checado ao criar o trigger).
+revoke execute on function public.fn_premio_atual_para_historico() from public, anon, authenticated;
+revoke execute on function public.fn_premios_atual_updated_at() from public, anon, authenticated;
+
 notify pgrst, 'reload schema';
 
 commit;
