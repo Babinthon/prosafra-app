@@ -828,6 +828,114 @@ const PREMIOS_ATUAIS_INIT = [
   { id: 9, mesIdx: 4, yr: 2027, contrato: "SK7", venda: 10.0, varDia: 0.0 },
 ];
 
+// Cores da leitura: verde = acima, amarelo = na média, vermelho = abaixo (paleta BZ).
+const LEITURA_COR = {
+  "Acima da máxima histórica": { c: BZ.up,     bg: "#E8F1EA" },
+  "Acima da média":            { c: BZ.up,     bg: "#EEF5F0" },
+  "Na média":                  { c: BZ.bronze, bg: BZ.goldSoft },
+  "Abaixo da média":           { c: BZ.down,   bg: "#F8ECE9" },
+  "Abaixo da mínima histórica":{ c: BZ.down,   bg: "#F4E1DC" },
+  "Sem referência histórica":  { c: BZ.textFaint, bg: "#F5F1EA" },
+};
+const numOrNull = v => (v === null || v === undefined || v === "" || isNaN(Number(v))) ? null : Number(v);
+const fmtSig = (v, d = 1) => { const n = numOrNull(v); return n === null ? "—" : `${n > 0 ? "+" : ""}${fmt(n, d)}`; };
+const fmtDataBR = s => s ? String(s).slice(0, 10).split("-").reverse().join("/") : "—";
+
+function FaixaBar({ valor, min, max, media }) {
+  const v = numOrNull(valor), lo = numOrNull(min), hi = numOrNull(max), m = numOrNull(media);
+  if (lo === null || hi === null || hi <= lo) return <span style={{ color: BZ.textFaint, fontSize: 10 }}>—</span>;
+  const pos = x => Math.max(0, Math.min(100, ((x - lo) / (hi - lo)) * 100));
+  const fora = v !== null && (v < lo || v > hi);
+  return (
+    <div style={{ position: "relative", width: 120, height: 14 }}>
+      <div style={{ position: "absolute", left: 0, right: 0, top: 5, height: 4, background: "#F2EEE6", borderRadius: 2 }} />
+      {m !== null && <div title={`Média ${fmt(m, 1)}`} style={{ position: "absolute", left: `${pos(m)}%`, top: 2, width: 1, height: 10, background: BZ.textMute }} />}
+      {v !== null && <div title={`Prêmio ${fmt(v, 1)}`} style={{ position: "absolute", left: `calc(${pos(v)}% - 5px)`, top: 2, width: 10, height: 10, borderRadius: 5, background: fora ? (v < lo ? BZ.down : BZ.up) : BZ.gold, border: "2px solid #FFFFFF", boxShadow: "0 0 0 1px #DED8CC" }} />}
+    </div>
+  );
+}
+
+function PremiosAvaliacaoView({ rows }) {
+  const cols = "118px 58px 84px 84px 150px 70px 160px 92px";
+  const bases = [...new Set(rows.map(r => r.base_label).filter(Boolean))];
+  const comRef = rows.filter(r => numOrNull(r.media_combinada) !== null);
+  const acima = comRef.filter(r => numOrNull(r.desvio_media) > 0).length;
+  const abaixo = comRef.filter(r => numOrNull(r.desvio_media) < 0).length;
+  const desvioMedio = comRef.length ? comRef.reduce((s, r) => s + (numOrNull(r.desvio_media) || 0), 0) / comRef.length : 0;
+  const ultima = rows.reduce((d, r) => (r.data_ref && r.data_ref > d ? r.data_ref : d), "");
+  return (
+    <div style={{ maxWidth: 1060, margin: "0 auto", padding: "20px 28px 48px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ width: 3, height: 18, background: BZ.gold, borderRadius: 2 }} />
+          <span style={{ fontSize: 15, fontWeight: 700 }}>Prêmios de Soja — Paranaguá</span>
+          <span style={{ color: BZ.textFaint, fontSize: 11 }}>Compra • cents/bushel</span>
+        </div>
+        <div style={{ color: "#C2B7A6", fontSize: 10 }}>Último lançamento: {fmtDataBR(ultima)}</div>
+      </div>
+
+      <div style={{ background: BZ.surface, border: `1px solid ${BZ.border}`, borderRadius: 10, overflowX: "auto", marginBottom: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: cols, minWidth: 820, padding: "10px 16px", borderBottom: `1px solid ${BZ.border}` }}>
+          {["Embarque", "Contrato", "Prêmio atual", "Média do dia", "Faixa (mín.–máx.)", "Desvio", "Leitura", "Lançado em"].map(h => (
+            <div key={h} style={{ color: BZ.textFaint, fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>{h}</div>
+          ))}
+        </div>
+        {rows.map(r => {
+          const lc = LEITURA_COR[r.leitura] || LEITURA_COR["Sem referência histórica"];
+          const desv = numOrNull(r.desvio_media);
+          return (
+            <div key={`${r.mes_idx}-${r.ano}`} style={{ display: "grid", gridTemplateColumns: cols, minWidth: 820, padding: "12px 16px", borderBottom: `1px solid ${BZ.borderSoft}`, alignItems: "center" }}
+              onMouseEnter={e => e.currentTarget.style.background = "#FAF7F1"}
+              onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+              <span style={{ color: BZ.brownDeep, fontSize: 13, fontWeight: 600 }}>{MESES[r.mes_idx]} {r.ano}</span>
+              <span style={{ color: BZ.textMute, fontSize: 11, fontFamily: "'JetBrains Mono',monospace" }}>{r.contrato}</span>
+              <span style={{ color: BZ.brownDeep, fontSize: 14, fontWeight: 700, fontFamily: "'JetBrains Mono',monospace" }}>{fmtSig(r.premio_lancado)}</span>
+              <span style={{ color: BZ.textMute, fontSize: 12, fontFamily: "'JetBrains Mono',monospace" }}>{fmtSig(r.media_combinada)}</span>
+              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <FaixaBar valor={r.premio_lancado} min={r.faixa_min} max={r.faixa_max} media={r.media_combinada} />
+                <span style={{ color: BZ.textFaint, fontSize: 10, fontFamily: "'JetBrains Mono',monospace" }}>
+                  {numOrNull(r.faixa_min) === null ? "sem faixa" : `${fmtSig(r.faixa_min, 0)} a ${fmtSig(r.faixa_max, 0)}`}
+                </span>
+              </div>
+              <span style={{ color: desv === null ? BZ.textFaint : desv >= 0 ? BZ.up : BZ.down, fontSize: 12, fontWeight: 600, fontFamily: "'JetBrains Mono',monospace" }}>{fmtSig(desv)}</span>
+              <span style={{ justifySelf: "start", color: lc.c, background: lc.bg, fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 10, whiteSpace: "nowrap" }}>{r.leitura}</span>
+              <span title={r.lancamento_antigo ? `Lançamento com ${r.dias_desde_lancamento} dias` : ""} style={{ color: r.lancamento_antigo ? BZ.bronze : BZ.textMute, fontSize: 11, fontWeight: r.lancamento_antigo ? 600 : 400 }}>
+                {fmtDataBR(r.data_ref)}{r.lancamento_antigo ? ` ⚠ ${r.dias_desde_lancamento}d` : ""}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      <div style={{ color: BZ.textFaint, fontSize: 10, marginBottom: 20, lineHeight: 1.6 }}>
+        Média do dia = média histórica do mesmo ponto do calendário de negociação (mesma distância até o embarque).
+        {bases.length > 0 && <> Base: {bases.join(" · ")}.</>}
+        {rows.some(r => r.lancamento_antigo) && <> ⚠ = lançamento com mais de 3 dias.</>}
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 }}>
+        {[
+          { label: "Acima da média do dia", value: acima, total: comRef.length, color: BZ.up },
+          { label: "Abaixo da média do dia", value: abaixo, total: comRef.length, color: BZ.down },
+          { label: "Desvio médio", value: `${desvioMedio >= 0 ? "+" : ""}${fmt(desvioMedio, 1)} c/bu`, color: desvioMedio >= 0 ? BZ.up : BZ.down },
+        ].map((c, i) => (
+          <div key={i} style={{ background: BZ.surface, border: `1px solid ${BZ.border}`, borderRadius: 10, padding: "16px 18px" }}>
+            <div style={{ color: BZ.textMute, fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>{c.label}</div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: c.color, fontFamily: "'JetBrains Mono',monospace" }}>
+              {typeof c.value === "number" ? `${c.value}/${c.total}` : c.value}
+            </div>
+            {typeof c.value === "number" && c.total > 0 && (
+              <div style={{ marginTop: 6, height: 4, background: BZ.borderSoft, borderRadius: 2, overflow: "hidden" }}>
+                <div style={{ height: "100%", width: `${(c.value / c.total) * 100}%`, background: c.color, borderRadius: 2 }} />
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function PremiosPortoPage({premiosData}) {
   // Use Supabase data if available, otherwise fallback
   const hasLive = premiosData && premiosData.atual && premiosData.atual.length > 0;
@@ -864,6 +972,16 @@ function PremiosPortoPage({premiosData}) {
   const sorted = [...premios]
     .filter(p => (p.yr > curYear) || (p.yr === curYear && p.mesIdx >= curMonth))
     .sort((a, b) => (a.yr * 12 + a.mesIdx) - (b.yr * 12 + b.mesIdx));
+
+  // Nova avaliação (média do mesmo ponto do calendário: StoneX + safras BZ encerradas).
+  // Sem a view (app publicado antes da migração), mantém a tela antiga abaixo.
+  const aval = (premiosData && Array.isArray(premiosData.avaliacao)) ? premiosData.avaliacao : [];
+  if (hasLive && aval.length > 0) {
+    const rows = aval
+      .filter(a => (a.ano > curYear) || (a.ano === curYear && a.mes_idx >= curMonth))
+      .sort((a, b) => (a.ano * 12 + a.mes_idx) - (b.ano * 12 + b.mes_idx));
+    return <PremiosAvaliacaoView rows={rows} />;
+  }
 
   return (
     <div style={{ maxWidth: 1060, margin: "0 auto", padding: "20px 28px 48px" }}>
@@ -3055,7 +3173,12 @@ function AdminPage({cotacoes}) {
 
   // Premios state
   const [pItems, setPItems] = useState([]);
-  const [pDataRef, setPDataRef] = useState(new Date().toISOString().slice(0, 10));
+  // Data de hoje em Brasília (toISOString é UTC: depois das 21h já seria "amanhã").
+  const hojeSP = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date());
+  const [pDataRef, setPDataRef] = useState(hojeSP());
+  const [pFonte, setPFonte] = useState("");
+  const [pOrig, setPOrig] = useState([]);   // prêmios como estão no banco (para saber o que mudou)
+  const [pAval, setPAval] = useState([]);   // faixa/média do dia (vw_premios_atual_avaliacao_combinada)
   const [pNewMes, setPNewMes] = useState("4-2026");
   const [pNewContrato, setPNewContrato] = useState("");
   const [pNewPremio, setPNewPremio] = useState("");
@@ -3232,8 +3355,9 @@ function AdminPage({cotacoes}) {
     try {
       const res = await fetch("/api/admin?type=premios", { headers: { "x-admin-password": pw } });
       const j = await res.json();
-      if (j.atual) setPItems(j.atual);
+      if (j.atual) { setPItems(j.atual); setPOrig(j.atual); }
       if (j.historico) setPHist(j.historico);
+      setPAval(Array.isArray(j.avaliacao) ? j.avaliacao : []);
     } catch {}
   };
 
@@ -3264,17 +3388,58 @@ function AdminPage({cotacoes}) {
     } catch {}
   };
 
+  // Avisos antes de salvar (os lançamentos agora formam a média histórica).
+  const LIM_ALERTA = 30;
+  const avisosPremios = () => {
+    const avisos = [];
+    for (const p of pItems) {
+      const nome = `${MESES_SHORT[p.mes_idx]}/${String(p.ano).slice(-2)}`;
+      const venda = Number(p.venda);
+      const orig = pOrig.find(o => o.mes_idx === p.mes_idx && o.ano === p.ano);
+      const mudou = !orig || Number(orig.venda) !== venda;
+      // Só avisa o que foi lançado/alterado agora ("Salvar todos" reenvia também os meses sem mudança).
+      if (!mudou) continue;
+      if (Math.abs(Number(p.var_dia) || 0) > LIM_ALERTA) {
+        avisos.push(`${nome}: var. dia informada de ${p.var_dia} c/bu`);
+      }
+      const ant = pHist
+        .filter(h => h.mes_idx === p.mes_idx && h.ano === p.ano && h.data_ref < pDataRef)
+        .sort((a, b) => (a.data_ref < b.data_ref ? 1 : -1))[0];
+      if (ant && Math.abs(venda - Number(ant.premio)) > LIM_ALERTA) {
+        const dif = venda - Number(ant.premio);
+        avisos.push(`${nome}: variação de ${dif > 0 ? "+" : ""}${dif.toFixed(1)} c/bu em relação ao último lançamento (${ant.data_ref.split("-").reverse().join("/")})`);
+      }
+      const av = pAval.find(a => a.mes_idx === p.mes_idx && a.ano === p.ano);
+      if (av && av.faixa_min != null && av.faixa_max != null &&
+          (venda < Number(av.faixa_min) - LIM_ALERTA || venda > Number(av.faixa_max) + LIM_ALERTA)) {
+        avisos.push(`${nome}: ${venda} c/bu está fora da faixa histórica (${av.faixa_min} a ${av.faixa_max})`);
+      }
+    }
+    return avisos;
+  };
+
   const savePremios = async () => {
     if (pItems.length === 0) { setPMsg("Adicione pelo menos 1 prêmio"); return; }
+    const foraFaixa = pItems.filter(p => !(Number(p.venda) >= -300 && Number(p.venda) <= 400));
+    if (foraFaixa.length) { setPMsg(`Prêmio fora da faixa aceita (-300 a +400 c/bu): ${foraFaixa.map(p => `${MESES_SHORT[p.mes_idx]}/${String(p.ano).slice(-2)} = ${p.venda}`).join(", ")}`); return; }
+    if (pDataRef > hojeSP()) { setPMsg("Data de referência no futuro"); return; }
+    const avisos = avisosPremios();
+    if (avisos.length && !confirm(
+      `Atenção:\n\n• ${avisos.join("\n• ")}\n\nEsses lançamentos serão gravados marcados para conferência e só entram na média histórica depois de revisados.\n\nConfirma?`
+    )) return;
     setPLoading(true); setPMsg("");
     try {
       const items = pItems.map(p => ({ mes_idx: p.mes_idx, ano: p.ano, contrato: p.contrato, premio: p.venda, var_dia: p.var_dia || 0 }));
       const res = await fetch("/api/admin", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: pw, action: "premios_upsert", data: { items, data_ref: pDataRef } }),
+        body: JSON.stringify({ password: pw, action: "premios_upsert", data: { items, data_ref: pDataRef, fonte: pFonte } }),
       });
       const j = await res.json();
-      if (j.success) { setPMsg(`✓ ${j.inserted} prêmio(s) salvos + histórico gravado`); loadPremios(); }
+      if (j.success) {
+        const nAl = Array.isArray(j.alertas) ? j.alertas.length : 0;
+        setPMsg(`✓ ${j.inserted} prêmio(s) salvos + histórico gravado${nAl ? ` · ⚠ ${nAl} marcado(s) para conferência` : ""}`);
+        loadPremios();
+      }
       else setPMsg(`Erro: ${j.error}`);
     } catch { setPMsg("Erro de conexão"); }
     setPLoading(false);
@@ -3694,7 +3859,17 @@ function AdminPage({cotacoes}) {
             {/* Date ref */}
             <div style={{ marginBottom: 14 }}>
               <label style={{ color: "#8A7E6F", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Data de referência</label>
-              <input type="date" value={pDataRef} onChange={e => setPDataRef(e.target.value)} style={{ ...inputStyle, width: 180 }} />
+              <input type="date" value={pDataRef} max={hojeSP()} onChange={e => setPDataRef(e.target.value)} style={{ ...inputStyle, width: 180 }} />
+              {pDataRef < hojeSP() && <span style={{ marginLeft: 10, color: "#B67A33", fontSize: 11 }}>Lançamento retroativo: grava o histórico nesta data e atualiza o prêmio atual.</span>}
+            </div>
+
+            {/* Fonte do prêmio (auditoria) */}
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ color: "#8A7E6F", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Fonte do prêmio</label>
+              <input list="premio-fontes" value={pFonte} onChange={e => setPFonte(e.target.value)} placeholder="StoneX, corretora, trading…" style={{ ...inputStyle, width: 240 }} />
+              <datalist id="premio-fontes">
+                {["StoneX", "Corretora", "Trading", ...new Set(pHist.map(h => h.fonte).filter(Boolean))].map(f => <option key={f} value={f} />)}
+              </datalist>
             </div>
 
             {/* Add row */}
@@ -3753,7 +3928,12 @@ function AdminPage({cotacoes}) {
 
           {/* Histórico de lançamentos */}
           <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 12, padding: 24 }}>
-            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 16 }}>Histórico de lançamentos ({pHist.length} registros)</div>
+            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: pHist.some(h => h.conferir) ? 6 : 16 }}>Histórico de lançamentos ({pHist.length} registros)</div>
+            {pHist.some(h => h.conferir) && (
+              <div style={{ color: "#B67A33", fontSize: 11, marginBottom: 14 }}>
+                ⚠ {pHist.filter(h => h.conferir).length} lançamento(s) aguardando conferência — não entram na média histórica até serem aprovados (ou corrigidos/excluídos). Passe o mouse em "Conferir" para ver o motivo.
+              </div>
+            )}
             {pHist.length > 0 ? (
               <div style={{ overflowX: "auto", maxHeight: 400, overflowY: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
@@ -3762,6 +3942,8 @@ function AdminPage({cotacoes}) {
                       <th style={{ textAlign: "left", padding: "8px 12px", color: "#8A7E6F", fontWeight: 500 }}>Data ref.</th>
                       <th style={{ textAlign: "left", padding: "8px 12px", color: "#8A7E6F", fontWeight: 500 }}>Embarque</th>
                       <th style={{ textAlign: "right", padding: "8px 12px", color: "#8A7E6F", fontWeight: 500 }}>Prêmio (c/bu)</th>
+                      <th style={{ textAlign: "left", padding: "8px 12px", color: "#8A7E6F", fontWeight: 500 }}>Fonte</th>
+                      <th style={{ textAlign: "left", padding: "8px 12px", color: "#8A7E6F", fontWeight: 500 }}>Conferência</th>
                       <th style={{ textAlign: "center", padding: "8px 12px", color: "#8A7E6F", fontWeight: 500 }}>Excluir</th>
                     </tr>
                   </thead>
@@ -3772,6 +3954,28 @@ function AdminPage({cotacoes}) {
                         <td style={{ padding: "6px 12px", color: "#6B6052" }}>{MESES_SHORT[h.mes_idx]}/{String(h.ano).slice(-2)}</td>
                         <td style={{ padding: "6px 12px", textAlign: "right", fontFamily: "'JetBrains Mono',monospace", color: h.premio >= 0 ? "#4E7C5A" : "#B0503F", fontWeight: 600 }}>
                           {h.premio > 0 ? "+" : ""}{h.premio}
+                        </td>
+                        <td style={{ padding: "6px 12px", color: "#8A7E6F", fontSize: 11 }}>{h.fonte || "—"}</td>
+                        <td style={{ padding: "6px 12px", fontSize: 11 }}>
+                          {h.conferir ? (
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                              <span title={h.motivo_conferir || ""} style={{ color: "#B67A33", fontWeight: 600, cursor: "help" }}>⚠ Conferir</span>
+                              <span onClick={async () => {
+                                if (!confirm(`Aprovar ${MESES_SHORT[h.mes_idx]}/${String(h.ano).slice(-2)} de ${h.data_ref?.split("-").reverse().join("/")} (${h.premio} c/bu)?\n\n${h.motivo_conferir || ""}\n\nDepois de aprovado, entra na média histórica.`)) return;
+                                try {
+                                  await fetch("/api/admin", {
+                                    method: "POST", headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ password: pw, action: "premios_hist_revisar", data: { data_ref: h.data_ref, mes_idx: h.mes_idx, ano: h.ano } }),
+                                  });
+                                  loadPremios();
+                                } catch {}
+                              }} style={{ color: "#4E7C5A", cursor: "pointer", fontWeight: 600, border: "1px solid rgba(78,124,90,0.35)", borderRadius: 5, padding: "1px 7px" }}>Aprovar</span>
+                            </span>
+                          ) : h.revisado_em ? (
+                            <span style={{ color: "#4E7C5A" }}>✓ Revisado</span>
+                          ) : (
+                            <span style={{ color: "#C2B7A6" }}>—</span>
+                          )}
                         </td>
                         <td style={{ padding: "6px 12px", textAlign: "center" }}>
                           <span onClick={async () => {

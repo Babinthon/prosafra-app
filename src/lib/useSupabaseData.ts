@@ -390,9 +390,35 @@ export interface PremioHistRow {
   data_ref: string;
 }
 
+/** Linha de vw_premios_atual_avaliacao_combinada (média StoneX + lançamentos BZ de safras encerradas). */
+export interface PremioAvaliacaoRow {
+  mes_idx: number;
+  ano: number;
+  contrato: string;
+  fonte: string | null;
+  data_ref: string;
+  dias_desde_lancamento: number;
+  lancamento_antigo: boolean;
+  premio_lancado: number;
+  var_dia: number | null;
+  media_stonex: number | null;
+  media_propria: number | null;
+  n_anos_proprios: number;
+  media_combinada: number | null;
+  faixa_min: number | null;
+  faixa_max: number | null;
+  base_label: string | null;
+  desvio_media: number | null;
+  posicao_faixa_pct: number | null;
+  leitura: string;
+  conferir: boolean;
+}
+
 export interface PremiosData {
   atual: PremioAtualRow[];
   historico: PremioHistRow[];
+  /** Vazio se a view ainda não existir (app publicado antes da migração): a tela cai no modo antigo. */
+  avaliacao: PremioAvaliacaoRow[];
 }
 
 export interface AnaliseRow {
@@ -573,6 +599,7 @@ export function useSupabaseData(): SupabaseData {
         .from("premios_atual")
         .select("mes_idx, ano, contrato, venda, var_dia")
         .eq("porto", "Paranaguá")
+        .eq("produto", "Soja")
         .order("ano", { ascending: true })
         .order("mes_idx", { ascending: true });
 
@@ -580,12 +607,21 @@ export function useSupabaseData(): SupabaseData {
         .from("premios_historico")
         .select("mes_idx, ano, premio, data_ref")
         .eq("porto", "Paranaguá")
+        .eq("produto", "Soja")
         .order("data_ref", { ascending: true });
+
+      // Avaliação vs. média histórica do dia (view). Se falhar, a tela usa o modo antigo.
+      const { data: premAval, error: premErr3 } = await supabase
+        .from("vw_premios_atual_avaliacao_combinada")
+        .select("mes_idx, ano, contrato, fonte, data_ref, dias_desde_lancamento, lancamento_antigo, premio_lancado, var_dia, media_stonex, media_propria, n_anos_proprios, media_combinada, faixa_min, faixa_max, base_label, desvio_media, posicao_faixa_pct, leitura, conferir")
+        .eq("porto", "Paranaguá")
+        .eq("produto", "Soja");
 
       if (!premErr1 && premAtual && premAtual.length > 0) {
         setPremiosData({
           atual: premAtual as PremioAtualRow[],
           historico: (premHist || []) as PremioHistRow[],
+          avaliacao: (!premErr3 && premAval ? premAval : []) as PremioAvaliacaoRow[],
         });
       }
 

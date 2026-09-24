@@ -54,7 +54,24 @@ export async function POST(request: Request) {
 
     // ─── PRÊMIOS PORTO ───
     if (action === "premios_upsert") {
-      const today = data.data_ref || new Date().toISOString().slice(0, 10);
+      // Data de hoje no fuso de Brasília (não UTC: depois das 21h o UTC já é "amanhã").
+      const hojeSP = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date());
+      const dataRef: string = data.data_ref || hojeSP;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dataRef)) {
+        return NextResponse.json({ error: "Data de referência inválida" }, { status: 400 });
+      }
+      if (dataRef > hojeSP) {
+        return NextResponse.json({ error: "Data de referência no futuro" }, { status: 400 });
+      }
+      // Faixa de sanidade (o banco também bloqueia: check -300..400).
+      const fora = (data.items || []).filter((it: any) => !(Number(it.premio) >= -300 && Number(it.premio) <= 400));
+      if (fora.length) {
+        return NextResponse.json({ error: `Prêmio fora da faixa aceita (-300 a +400 c/bu): ${fora.map((it: any) => it.premio).join(", ")}` }, { status: 400 });
+      }
+      // Lançamento do dia: agora. Retroativo: meio-dia de Brasília da data escolhida.
+      // O trigger do banco grava premios_historico com a data (America/Sao_Paulo) de updated_at.
+      const updatedAt = dataRef === hojeSP ? new Date().toISOString() : `${dataRef}T12:00:00-03:00`;
+      const fonte = typeof data.fonte === "string" && data.fonte.trim() ? data.fonte.trim() : null;
 
       const atualRows = data.items.map((it: any) => ({
         mes_idx: it.mes_idx,
@@ -64,7 +81,8 @@ export async function POST(request: Request) {
         var_dia: it.var_dia || 0,
         produto: "Soja",
         porto: "Paranaguá",
-        updated_at: new Date().toISOString(),
+        updated_at: updatedAt,
+        fonte,
       }));
 
       const { error: e1 } = await supabase
@@ -72,21 +90,30 @@ export async function POST(request: Request) {
         .upsert(atualRows, { onConflict: "mes_idx,ano,produto,porto" });
       if (e1) return NextResponse.json({ error: "premios_atual: " + e1.message }, { status: 500 });
 
-      const histRows = data.items.map((it: any) => ({
-        data_ref: today,
-        mes_idx: it.mes_idx,
-        ano: it.ano,
-        contrato: it.contrato,
-        premio: it.premio,
-        porto: "Paranaguá",
-      }));
-
-      const { error: e2 } = await supabase
+      // premios_historico agora é gravado pelo trigger trg_premio_atual_para_historico
+      // (mesma transação). Aqui só lemos os lançamentos que ficaram marcados para conferência.
+      const { data: alertas } = await supabase
         .from("premios_historico")
-        .upsert(histRows, { onConflict: "data_ref,mes_idx,ano,porto" });
-      if (e2) return NextResponse.json({ error: "premios_historico: " + e2.message }, { status: 500 });
+        .select("mes_idx, ano, premio, motivo_conferir")
+        .eq("data_ref", dataRef)
+        .eq("porto", "Paranaguá")
+        .eq("produto", "Soja")
+        .eq("conferir", true);
 
-      return NextResponse.json({ success: true, inserted: data.items.length });
+      return NextResponse.json({ success: true, inserted: data.items.length, data_ref: dataRef, alertas: alertas || [] });
+    }
+
+    if (action === "premios_hist_revisar") {
+      const { error } = await supabase
+        .from("premios_historico")
+        .update({ conferir: false, revisado_em: new Date().toISOString(), revisado_por: "admin" })
+        .eq("data_ref", data.data_ref)
+        .eq("mes_idx", data.mes_idx)
+        .eq("ano", data.ano)
+        .eq("porto", "Paranaguá")
+        .eq("produto", "Soja");
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ success: true });
     }
 
     if (action === "premios_delete") {
@@ -95,7 +122,8 @@ export async function POST(request: Request) {
         .delete()
         .eq("mes_idx", data.mes_idx)
         .eq("ano", data.ano)
-        .eq("porto", "Paranaguá");
+        .eq("porto", "Paranaguá")
+        .eq("produto", "Soja");
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
       return NextResponse.json({ success: true });
     }
@@ -107,7 +135,8 @@ export async function POST(request: Request) {
         .eq("data_ref", data.data_ref)
         .eq("mes_idx", data.mes_idx)
         .eq("ano", data.ano)
-        .eq("porto", "Paranaguá");
+        .eq("porto", "Paranaguá")
+        .eq("produto", "Soja");
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
       return NextResponse.json({ success: true });
     }
@@ -300,21 +329,30 @@ export async function GET(request: Request) {
   if (type === "premios") {
     const { data: atual, error: e1 } = await supabase
       .from("premios_atual")
-      .select("mes_idx, ano, contrato, venda, var_dia")
+      .select("mes_idx, ano, contrato, venda, var_dia, fonte, updated_at")
       .eq("porto", "Paranaguá")
+      .eq("produto", "Soja")
       .order("ano", { ascending: true })
       .order("mes_idx", { ascending: true });
 
     const { data: hist, error: e2 } = await supabase
       .from("premios_historico")
-      .select("mes_idx, ano, premio, data_ref")
+      .select("mes_idx, ano, premio, data_ref, fonte, conferir, motivo_conferir, var_calc, revisado_em, origem")
       .eq("porto", "Paranaguá")
+      .eq("produto", "Soja")
       .order("data_ref", { ascending: true });
+
+    // Avaliação do dia (faixa/média) — usada no aviso antes de salvar. Opcional.
+    const { data: aval } = await supabase
+      .from("vw_premios_atual_avaliacao_combinada")
+      .select("mes_idx, ano, media_combinada, faixa_min, faixa_max, base_label")
+      .eq("porto", "Paranaguá")
+      .eq("produto", "Soja");
 
     if (e1) return NextResponse.json({ error: e1.message }, { status: 500 });
     if (e2) return NextResponse.json({ error: e2.message }, { status: 500 });
 
-    return NextResponse.json({ atual: atual || [], historico: hist || [] });
+    return NextResponse.json({ atual: atual || [], historico: hist || [], avaliacao: aval || [] });
   }
 
   if (type === "analise") {
