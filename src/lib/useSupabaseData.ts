@@ -390,7 +390,7 @@ export interface PremioHistRow {
   data_ref: string;
 }
 
-/** Linha de vw_premios_atual_avaliacao_combinada (média StoneX + lançamentos BZ de safras encerradas). */
+/** Linha de vw_premios_atual_avaliacao_combinada (média da base histórica + lançamentos BZ de safras encerradas). */
 export interface PremioAvaliacaoRow {
   mes_idx: number;
   ano: number;
@@ -401,7 +401,6 @@ export interface PremioAvaliacaoRow {
   lancamento_antigo: boolean;
   premio_lancado: number;
   var_dia: number | null;
-  media_stonex: number | null;
   media_propria: number | null;
   n_anos_proprios: number;
   media_combinada: number | null;
@@ -613,7 +612,7 @@ export function useSupabaseData(): SupabaseData {
       // Avaliação vs. média histórica do dia (view). Se falhar, a tela usa o modo antigo.
       const { data: premAval, error: premErr3 } = await supabase
         .from("vw_premios_atual_avaliacao_combinada")
-        .select("mes_idx, ano, contrato, fonte, data_ref, dias_desde_lancamento, lancamento_antigo, premio_lancado, var_dia, media_stonex, media_propria, n_anos_proprios, media_combinada, faixa_min, faixa_max, base_label, desvio_media, posicao_faixa_pct, leitura, conferir")
+        .select("mes_idx, ano, contrato, fonte, data_ref, dias_desde_lancamento, lancamento_antigo, premio_lancado, var_dia, media_propria, n_anos_proprios, media_combinada, faixa_min, faixa_max, base_label, desvio_media, posicao_faixa_pct, leitura, conferir")
         .eq("porto", "Paranaguá")
         .eq("produto", "Soja");
 

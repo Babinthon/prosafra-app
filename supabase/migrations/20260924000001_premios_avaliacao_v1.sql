@@ -1,7 +1,7 @@
 -- =====================================================================
 -- Migração 1/2 — 20260924_premios_avaliacao_v1
 -- ProSafra / BZ Grãos — Prêmios: histórico automático, auditoria,
--- validação e avaliação vs. média histórica (StoneX + lançamentos próprios)
+-- validação e avaliação vs. média histórica (base histórica + lançamentos próprios)
 --
 -- 100% aditiva. É compatível com o código ATUAL do app (a chave única
 -- antiga de premios_historico é MANTIDA aqui; só sai na migração 2/2,
@@ -23,7 +23,7 @@ alter table public.premios_porto
   add column if not exists valido      boolean not null default true,
   add column if not exists obs         text,
   add column if not exists base_anos   text not null default '2023-2025',
-  add column if not exists fonte       text not null default 'StoneX';
+  add column if not exists fonte       text not null default 'Base histórica';
 
 update public.premios_porto set mes_idx=1, data_inicio='1999-01-29', data_fim='1999-02-17', valido=true, obs=null where id=1 and premio_inicio=45 and premio_fim=22;
 update public.premios_porto set mes_idx=1, data_inicio='1999-02-17', data_fim='1999-03-07', valido=true, obs=null where id=2 and premio_inicio=22 and premio_fim=15;
@@ -220,10 +220,10 @@ create table if not exists public.premios_parametros (
   descricao text
 );
 insert into public.premios_parametros (chave, valor, descricao) values
-  ('peso_stonex',            3,  'Peso da média StoneX na média combinada (= nº de anos da base StoneX 2023-2025)'),
+  ('peso_base',              3,  'Peso da média da base histórica na média combinada (= nº de anos da base 2023-2025)'),
   ('gap_max_dias',          10,  'Buraco máximo (dias) entre dois lançamentos próprios para interpolar'),
   ('alerta_var',            30,  'Variação (c/bu) acima da qual o lançamento fica com conferir = true'),
-  ('alerta_margem_faixa',   30,  'Margem (c/bu) fora de [mín, máx] do segmento StoneX que marca conferir = true'),
+  ('alerta_margem_faixa',   30,  'Margem (c/bu) fora de [mín, máx] da faixa histórica que marca conferir = true'),
   ('dias_lancamento_antigo', 3,  'Lançamento com mais de N dias é sinalizado no painel')
 on conflict (chave) do nothing;
 alter table public.premios_parametros enable row level security;
@@ -265,7 +265,7 @@ alter table public.premios_historico
   add column if not exists lancado_por     uuid,
   add column if not exists lancado_em      timestamptz,
   add column if not exists origem          text,         -- papel que gravou (service_role, authenticated, postgres…)
-  add column if not exists fonte           text,         -- StoneX, corretora, trading…
+  add column if not exists fonte           text,         -- corretora, trading…
   add column if not exists conferir        boolean not null default false,
   add column if not exists motivo_conferir text,
   add column if not exists var_calc        numeric,      -- variação vs. lançamento anterior (calculada)
@@ -290,7 +290,7 @@ create index if not exists premios_historico_busca_idx
   on public.premios_historico (porto, produto, mes_idx, ano, data_ref);
 
 -- ---------------------------------------------------------------------
--- 5) Referência histórica StoneX para uma data de negociação
+-- 5) Referência da base histórica para uma data de negociação
 --    Interpola linearmente o segmento (inicio -> fim) que contém a data.
 -- ---------------------------------------------------------------------
 create or replace function public.premio_referencia(
@@ -408,7 +408,7 @@ after insert or update of venda, contrato on public.premios_atual
 for each row execute function public.fn_premio_atual_para_historico();
 
 -- ---------------------------------------------------------------------
--- 7) Views de avaliação vs. StoneX (partes 4/5 do arquivo original)
+-- 7) Views de avaliação vs. base histórica (partes 4/5 do arquivo original)
 --    tolerância "na média" = maior entre 5 c/bu e 15% da amplitude do segmento
 -- ---------------------------------------------------------------------
 create or replace view public.vw_premios_avaliacao
@@ -456,22 +456,22 @@ left join lateral public.premio_referencia(a.porto, a.produto, a.mes_idx, a.ano,
 left join lateral (select greatest(5, 0.15 * (r.premio_max - r.premio_min)) as tol) t on true;
 
 -- ---------------------------------------------------------------------
--- 8) Média viva: StoneX + lançamentos próprios de safras ENCERRADAS
+-- 8) Média viva: base histórica + lançamentos próprios de safras ENCERRADAS
 --    (não altera premio_referencia)
 -- ---------------------------------------------------------------------
 create or replace function public.premio_referencia_combinada(
   p_porto text, p_produto text, p_mes_idx int, p_ano int, p_data date)
 returns table (
-  media_stonex numeric, stonex_min numeric, stonex_max numeric, base_stonex text,
+  media_base numeric, base_min numeric, base_max numeric, base_anos text,
   media_propria numeric, n_anos_proprios int, anos_proprios int[],
-  peso_stonex numeric, media_combinada numeric, faixa_min numeric, faixa_max numeric,
+  peso_base numeric, media_combinada numeric, faixa_min numeric, faixa_max numeric,
   base_label text)
 language sql
 stable
 set search_path = public
 as $$
   with par as (
-    select coalesce((select valor from premios_parametros where chave = 'peso_stonex'), 3)  as peso,
+    select coalesce((select valor from premios_parametros where chave = 'peso_base'), 3)  as peso,
            coalesce((select valor from premios_parametros where chave = 'gap_max_dias'), 10) as gap
   ),
   sx as (
@@ -479,8 +479,6 @@ as $$
            (select s.base_anos from premios_porto s where s.id = r.segmento_id) as base_anos
       from premio_referencia(p_porto, p_produto, p_mes_idx, p_ano, p_data) r
   ),
-  -- anos próprios: entrega ANTERIOR à avaliada e já encerrada na data da avaliação
-  -- (o lançamento da safra em curso nunca entra na média que avalia a si mesmo)
   anos as (
     select distinct h.ano as y
       from premios_historico h
@@ -488,7 +486,7 @@ as $$
        and h.ano < p_ano
        and (make_date(h.ano, p_mes_idx + 1, 1) + interval '1 month')::date <= p_data
   ),
-  alvo as (  -- mesma posição no calendário de negociação, deslocada para o ano y
+  alvo as (
     select a.y,
            (make_date(extract(year from p_data)::int + (a.y - p_ano), extract(month from p_data)::int, 1)
             + (extract(day from p_data)::int - 1))::date as d
@@ -546,20 +544,19 @@ as $$
               from (select least(coalesce(split_part(sx.base_anos, '-', 1)::int, 9999), coalesce(agg.anos[1], 9999)) as lo,
                            greatest(coalesce(split_part(sx.base_anos, '-', 2)::int, 0),
                                     coalesce(agg.anos[array_length(agg.anos, 1)], 0)) as hi) x)
-        || ' ('
-        || concat_ws(' + ',
-             case when sx.premio_medio is not null
-                  then 'StoneX ' || split_part(sx.base_anos, '-', 1) || '–' || right(split_part(sx.base_anos, '-', 2), 2) end,
-             case when coalesce(agg.n, 0) > 0
-                  then 'BZ ' || array_to_string(agg.anos, ', ') end)
-        || ')'
+        || case when coalesce(agg.n, 0) > 0
+                then ' (' || concat_ws(' + ',
+                       case when sx.premio_medio is not null
+                            then 'base ' || split_part(sx.base_anos, '-', 1) || '–' || right(split_part(sx.base_anos, '-', 2), 2) end,
+                       'BZ ' || array_to_string(agg.anos, ', ')) || ')'
+                else '' end
     end
   from par
   left join sx  on true
   left join agg on true;
 $$;
 
--- leitura padronizada (mesmas regras das views StoneX)
+-- leitura padronizada (mesmas regras das views de avaliação)
 create or replace function public.premio_leitura(p_valor numeric, p_media numeric, p_min numeric, p_max numeric)
 returns text language sql immutable set search_path = public as $$
   select case
@@ -585,7 +582,7 @@ select a.porto, a.produto, a.mes_idx, a.ano, a.contrato, a.fonte,
          > coalesce((select valor from public.premios_parametros where chave = 'dias_lancamento_antigo'), 3)
                                                      as lancamento_antigo,
        a.venda as premio_lancado, a.var_dia,
-       c.media_stonex, c.media_propria, c.n_anos_proprios, c.anos_proprios,
+       c.media_base, c.media_propria, c.n_anos_proprios, c.anos_proprios,
        c.media_combinada, c.faixa_min, c.faixa_max, c.base_label,
        round(a.venda - c.media_combinada, 1) as desvio_media,
        case when c.faixa_max > c.faixa_min
