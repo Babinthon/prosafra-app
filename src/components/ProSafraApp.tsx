@@ -1708,6 +1708,172 @@ function PosicaoFundosPage({fundosData}) {
 // CÂMBIO PROJETADO PAGE
 // ═══════════════════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════════════════
+// HISTÓRICO DA PTAX (bloco da aba Câmbio — somente leitura de ptax_diaria)
+// ═══════════════════════════════════════════════════════════════
+
+function PtaxHistorico() {
+  const hoje = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date());
+  const menosDias = (n) => { const d = new Date(hoje + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() - n); return d.toISOString().slice(0, 10); };
+  const PERIODOS = [
+    { id: "30", label: "30 dias", ini: () => menosDias(30) },
+    { id: "90", label: "90 dias", ini: () => menosDias(90) },
+    { id: "365", label: "12 meses", ini: () => menosDias(365) },
+    { id: "tudo", label: "Tudo", ini: () => "2000-01-01" },
+  ];
+  const [per, setPer] = useState("90");
+  const [dIni, setDIni] = useState(menosDias(90));
+  const [dFim, setDFim] = useState(hoje);
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState("");
+  const [hover, setHover] = useState(null);
+
+  const escolher = (p) => { setPer(p.id); setDIni(p.ini()); setDFim(hoje); };
+
+  useEffect(() => {
+    let vivo = true;
+    (async () => {
+      setLoading(true); setErro("");
+      try {
+        const out = [];
+        for (let de = 0; de < 20000; de += 1000) {
+          const { data, error } = await supabase
+            .from("ptax_diaria")
+            .select("data_ref, compra, venda")
+            .gte("data_ref", dIni)
+            .lte("data_ref", dFim)
+            .order("data_ref", { ascending: true })
+            .range(de, de + 999);
+          if (error) throw error;
+          out.push(...(data || []));
+          if (!data || data.length < 1000) break;
+        }
+        if (vivo) setRows(out.map(r => ({ data_ref: r.data_ref, compra: Number(r.compra), venda: Number(r.venda) })));
+      } catch (e) { if (vivo) setErro("Não foi possível carregar o histórico."); }
+      if (vivo) setLoading(false);
+    })();
+    return () => { vivo = false; };
+  }, [dIni, dFim]);
+
+  const dBR = (s) => s ? s.split("-").reverse().join("/") : "—";
+  const n = rows.length;
+  const vendas = rows.map(r => r.venda);
+  const minV = n ? Math.min(...vendas) : null;
+  const maxV = n ? Math.max(...vendas) : null;
+  const medV = n ? vendas.reduce((a, b) => a + b, 0) / n : null;
+  const diaMin = n ? rows.find(r => r.venda === minV).data_ref : null;
+  const diaMax = n ? rows.find(r => r.venda === maxV).data_ref : null;
+  const varAbs = n > 1 ? rows[n - 1].venda - rows[0].venda : null;
+  const varPct = n > 1 ? (varAbs / rows[0].venda) * 100 : null;
+
+  const baixar = () => {
+    const linhas = ["Data;PTAX compra;PTAX venda", ...rows.map(r => `${dBR(r.data_ref)};${String(r.compra).replace(".", ",")};${String(r.venda).replace(".", ",")}`)];
+    const blob = new Blob(["﻿" + linhas.join("\n")], { type: "text/csv;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `ptax_${rows[0].data_ref}_a_${rows[rows.length - 1].data_ref}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
+
+  // gráfico (eixo X proporcional ao tempo)
+  const W = 700, H = 200, pL = 56, pR = 16, pT = 16, pB = 28;
+  const t = (s) => new Date(s + "T12:00:00Z").getTime();
+  const t0 = n ? t(rows[0].data_ref) : 0, t1 = n ? t(rows[n - 1].data_ref) : 1;
+  const yLo = n ? minV - (maxV - minV || 0.05) * 0.1 : 0, yHi = n ? maxV + (maxV - minV || 0.05) * 0.1 : 1;
+  const X = (s) => pL + ((t(s) - t0) / Math.max(t1 - t0, 1)) * (W - pL - pR);
+  const Y = (v) => pT + (1 - (v - yLo) / (yHi - yLo)) * (H - pT - pB);
+  const path = rows.map((r, i) => `${i ? "L" : "M"}${X(r.data_ref).toFixed(1)},${Y(r.venda).toFixed(1)}`).join(" ");
+  const marcas = n ? [0, 0.25, 0.5, 0.75, 1].map(f => rows[Math.min(n - 1, Math.round(f * (n - 1)))]) : [];
+  const onMove = (e) => {
+    if (!n) return;
+    const box = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - box.left) / box.width) * W;
+    let best = 0, bd = Infinity;
+    rows.forEach((r, i) => { const d = Math.abs(X(r.data_ref) - x); if (d < bd) { bd = d; best = i; } });
+    setHover(best);
+  };
+
+  const card = { background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "14px 18px", flex: "1 1 150px", minWidth: 140 };
+  const lab = { color: "#8A7E6F", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 };
+  const num = { fontSize: 18, fontWeight: 700, color: "#4A2C16", fontFamily: "'JetBrains Mono',monospace" };
+  const btn = (on) => ({ background: on ? "#D5A246" : "#FFFFFF", border: `1px solid ${on ? "#D5A246" : "#DED8CC"}`, borderRadius: 6, padding: "6px 12px", fontSize: 11, fontWeight: 600, color: "#4A2C16", cursor: "pointer" });
+  const inp = { background: "#FFFFFF", border: "1px solid #DED8CC", borderRadius: 6, padding: "5px 8px", fontSize: 11, color: "#4A2C16" };
+
+  return (
+    <div style={{ marginTop: 28 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
+        <div style={{ width: 3, height: 18, background: "#D5A246", borderRadius: 2 }} />
+        <span style={{ fontSize: 15, fontWeight: 700 }}>Histórico da PTAX</span>
+        <span style={{ color: "#A89C8A", fontSize: 11 }}>Fechamento diário — Banco Central do Brasil</span>
+      </div>
+
+      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 14 }}>
+        {PERIODOS.map(p => <button key={p.id} type="button" onClick={() => escolher(p)} style={btn(per === p.id)}>{p.label}</button>)}
+        <span style={{ color: "#A89C8A", fontSize: 11, marginLeft: 6 }}>De</span>
+        <input type="date" value={per === "tudo" && n ? rows[0].data_ref : dIni} max={dFim} onChange={e => { setPer("custom"); setDIni(e.target.value); }} style={inp} />
+        <span style={{ color: "#A89C8A", fontSize: 11 }}>até</span>
+        <input type="date" value={dFim} min={dIni} max={hoje} onChange={e => { setPer("custom"); setDFim(e.target.value); }} style={inp} />
+        <button type="button" onClick={baixar} disabled={!n} style={{ ...btn(false), marginLeft: "auto", opacity: n ? 1 : 0.5 }}>⬇ Baixar planilha</button>
+      </div>
+
+      {erro && <div style={{ color: "#B0503F", fontSize: 12, marginBottom: 10 }}>{erro}</div>}
+
+      <div style={{ display: "flex", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
+        <div style={card}><div style={lab}>Última (venda)</div><div style={num}>{n ? `R$ ${fmt(rows[n - 1].venda, 4)}` : "—"}</div><div style={{ color: "#C2B7A6", fontSize: 9, marginTop: 3 }}>{n ? dBR(rows[n - 1].data_ref) : ""}</div></div>
+        <div style={card}><div style={lab}>Mínima</div><div style={num}>{n ? `R$ ${fmt(minV, 4)}` : "—"}</div><div style={{ color: "#C2B7A6", fontSize: 9, marginTop: 3 }}>{dBR(diaMin)}</div></div>
+        <div style={card}><div style={lab}>Máxima</div><div style={num}>{n ? `R$ ${fmt(maxV, 4)}` : "—"}</div><div style={{ color: "#C2B7A6", fontSize: 9, marginTop: 3 }}>{dBR(diaMax)}</div></div>
+        <div style={card}><div style={lab}>Média do período</div><div style={num}>{n ? `R$ ${fmt(medV, 4)}` : "—"}</div><div style={{ color: "#C2B7A6", fontSize: 9, marginTop: 3 }}>{n} dias</div></div>
+        <div style={card}><div style={lab}>Variação no período</div>
+          <div style={{ ...num, color: varAbs == null ? "#4A2C16" : varAbs >= 0 ? "#B0503F" : "#4E7C5A" }}>{varAbs == null ? "—" : `${varAbs >= 0 ? "+" : ""}${fmt(varAbs, 4)}`}</div>
+          <div style={{ color: "#C2B7A6", fontSize: 9, marginTop: 3 }}>{varPct == null ? "" : `${varPct >= 0 ? "+" : ""}${fmt(varPct, 2)}%`}</div></div>
+      </div>
+
+      <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, padding: "16px 20px", marginBottom: 14 }}>
+        {loading ? <div style={{ color: "#A89C8A", fontSize: 12, padding: 30, textAlign: "center" }}>Carregando…</div>
+          : n < 2 ? <div style={{ color: "#A89C8A", fontSize: 12, padding: 30, textAlign: "center" }}>Sem dados suficientes no período.</div>
+          : (
+          <svg width="100%" viewBox={`0 0 ${W} ${H}`} onMouseMove={onMove} onMouseLeave={() => setHover(null)} style={{ overflow: "visible", cursor: "crosshair" }}>
+            {[0, 0.25, 0.5, 0.75, 1].map(f => { const v = yHi - f * (yHi - yLo); const y = Y(v); return <g key={f}><line x1={pL} y1={y} x2={W - pR} y2={y} stroke="#F2EEE6" strokeWidth="0.5" /><text x={pL - 8} y={y + 3} fill="#A89C8A" fontSize="9" textAnchor="end" fontFamily="'JetBrains Mono',monospace">{v.toFixed(3)}</text></g>; })}
+            {marcas.map((r, i) => <text key={i} x={X(r.data_ref)} y={H - 6} fill="#A89C8A" fontSize="8" textAnchor={i === 0 ? "start" : i === marcas.length - 1 ? "end" : "middle"} fontFamily="'JetBrains Mono',monospace">{dBR(r.data_ref)}</text>)}
+            <path d={path} fill="none" stroke="#B67A33" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" />
+            {hover != null && (() => { const r = rows[hover]; const x = X(r.data_ref), y = Y(r.venda); const dir = x > W * 0.7; return (
+              <g>
+                <line x1={x} y1={pT} x2={x} y2={H - pB} stroke="#C2B7A6" strokeWidth="0.6" strokeDasharray="3,3" />
+                <circle cx={x} cy={y} r={3.5} fill="#B67A33" stroke="#FFFFFF" strokeWidth="1.5" />
+                <rect x={dir ? x - 128 : x + 8} y={pT} width={120} height={34} rx={4} fill="#4A2C16" opacity={0.92} />
+                <text x={dir ? x - 120 : x + 16} y={pT + 14} fill="#FFFFFF" fontSize="10" fontFamily="'JetBrains Mono',monospace">{dBR(r.data_ref)}</text>
+                <text x={dir ? x - 120 : x + 16} y={pT + 27} fill="#FBF4E6" fontSize="10" fontFamily="'JetBrains Mono',monospace">Venda R$ {fmt(r.venda, 4)}</text>
+              </g>); })()}
+          </svg>
+        )}
+      </div>
+
+      <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 10, overflow: "hidden" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", padding: "8px 18px", borderBottom: "1px solid #ECE7DD" }}>
+          {["Data", "Compra", "Venda", "Var. dia (venda)"].map(h => <span key={h} style={{ color: "#A89C8A", fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>{h}</span>)}
+        </div>
+        <div style={{ maxHeight: 360, overflowY: "auto" }}>
+          {[...rows].reverse().map((r, i, arr) => {
+            const ant = arr[i + 1];
+            const dv = ant ? r.venda - ant.venda : null;
+            return (
+              <div key={r.data_ref} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", padding: "8px 18px", borderBottom: "1px solid #F2EEE6", fontSize: 12 }}>
+                <span style={{ color: "#6B6052" }}>{dBR(r.data_ref)}</span>
+                <span style={{ fontFamily: "'JetBrains Mono',monospace", color: "#4A2C16" }}>R$ {fmt(r.compra, 4)}</span>
+                <span style={{ fontFamily: "'JetBrains Mono',monospace", color: "#4A2C16", fontWeight: 600 }}>R$ {fmt(r.venda, 4)}</span>
+                <span style={{ fontFamily: "'JetBrains Mono',monospace", color: dv == null ? "#C2B7A6" : dv >= 0 ? "#B0503F" : "#4E7C5A" }}>{dv == null ? "—" : `${dv >= 0 ? "+" : ""}${fmt(dv, 4)}`}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      <div style={{ color: "#C2B7A6", fontSize: 9, marginTop: 6 }}>Dias sem pregão (fins de semana e feriados) não têm PTAX.</div>
+    </div>
+  );
+}
+
 function CambioPage({COTACOES, ptax, ptaxPrev}) {
   const nowD = new Date();
   // PTAX: separar "fechamento de hoje" (só aparece quando existe) do "dia anterior".
@@ -1926,6 +2092,9 @@ function CambioPage({COTACOES, ptax, ptaxPrev}) {
           );
         })}
       </div>
+
+      {/* Histórico da PTAX (bloco adicional) */}
+      <PtaxHistorico />
     </div>
   );
 }
@@ -3139,6 +3308,25 @@ function AdminPage({cotacoes}) {
   const [authed, setAuthed] = useState(false);
   const [authErr, setAuthErr] = useState("");
   const [tab, setTab] = useState("fundos");
+  // PTAX: preencher histórico
+  const [ptIni, setPtIni] = useState("2023-01-01");
+  const [ptFim, setPtFim] = useState(new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date()));
+  const [ptMsg, setPtMsg] = useState("");
+  const [ptDiv, setPtDiv] = useState([]);
+  const [ptLoading, setPtLoading] = useState(false);
+  const preencherPtax = async () => {
+    setPtLoading(true); setPtMsg(""); setPtDiv([]);
+    try {
+      const res = await fetch("/api/admin", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: pw, action: "ptax_preencher", data: { inicio: ptIni, fim: ptFim } }) });
+      const j = await res.json();
+      if (j.success) {
+        setPtMsg(`✓ ${j.encontrados} dia(s) com PTAX no Banco Central no período · ${j.inseridos} dia(s) que faltavam foram gravados`);
+        setPtDiv(Array.isArray(j.divergentes) ? j.divergentes : []);
+      } else setPtMsg(`Erro: ${j.error}`);
+    } catch { setPtMsg("Erro de conexão"); }
+    setPtLoading(false);
+  };
 
   // Fundos state
   const [fDataRef, setFDataRef] = useState(new Date().toISOString().slice(0, 10));
@@ -3580,7 +3768,7 @@ function AdminPage({cotacoes}) {
 
       {/* Tabs */}
       <div style={{ display: "flex", gap: 6, marginBottom: 24 }}>
-        {[{ id: "gestao", label: "Gestão" }, { id: "fundos", label: "Posição Fundos" }, { id: "premios", label: "Prêmios Porto" }, { id: "analise", label: "Análise Técnica" }, { id: "usda", label: "Fundamentos USDA" }, { id: "acessos", label: "Acessos" }, { id: "basis", label: "Praças & Basis" }].map(t => (
+        {[{ id: "gestao", label: "Gestão" }, { id: "fundos", label: "Posição Fundos" }, { id: "premios", label: "Prêmios Porto" }, { id: "analise", label: "Análise Técnica" }, { id: "usda", label: "Fundamentos USDA" }, { id: "acessos", label: "Acessos" }, { id: "basis", label: "Praças & Basis" }, { id: "ptax", label: "PTAX" }].map(t => (
           <div key={t.id} onClick={() => setTab(t.id)} style={{
             padding: "8px 20px", borderRadius: 7, cursor: "pointer", fontSize: 12, fontWeight: 600,
             background: tab === t.id ? "rgba(230,57,70,0.1)" : "#F5F1EA",
@@ -3783,6 +3971,39 @@ function AdminPage({cotacoes}) {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* ═══ PTAX TAB ═══ */}
+      {tab === "ptax" && (
+        <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 12, padding: 24, marginBottom: 20 }}>
+          <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>Histórico da PTAX — preencher dias que faltam</div>
+          <div style={{ color: "#8A7E6F", fontSize: 11, marginBottom: 16 }}>
+            Busca no Banco Central a PTAX de fechamento de cada dia útil do período e grava só os dias que ainda não estão no sistema. Nada do que já existe é alterado.
+            A rotina diária já faz isso sozinha para os últimos 15 dias.
+          </div>
+          <div style={{ display: "flex", gap: 10, alignItems: "flex-end", flexWrap: "wrap", marginBottom: 14 }}>
+            <div>
+              <label style={{ color: "#8A7E6F", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>De</label>
+              <input type="date" value={ptIni} onChange={e => setPtIni(e.target.value)} style={{ ...inputStyle, width: 170 }} />
+            </div>
+            <div>
+              <label style={{ color: "#8A7E6F", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Até</label>
+              <input type="date" value={ptFim} onChange={e => setPtFim(e.target.value)} style={{ ...inputStyle, width: 170 }} />
+            </div>
+            <button onClick={preencherPtax} disabled={ptLoading} style={{ ...btnStyle, opacity: ptLoading ? 0.6 : 1 }}>
+              {ptLoading ? "Buscando no Banco Central..." : "Preencher dias que faltam"}
+            </button>
+          </div>
+          {ptMsg && <div style={{ fontSize: 12, color: ptMsg.startsWith("✓") ? "#4E7C5A" : "#B0503F", marginBottom: 10 }}>{ptMsg}</div>}
+          {ptDiv.length > 0 && (
+            <div style={{ fontSize: 11, color: "#B67A33" }}>
+              ⚠ {ptDiv.length} dia(s) gravados com valor diferente do Banco Central (não foram alterados):
+              <div style={{ maxHeight: 160, overflowY: "auto", marginTop: 6, fontFamily: "'JetBrains Mono',monospace", color: "#6B6052" }}>
+                {ptDiv.map(d => <div key={d.data_ref}>{d.data_ref.split("-").reverse().join("/")}: gravado {d.gravado} · Banco Central {d.bcb}</div>)}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
