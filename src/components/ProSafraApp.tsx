@@ -836,6 +836,11 @@ const LEITURA_COR = {
   "Abaixo da média":           { c: BZ.down,   bg: "#F8ECE9" },
   "Abaixo da mínima histórica":{ c: BZ.down,   bg: "#F4E1DC" },
   "Sem referência histórica":  { c: BZ.textFaint, bg: "#F5F1EA" },
+  // Leitura por quadrantes em volta da média do dia (premios_parametros.leitura_modo = 1)
+  "Ótima oportunidade de buscar negócios": { c: "#FFFFFF", bg: "#2F6A45" },
+  "Cenário bom":                           { c: BZ.up,     bg: "#E3EFE6" },
+  "Mercado sem interesse em negócios":     { c: "#8A6512", bg: "#FBF0D2" },
+  "Mercado péssimo, compradores fora":     { c: "#FFFFFF", bg: BZ.down },
 };
 const numOrNull = v => (v === null || v === undefined || v === "" || isNaN(Number(v))) ? null : Number(v);
 const fmtSig = (v, d = 1) => { const n = numOrNull(v); return n === null ? "—" : `${n > 0 ? "+" : ""}${fmt(n, d)}`; };
@@ -856,7 +861,7 @@ function FaixaBar({ valor, min, max, media }) {
 }
 
 function PremiosAvaliacaoView({ rows }) {
-  const cols = "118px 58px 84px 84px 150px 70px 160px 92px";
+  const cols = "118px 58px 84px 84px 150px 70px 230px 92px";
   const bases = [...new Set(rows.map(r => r.base_label).filter(Boolean))];
   const comRef = rows.filter(r => numOrNull(r.media_combinada) !== null);
   const acima = comRef.filter(r => numOrNull(r.desvio_media) > 0).length;
@@ -868,14 +873,14 @@ function PremiosAvaliacaoView({ rows }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 8 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{ width: 3, height: 18, background: BZ.gold, borderRadius: 2 }} />
-          <span style={{ fontSize: 15, fontWeight: 700 }}>Prêmios de Soja — Paranaguá</span>
+          <span style={{ fontSize: 15, fontWeight: 700 }}>Prêmio Soja Porto</span>
           <span style={{ color: BZ.textFaint, fontSize: 11 }}>Compra • cents/bushel</span>
         </div>
         <div style={{ color: "#C2B7A6", fontSize: 10 }}>Último lançamento: {fmtDataBR(ultima)}</div>
       </div>
 
       <div style={{ background: BZ.surface, border: `1px solid ${BZ.border}`, borderRadius: 10, overflowX: "auto", marginBottom: 12 }}>
-        <div style={{ display: "grid", gridTemplateColumns: cols, minWidth: 820, padding: "10px 16px", borderBottom: `1px solid ${BZ.border}` }}>
+        <div style={{ display: "grid", gridTemplateColumns: cols, minWidth: 890, padding: "10px 16px", borderBottom: `1px solid ${BZ.border}` }}>
           {["Embarque", "Contrato", "Prêmio atual", "Média do dia", "Faixa (mín.–máx.)", "Desvio", "Leitura", "Lançado em"].map(h => (
             <div key={h} style={{ color: BZ.textFaint, fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>{h}</div>
           ))}
@@ -884,7 +889,7 @@ function PremiosAvaliacaoView({ rows }) {
           const lc = LEITURA_COR[r.leitura] || LEITURA_COR["Sem referência histórica"];
           const desv = numOrNull(r.desvio_media);
           return (
-            <div key={`${r.mes_idx}-${r.ano}`} style={{ display: "grid", gridTemplateColumns: cols, minWidth: 820, padding: "12px 16px", borderBottom: `1px solid ${BZ.borderSoft}`, alignItems: "center" }}
+            <div key={`${r.mes_idx}-${r.ano}`} style={{ display: "grid", gridTemplateColumns: cols, minWidth: 890, padding: "12px 16px", borderBottom: `1px solid ${BZ.borderSoft}`, alignItems: "center" }}
               onMouseEnter={e => e.currentTarget.style.background = "#FAF7F1"}
               onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
               <span style={{ color: BZ.brownDeep, fontSize: 13, fontWeight: 600 }}>{MESES[r.mes_idx]} {r.ano}</span>
@@ -908,7 +913,7 @@ function PremiosAvaliacaoView({ rows }) {
       </div>
 
       <div style={{ color: BZ.textFaint, fontSize: 10, marginBottom: 20, lineHeight: 1.6 }}>
-        Média do dia = média histórica do mesmo ponto do calendário de negociação (mesma distância até o embarque).
+        Média do dia = média histórica do mesmo ponto do calendário de negociação (mesma distância até o embarque). Leitura = distância do prêmio atual para a média do dia.
         {bases.length > 0 && <> Base: {bases.join(" · ")}.</>}
         {rows.some(r => r.lancamento_antigo) && <> ⚠ = lançamento com mais de 3 dias.</>}
       </div>
@@ -973,7 +978,7 @@ function PremiosPortoPage({premiosData}) {
     .filter(p => (p.yr > curYear) || (p.yr === curYear && p.mesIdx >= curMonth))
     .sort((a, b) => (a.yr * 12 + a.mesIdx) - (b.yr * 12 + b.mesIdx));
 
-  // Nova avaliação (média do mesmo ponto do calendário: StoneX + safras BZ encerradas).
+  // Nova avaliação (média do mesmo ponto do calendário: base histórica + safras BZ encerradas).
   // Sem a view (app publicado antes da migração), mantém a tela antiga abaixo.
   const aval = (premiosData && Array.isArray(premiosData.avaliacao)) ? premiosData.avaliacao : [];
   if (hasLive && aval.length > 0) {
@@ -990,7 +995,7 @@ function PremiosPortoPage({premiosData}) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{ width: 3, height: 18, background: "#D5A246", borderRadius: 2 }} />
-          <span style={{ fontSize: 15, fontWeight: 700 }}>Prêmios de Soja — Paranaguá</span>
+          <span style={{ fontSize: 15, fontWeight: 700 }}>Prêmio Soja Porto</span>
           <span style={{ color: "#A89C8A", fontSize: 11 }}>Compra • cents/bushel</span>
         </div>
         <div style={{ color: "#C2B7A6", fontSize: 10 }}>{hasLive ? "✓ Dados ao vivo" : "Dados de exemplo"}</div>
@@ -3853,7 +3858,7 @@ function AdminPage({cotacoes}) {
       {tab === "premios" && (
         <div>
           <div style={{ background: "#FFFFFF", border: "1px solid #ECE7DD", borderRadius: 12, padding: 24, marginBottom: 20 }}>
-            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>Lançar prêmios — Soja Paranaguá</div>
+            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>Lançar prêmios — Soja Porto</div>
             <div style={{ color: "#8A7E6F", fontSize: 11, marginBottom: 16 }}>Adicione cada mês de embarque, depois clique "Salvar todos"</div>
 
             {/* Date ref */}
@@ -3866,9 +3871,9 @@ function AdminPage({cotacoes}) {
             {/* Fonte do prêmio (auditoria) */}
             <div style={{ marginBottom: 14 }}>
               <label style={{ color: "#8A7E6F", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Fonte do prêmio</label>
-              <input list="premio-fontes" value={pFonte} onChange={e => setPFonte(e.target.value)} placeholder="StoneX, corretora, trading…" style={{ ...inputStyle, width: 240 }} />
+              <input list="premio-fontes" value={pFonte} onChange={e => setPFonte(e.target.value)} placeholder="Corretora, trading…" style={{ ...inputStyle, width: 240 }} />
               <datalist id="premio-fontes">
-                {["StoneX", "Corretora", "Trading", ...new Set(pHist.map(h => h.fonte).filter(Boolean))].map(f => <option key={f} value={f} />)}
+                {[...new Set(["Corretora", "Trading", ...pHist.map(h => h.fonte).filter(Boolean)])].map(f => <option key={f} value={f} />)}
               </datalist>
             </div>
 
@@ -4514,7 +4519,7 @@ export default function ProSafraApp({ userProfile, onLogout }) {
               {!isMobile&&page==="dashboard"&&<span style={{color:BZ.textFaint,fontSize:11,marginLeft:10}}>{dateStr}</span>}
               {!isMobile&&page==="preco-justo"&&<span style={{color:BZ.textMute,fontSize:11,marginLeft:8}}>Regiões de preço para negociação</span>}
               {!isMobile&&page==="mercado"&&<span style={{color:BZ.textMute,fontSize:11,marginLeft:8}}>Cotações de bolsa — Chicago, B3 e contratos</span>}
-              {!isMobile&&page==="premios"&&<span style={{color:BZ.textMute,fontSize:11,marginLeft:8}}>Prêmios de exportação — Base Paranaguá</span>}
+              {!isMobile&&page==="premios"&&<span style={{color:BZ.textMute,fontSize:11,marginLeft:8}}>Prêmio Soja Porto</span>}
               {!isMobile&&page==="analise"&&<span style={{color:BZ.textMute,fontSize:11,marginLeft:8}}>Regiões de preço em Chicago — Análise semanal</span>}
               {!isMobile&&page==="fundamentos"&&<span style={{color:BZ.textMute,fontSize:11,marginLeft:8}}>Oferta e demanda mundial — Dados USDA/WASDE</span>}
               {!isMobile&&page==="fundos"&&<span style={{color:BZ.textMute,fontSize:11,marginLeft:8}}>Managed Money — CFTC Commitments of Traders</span>}
